@@ -5,12 +5,17 @@ body, html {
 .hero-image {
   background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(https://images.unsplash.com/photo-1515378960530-7c0da6231fb1?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80);
 
-  height: 50%;
+  height: 45%;
 
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
-  position: relative;
+  position: fixed;
+  left: 0;
+  width: 100%;
+  margin-left: 0;
+  padding: 0;
+  top: 0;
 }
 
 .hero-text {
@@ -22,4 +27,12 @@ body, html {
   color: white;
   font-family: 'Bona Nova', serif;
   font-size: 200%;
+  font-weight: 400;
+}
+
+.navbar {
+    width: 100%;
+    background-color: #555;
+    overflow: auto;
+    position: relative;
 }
