@@ -10,7 +10,7 @@ body {
     left: 0;
 }
 
-h1 {
+h1, h2 {
     font-family: 'Playfair Display', serif;
     color: white;
     text-align: center;
@@ -18,5 +18,15 @@ h1 {
 
 #homepage-text {
     position: fixed;
-    right: 0;
+    left: 725px;
+}
+
+#name {
+    font-size: 50px;
+    margin-bottom: 10px;
+}
+
+h2#title {
+    font-size: 25px;
+    margin-top: 10px;
 }
