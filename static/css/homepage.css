@@ -29,4 +29,6 @@ h2#title {
 button {
     background-color: #832232;;
     color: white;
+    border: none;
+    padding: 15px 32px;
 }
