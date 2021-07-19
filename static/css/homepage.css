@@ -30,3 +30,8 @@ h2#title {
     font-size: 25px;
     margin-top: 10px;
 }
+
+button {
+    background-color: #832232;;
+    color: white;
+}
