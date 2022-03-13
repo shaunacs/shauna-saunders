@@ -1,34 +1,10 @@
-#Shauna {
-    height: 100%;
-    position: fixed;
-    top: 0;
-    left: 0;
+h1, nav, a {
+    font-family: 'Barrio', cursive;
 }
 
-h1, h2 {
-    font-family: 'Playfair Display', serif;
+.btn {
     color: white;
-    text-align: center;
-}
-
-#homepage-text {
-    position: fixed;
-    left: 725px;
-}
-
-#name {
-    font-size: 50px;
-    margin-bottom: 10px;
-}
-
-h2#title {
-    font-size: 25px;
-    margin-top: 10px;
-}
-
-button {
-    background-color: #832232;;
-    color: white;
-    border: none;
-    padding: 15px 32px;
+    background-color: #6D72C3;
+    padding: 14px 25px;
+    text-decoration: none;
 }
