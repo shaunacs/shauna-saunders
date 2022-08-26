@@ -8,3 +8,44 @@ h1, nav, a {
     padding: 14px 25px;
     text-decoration: none;
 }
+
+nav {
+    display: inline;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: white;
+    font-size: 32px;
+    margin-left: 12px;
+    margin-right: 10px;
+}
+
+body {
+    background-color: black;
+}
+
+.nav-heading {
+    color: #EF6461;
+    display: inline;
+    font-size: 64px;
+    margin-left: 60px;
+}
+
+navlinks {
+    transform: translateY(-50%);
+    top: 6%;
+    position: absolute;
+    right: 12px;
+}
+
+img {
+    width: 40%;
+    padding-left: 42px;
+}
+
+#about-me-button {
+    position: fixed;
+    right: 225px;
+    top: 250px;
+}

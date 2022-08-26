@@ -5,15 +5,19 @@
 {% endblock %}
 {% block body %}
 <header>
-    <h1>Shauna Saunders</h1>
+    <h1 class="nav-heading">Shauna Saunders</h1>
     <nav>
-        <a href="/">Home</a>
-        <a href="/about">About</a>
-        <a href="/portfolio">Portfolio</a>
-        <a href="/contact">Contact</a>
+        <navlinks>
+            <a href="/" class="nav-link">Home</a>
+            <a href="/about" class="nav-link">About</a>
+            <a href="/portfolio" class="nav-link">Portfolio</a>
+            <a href="/contact" class="nav-link">Contact</a>
+        </navlinks>
     </nav>
 </header>
-<img src="../static/img/shauna-nola.jpeg">
-<p>Image goes here</p>
-<a href="/about" class="btn">About Me</a>
+<div>
+    <img src="../static/img/shauna-nola.jpeg">
+    <a href="/about" class="btn" id="about-me-button">About Me</a>
+</div>
+
 {% endblock %}
