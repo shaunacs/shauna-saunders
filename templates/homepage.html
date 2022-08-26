@@ -1,23 +1,28 @@
 {% extends 'base.html' %}
 {% block title %}Shauna Saunders Homepage{% endblock %}
 {% block head %}
-
+<script>
+    function youFab() {
+        alert("I'll fix all of this later. You are fabulous.");
+    }
+</script>
 {% endblock %}
 {% block body %}
 <header>
-        <h1 class="nav-heading">Shauna Saunders</h1>
-        <nav>
-            <navlinks>
-                <a href="/" class="nav-link">Home</a>
-                <a href="/" class="nav-link">About</a>
-                <a href="/" class="nav-link">Portfolio</a>
-                <a href="/" class="nav-link">Contact</a>
-            </navlinks>
-        </nav>
+    <h1 class="nav-heading">Shauna Saunders</h1>
 </header>
+<nav>
+    <navlinks>
+        <a href="/" class="nav-link">Home</a>
+        <a href="/" class="nav-link">About</a>
+        <a href="/" class="nav-link">Portfolio</a>
+        <a href="/" class="nav-link">Contact</a>
+    </navlinks>
+</nav>
+
 <div class="col-12">
     <img src="../static/img/shauna-nola.jpeg">
-    <a href="/" class="btn" id="about-me-button">About Me</a>
+    <a href="/" class="btn" id="about-me-button" onclick="youFab()">About Me</a>
 </div>
 
 {% endblock %}
