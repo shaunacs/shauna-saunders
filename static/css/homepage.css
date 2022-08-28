@@ -49,16 +49,23 @@ img {
 }
 
 #about-me-button {
-    position: absolute;
+    /* position: absolute; */
+    display: inline;
+    margin-left: 70px;
     right: 142px;
 }
 
 #random-cat-button {
-    position: absolute;
+    /* position: absolute; */
     right: 142px;
-    top: 407px;
+    display: inline;
+    margin-left: 14px;
 }
 
+
+#homepage-buttons {
+    margin-top: 27px;
+}
 .row::after {
     content: "";
     clear: both;
