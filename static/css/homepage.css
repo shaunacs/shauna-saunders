@@ -53,6 +53,12 @@ img {
     right: 142px;
 }
 
+#random-cat-button {
+    position: absolute;
+    right: 142px;
+    top: 407px;
+}
+
 .row::after {
     content: "";
     clear: both;
@@ -94,5 +100,11 @@ img {
         position: absolute;
         right: 300px;
         top: 250px;
+    }
+
+    #random-cat-button {
+        position: absolute;
+        right: 300px;
+        top: 308px;
     }
   }

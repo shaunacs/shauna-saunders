@@ -2,11 +2,8 @@
 {% block title %}Shauna Saunders Homepage{% endblock %}
 {% block head %}
 <meta name="viewport" content="width=device-width">
-<script>
-    function youFab() {
-        alert("Wouldn't you like to know, weather boy?");
-    }
-</script>
+<script src="../static/js/about-me-button.js"></script>
+<script src="../static/js/random-cat-button.js"></script>
 {% endblock %}
 {% block body %}
 <div class="row">
@@ -23,11 +20,16 @@
     </nav> -->
 </div>
 <div class="row">
-    <img src="../static/img/shauna-nola.jpeg">
+    <img src="../static/img/shauna-nola.jpeg" id="cat-image">
 </div>
 <div class="row">
     <a class="btn" id="about-me-button" onclick="youFab()">About Me</a>
 </div>
-
+<div class="row">
+    <a class="btn" id="random-cat-button" onclick="shuffleCats()">Click Me</a>
+</div>
+<!-- <div class="row">
+    <img src="" id="cat-image">
+</div> -->
 
 {% endblock %}
