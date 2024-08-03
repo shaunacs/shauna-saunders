@@ -6,21 +6,22 @@
 <script src="../static/js/random-cat-button.js"></script>
 {% endblock %}
 {% block body %}
-<div class="row">
+<div class="row" id="navigation-header">
     <header class="col-6">
-        <h1 class="nav-heading">Shauna Saunders</h1>
+        <h2 id="last-name">Shauna Saunders</h2>
+        <!-- <h1 class="nav-heading">Shauna Saunders</h1> -->
     </header>
-    <!-- <nav class="col-6">
+    <nav class="col-6">
         <navlink>
             <a href="/" class="nav-link">Home</a>
-            <a href="/" class="nav-link">About</a>
+            <a href="/about-me" class="nav-link">About</a>
             <a href="/" class="nav-link">Portfolio</a>
             <a href="/" class="nav-link">Contact</a>
         </navlinks>
-    </nav> -->
+    </nav>
 </div>
 <div class="row">
-    <img src="../static/img/shauna-nola.jpeg" id="cat-image">
+    <img src="../static/img/Shauna-parking-deck.png" id="cat-image">
 </div>
 <div class="row" id="homepage-buttons">
     <a class="btn" id="about-me-button" onclick="youFab()">About Me</a>
