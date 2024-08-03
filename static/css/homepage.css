@@ -1,5 +1,6 @@
-h1, nav, a {
-    font-family: 'Barrio', cursive;
+h1, nav, a, #last-name {
+    font-family: 'Roboto Mono', monospace;
+    color: white;
 }
 
 .btn {
@@ -16,7 +17,7 @@ nav {
 .nav-link {
     text-decoration: none;
     color: white;
-    font-size: 32px;
+    font-size: 22px;
     margin-left: 12px;
     margin-right: 10px;
 }
@@ -26,7 +27,7 @@ body {
 }
 
 .nav-heading {
-    color: #EF6461;
+    color: white;
     display: inline;
     font-size: 36px;
     margin-left: 10px;
@@ -45,7 +46,8 @@ navlink {
 
 img {
     width: 80%;
-    padding-left: 42px;
+    padding-left: 66px;
+    margin-top: 2%;
 }
 
 #about-me-button {
@@ -66,6 +68,25 @@ img {
 #homepage-buttons {
     margin-top: 27px;
 }
+
+#last-name {
+    color: white;
+    display: inline;
+}
+
+.row {
+    display: flex;
+}
+
+.col-6 {
+    flex: 1;
+    box-sizing: border-box;
+}
+
+#navigation-header {
+    margin-top: 2%;
+}
+
 .row::after {
     content: "";
     clear: both;
