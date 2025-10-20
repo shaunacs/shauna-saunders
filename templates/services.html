@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+{% block title %}Services - Shauna Saunders{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="../static/css/base.css">
+{% endblock %}
+{% block body %}
+<div class="container">
+    <nav class="main-nav">
+        <a href="/" class="nav-brand-link"><h2 class="nav-brand">Shauna Saunders</h2></a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/about-me" class="nav-link">About</a>
+            <a href="/services" class="nav-link active">Services</a>
+            <a href="/portfolio" class="nav-link">Portfolio</a>
+            <a href="/contact" class="nav-link">Contact</a>
+        </div>
+    </nav>
+
+    <main class="content services-content">
+        <section class="services-header">
+            <h1 class="page-title">Web Development Services & Pricing</h1>
+            <p class="services-intro">
+                Whether you're starting a business, launching a personal brand, showcasing your work, or building an online presence for your organization, I help turn your ideas into professional, functional websites that work for you 24/7.
+            </p>
+        </section>
+
+        <section class="service-options">
+            <h2 class="section-heading">Service Options</h2>
+
+            <div class="service-card featured-service">
+                <div class="service-header">
+                    <h3 class="service-title">Option 1: Custom Website Development</h3>
+                    <p class="service-price">$2,500</p>
+                    <p class="service-tagline">Best for: Anyone who wants a unique, professional presence that stands out</p>
+                </div>
+
+                <div class="service-content">
+                    <h4 class="service-subheading">What's Included:</h4>
+                    <ul class="service-list">
+                        <li><strong>Discovery & Planning (3-5 hours):</strong> Understanding your vision, goals, target audience, and specific needs</li>
+                        <li><strong>Custom Design & Mockups (5-10 hours):</strong> Creating a unique design tailored to your brand and personality</li>
+                        <li><strong>Development (15-25 hours):</strong> Building a fully functional, responsive website with clean code</li>
+                        <li><strong>Revisions & Refinements (5-10 hours):</strong> Up to 3 rounds of feedback and adjustments to get everything perfect</li>
+                        <li><strong>Testing & Deployment (3-5 hours):</strong> Ensuring everything works flawlessly across all devices and browsers, then launching your site</li>
+                        <li><strong>Ongoing Communication (5-8 hours):</strong> Regular check-ins, updates, and answering your questions throughout the process</li>
+                    </ul>
+
+                    <h4 class="service-subheading">Features:</h4>
+                    <ul class="service-features">
+                        <li>5-7 custom pages (Home, About, Services/Portfolio, Contact, etc.)</li>
+                        <li>Mobile-responsive design (looks great on phones, tablets, and desktops)</li>
+                        <li>Contact forms and/or custom functionality</li>
+                        <li>SSL certificate (secure connection)</li>
+                        <li>Professional email setup guidance</li>
+                    </ul>
+
+                    <h4 class="service-subheading">Why Choose Custom Development?</h4>
+                    <div class="benefits-grid">
+                        <div class="benefit-item">
+                            <h5>Complete Control & Uniqueness</h5>
+                            <p>Your website reflects your unique vision and brand. No cookie-cutter templates that look like dozens of other sites.</p>
+                        </div>
+                        <div class="benefit-item">
+                            <h5>Scalability & Flexibility</h5>
+                            <p>Easy to add features as your business grows. Not limited by template constraints.</p>
+                        </div>
+                        <div class="benefit-item">
+                            <h5>Professional Polish</h5>
+                            <p>Every detail designed specifically for your needs. Creates trust and credibility with your audience.</p>
+                        </div>
+                    </div>
+
+                    <div class="payment-options">
+                        <h4 class="service-subheading">Payment Options:</h4>
+                        <ol class="payment-list">
+                            <li><strong>Standard Terms:</strong> 50% ($1,250) upfront, 50% ($1,250) upon completion</li>
+                            <li><strong>Milestone Plan:</strong> 33% ($825) upfront, 33% ($825) at design approval, 34% ($850) at launch</li>
+                            <li><strong>Split Payment:</strong> $625/month for 4 months (begins upon project start)</li>
+                        </ol>
+                    </div>
+
+                    <p class="service-timeline"><strong>Typical Timeline:</strong> 4-6 weeks from start to launch</p>
+                </div>
+            </div>
+
+            <div class="service-card">
+                <div class="service-header">
+                    <h3 class="service-title">Option 2: Template-Based Website</h3>
+                    <p class="service-price">$1,200</p>
+                    <p class="service-tagline">Best for: Those on a tight budget who need something up quickly</p>
+                </div>
+
+                <div class="service-content">
+                    <h4 class="service-subheading">What's Included:</h4>
+                    <ul class="service-list">
+                        <li>Selection and setup of a professional template</li>
+                        <li>Basic customization (colors, logo, text, images)</li>
+                        <li>5-7 pages of content setup</li>
+                        <li>Mobile-responsive design</li>
+                        <li>Contact form setup</li>
+                        <li>Basic launch and testing</li>
+                    </ul>
+
+                    <h4 class="service-subheading">Why This Costs Less:</h4>
+                    <ul class="service-features">
+                        <li>Reduced design time (using pre-made templates)</li>
+                        <li>Limited customization options</li>
+                        <li>Faster turnaround (2-3 weeks)</li>
+                    </ul>
+
+                    <div class="warning-box">
+                        <h4 class="service-subheading">Important Considerations:</h4>
+                        <ul class="consideration-list">
+                            <li><strong>Less Unique:</strong> Your site may look similar to others using the same template</li>
+                            <li><strong>Restricted Flexibility:</strong> Limited by template structure and features</li>
+                            <li><strong>Potential Performance Issues:</strong> Templates often include unnecessary code that slows down your site</li>
+                            <li><strong>Harder to Modify Later:</strong> Making changes beyond basic edits can be difficult or impossible</li>
+                            <li><strong>Platform Dependency:</strong> Often tied to specific platforms with ongoing subscription costs</li>
+                        </ul>
+                    </div>
+
+                    <div class="payment-options">
+                        <h4 class="service-subheading">Payment Options:</h4>
+                        <ol class="payment-list">
+                            <li><strong>Standard Terms:</strong> 50% ($600) upfront, 50% ($600) upon completion</li>
+                            <li><strong>Full Payment:</strong> $1,200 upfront</li>
+                        </ol>
+                    </div>
+
+                    <p class="service-timeline"><strong>Typical Timeline:</strong> 2-3 weeks from start to launch</p>
+                </div>
+            </div>
+
+            <div class="service-card-row">
+                <div class="service-card small-card">
+                    <div class="service-header">
+                        <h3 class="service-title">Option 3: Ongoing Maintenance & Support</h3>
+                        <p class="service-price">$80<span class="price-period">/month</span></p>
+                    </div>
+
+                    <div class="service-content">
+                        <h4 class="service-subheading">For Websites I've Built:</h4>
+                        <ul class="service-list compact">
+                            <li>Regular software/plugin updates</li>
+                            <li>Security monitoring and updates</li>
+                            <li>Minor content updates (text changes, new photos, etc.)</li>
+                            <li>Bug fixes and troubleshooting</li>
+                            <li>Performance monitoring</li>
+                            <li>Monthly backup</li>
+                            <li><strong>Priority email support with 48-hour response time</strong></li>
+                        </ul>
+
+                        <h4 class="service-subheading">For Existing Websites (Built by Others):</h4>
+                        <ul class="service-features compact">
+                            <li>Same services as above</li>
+                            <li>Initial site audit and assessment</li>
+                            <li>Recommendations for improvements</li>
+                            <li>Emergency support for critical issues</li>
+                        </ul>
+
+                        <div class="terms-box">
+                            <h4 class="service-subheading">Terms:</h4>
+                            <ul class="terms-list">
+                                <li>3-month minimum commitment</li>
+                                <li>Can cancel after initial period with 30 days notice</li>
+                                <li>Ensures consistent site health and security</li>
+                            </ul>
+                        </div>
+
+                        <p class="service-note"><strong>Note:</strong> Major redesigns, new features, or significant functionality changes billed separately at $100/hour.</p>
+                    </div>
+                </div>
+
+                <div class="service-card small-card">
+                    <div class="service-header">
+                        <h3 class="service-title">Option 4: As-Needed Maintenance</h3>
+                        <p class="service-price">$150<span class="price-period">/service call</span></p>
+                    </div>
+
+                    <div class="service-content">
+                        <h4 class="service-subheading">Best for: Those who only need occasional updates or fixes</h4>
+
+                        <h4 class="service-subheading">What's Included:</h4>
+                        <ul class="service-list compact">
+                            <li>Minor content updates</li>
+                            <li>Bug fixes and troubleshooting</li>
+                            <li>Plugin/software updates</li>
+                            <li>Technical support</li>
+                            <li>Minimum 1 hour of work per service call</li>
+                        </ul>
+
+                        <div class="terms-box">
+                            <h4 class="service-subheading">Terms:</h4>
+                            <ul class="terms-list">
+                                <li>No commitment required</li>
+                                <li>Pay only when you need service</li>
+                                <li>5-7 business day response time</li>
+                                <li>Work performed as availability permits</li>
+                            </ul>
+                        </div>
+
+                        <p class="service-note"><strong>Why the difference in price?</strong> Ongoing maintenance clients receive priority service, proactive monitoring, and regular updates that prevent issues before they happen. As-needed service is reactive and worked into the schedule as time allows.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="comparison-section">
+            <h2 class="section-heading">Comparing Your Options</h2>
+            <div class="comparison-table-container">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Custom Development</th>
+                            <th>Template-Based</th>
+                            <th>Ongoing Maintenance</th>
+                            <th>As-Needed Service</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Initial Cost</strong></td>
+                            <td>$2,500</td>
+                            <td>$1,200</td>
+                            <td>$0</td>
+                            <td>$0</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Monthly Cost</strong></td>
+                            <td>—</td>
+                            <td>—</td>
+                            <td>$80</td>
+                            <td>$150/call</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Commitment</strong></td>
+                            <td>Project-based</td>
+                            <td>Project-based</td>
+                            <td>3 months minimum</td>
+                            <td>None</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Response Time</strong></td>
+                            <td>During project</td>
+                            <td>During project</td>
+                            <td>48 hours</td>
+                            <td>5-7 business days</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Unique Design</strong></td>
+                            <td class="check-mark">✓ Yes</td>
+                            <td>Limited</td>
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Full Customization</strong></td>
+                            <td class="check-mark">✓ Yes</td>
+                            <td>Limited</td>
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Best Performance</strong></td>
+                            <td class="check-mark">✓ Yes</td>
+                            <td>Moderate</td>
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Timeline</strong></td>
+                            <td>4-6 weeks</td>
+                            <td>2-3 weeks</td>
+                            <td>Ongoing</td>
+                            <td>As needed</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Future Flexibility</strong></td>
+                            <td class="check-mark">✓ Excellent</td>
+                            <td>Limited</td>
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="faq-section">
+            <h2 class="section-heading">Frequently Asked Questions</h2>
+
+            <div class="faq-grid">
+                <details class="faq-item">
+                    <summary class="faq-question">Why not just use Squarespace or Wix myself?</summary>
+                    <p class="faq-answer">You certainly could! However, you'd be investing your own time (10-30+ hours) learning the platform, making design decisions, troubleshooting technical issues, and likely feeling frustrated. Your time is valuable, and professional developers know best practices for performance and user experience that aren't obvious to beginners. I handle the technical complexity so you can focus on what you do best.</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary class="faq-question">What if I need changes after the site is launched?</summary>
+                    <p class="faq-answer">Minor updates are included in the ongoing maintenance plan ($80/month with 3-month minimum). If you prefer not to commit to ongoing maintenance, you can request as-needed service at $150/service call. Larger changes or new features are billed at $100/hour with a clear estimate provided upfront.</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary class="faq-question">Do I own the website?</summary>
+                    <p class="faq-answer">Yes! You own all content and have full access to your site. I provide training so you can make basic updates yourself if desired.</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary class="faq-question">What if I'm not happy with the design?</summary>
+                    <p class="faq-answer">The custom development package includes up to 3 rounds of revisions. I work closely with you throughout the design process to ensure you love the final result before we move to development.</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary class="faq-question">Can I upgrade from template to custom later?</summary>
+                    <p class="faq-answer">Absolutely! I can credit $800 of your template site investment toward a full custom rebuild.</p>
+                </details>
+
+                <details class="faq-item">
+                    <summary class="faq-question">What types of websites do you build?</summary>
+                    <p class="faq-answer">I build a wide range of websites including business sites, portfolios, personal brands, e-commerce stores, blogs, booking/scheduling sites, and more. If you have an idea, let's talk about how to make it happen!</p>
+                </details>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <h2 class="cta-title">Ready to Get Started?</h2>
+            <p class="cta-text">Contact me to start discussing your vision, your goals, and which option is the best fit for your needs.</p>
+            <div class="cta-buttons">
+                <a href="/contact" class="btn btn-primary">Get In Touch</a>
+            </div>
+        </section>
+
+        <p class="disclaimer">Prices are for standard informational and business websites. Complex functionality (e-commerce platforms, custom web applications, etc.) quoted separately based on scope.</p>
+    </main>
+</div>
+{% endblock %}

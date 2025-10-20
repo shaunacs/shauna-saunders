@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Portfolio - Shauna Saunders{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="../static/css/base.css">
+{% endblock %}
+{% block body %}
+<div class="container">
+    <nav class="main-nav">
+        <a href="/" class="nav-brand-link"><h2 class="nav-brand">Shauna Saunders</h2></a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/about-me" class="nav-link">About</a>
+            <a href="/services" class="nav-link">Services</a>
+            <a href="/portfolio" class="nav-link active">Portfolio</a>
+            <a href="/contact" class="nav-link">Contact</a>
+        </div>
+    </nav>
+
+    <main class="content">
+        <section class="portfolio-section">
+            <h1 class="page-title">Portfolio</h1>
+
+            <div class="portfolio-grid">
+                <div class="portfolio-item">
+                    <h2 class="portfolio-title">Hackbright Academy Final Project</h2>
+                    <p class="portfolio-description">
+                        Check out my final project from Hackbright Academy.
+                    </p>
+                    <a href="https://youtu.be/Q_sMu8OQ93Y" target="_blank" class="portfolio-link">
+                        View Demo
+                        <svg class="external-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                    </a>
+                </div>
+
+                <div class="portfolio-item">
+                    <h2 class="portfolio-title">Three of Cups LLC</h2>
+                    <p class="portfolio-description">
+                        A custom application built for a business client.
+                    </p>
+                    <a href="https://threeofcupsllc.com" target="_blank" class="portfolio-link">
+                        Visit Site
+                        <svg class="external-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                    </a>
+                </div>
+
+                <div class="portfolio-item featured">
+                    <h2 class="portfolio-title">shaunasaunders.com</h2>
+                    <p class="portfolio-description">
+                        You're already here! This very website you're browsing.
+                    </p>
+                    <a href="https://shaunasaunders.com" class="portfolio-link">
+                        You Are Here
+                        <svg class="checkmark-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+{% endblock %}

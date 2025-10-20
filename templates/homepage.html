@@ -1,36 +1,38 @@
 {% extends 'base.html' %}
-{% block title %}Shauna Saunders Homepage{% endblock %}
+{% block title %}Shauna Saunders - Software Engineer{% endblock %}
 {% block head %}
-<meta name="viewport" content="width=device-width">
-<script src="../static/js/about-me-button.js"></script>
-<script src="../static/js/random-cat-button.js"></script>
+<link rel="stylesheet" href="../static/css/base.css">
 {% endblock %}
 {% block body %}
-<div class="row" id="navigation-header">
-    <header class="col-6">
-        <h2 id="last-name">Shauna Saunders</h2>
-        <!-- <h1 class="nav-heading">Shauna Saunders</h1> -->
-    </header>
-    <nav class="col-6">
-        <navlink>
-            <a href="/" class="nav-link">Home</a>
+<div class="container">
+    <nav class="main-nav">
+        <a href="/" class="nav-brand-link"><h2 class="nav-brand">Shauna Saunders</h2></a>
+        <div class="nav-links">
+            <a href="/" class="nav-link active">Home</a>
             <a href="/about-me" class="nav-link">About</a>
-            <a href="/" class="nav-link">Portfolio</a>
-            <a href="/" class="nav-link">Contact</a>
-        </navlinks>
+            <a href="/services" class="nav-link">Services</a>
+            <a href="/portfolio" class="nav-link">Portfolio</a>
+            <a href="/contact" class="nav-link">Contact</a>
+        </div>
     </nav>
-</div>
-<div class="row">
-    <img src="../static/img/Shauna-parking-deck.png" id="cat-image">
-</div>
-<div class="row" id="homepage-buttons">
-    <a class="btn" id="about-me-button" onclick="youFab()">About Me</a>
-    <a class="btn" id="random-cat-button" onclick="shuffleCats()">Click Me</a>
-</div>
-<div class="row">
-</div>
-<!-- <div class="row">
-    <img src="" id="cat-image">
-</div> -->
 
+    <main class="hero-section">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title">Hi, I'm Shauna Saunders</h1>
+                <p class="hero-subtitle">Software Engineer</p>
+                <p class="hero-description">
+                    Building elegant solutions to complex problems.
+                </p>
+                <div class="hero-buttons">
+                    <a href="/portfolio" class="btn btn-primary">View My Work</a>
+                    <a href="/contact" class="btn btn-secondary">Get In Touch</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="../static/img/shauna-headshot.JPG" alt="Shauna Saunders">
+            </div>
+        </div>
+    </main>
+</div>
 {% endblock %}

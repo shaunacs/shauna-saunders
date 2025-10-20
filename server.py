@@ -19,5 +19,26 @@ def render_about_me_page():
     return render_template('about-me.html')
 
 
+@app.route('/portfolio')
+def render_portfolio_page():
+    """Renders portfolio page"""
+
+    return render_template('portfolio.html')
+
+
+@app.route('/contact')
+def render_contact_page():
+    """Renders contact page"""
+
+    return render_template('contact.html')
+
+
+@app.route('/services')
+def render_services_page():
+    """Renders services page"""
+
+    return render_template('services.html')
+
+
 if __name__ == '__main__':
     app.run()

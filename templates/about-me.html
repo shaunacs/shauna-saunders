@@ -1,6 +1,59 @@
 {% extends 'base.html' %}
-{% block title %}About Me{% endblock %}
-{% block head %}{% endblock %}
+{% block title %}About Me - Shauna Saunders{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="../static/css/base.css">
+{% endblock %}
 {% block body %}
-<h1>About Me</h1>
+<div class="container">
+    <nav class="main-nav">
+        <a href="/" class="nav-brand-link"><h2 class="nav-brand">Shauna Saunders</h2></a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/about-me" class="nav-link active">About</a>
+            <a href="/services" class="nav-link">Services</a>
+            <a href="/portfolio" class="nav-link">Portfolio</a>
+            <a href="/contact" class="nav-link">Contact</a>
+        </div>
+    </nav>
+
+    <main class="content">
+        <section class="about-section">
+
+            <div class="about-story">
+                <p class="about-paragraph">
+                    Hi, I'm Shauna! I'm a Software Engineer with a passion for turning ideas into reality through code.
+                </p>
+
+                <p class="about-paragraph">
+                    My journey into development started long before I wrote my first line of code. As a kid, I was the one taking toys apart just to see how they worked. That curiosity has been with me my whole life, even when others didn't see my potential. Growing up, I learned early on that I'd have to prove myself and fight for opportunities that others took for granted—a lesson that's shaped my entire path.
+                </p>
+
+                <p class="about-paragraph">
+                    I didn't study computer science in college. Honestly, I didn't even know it was an option when I started at UNC-Chapel Hill with a focus on Human Development & Family Studies. But when I discovered software engineering, everything clicked. I made the leap, completed an intensive bootcamp at Hackbright Academy, and never looked back. My nontraditional background isn't a limitation—it's my strength. It taught me grit, determination, and how to learn anything I set my mind to.
+                </p>
+
+                <p class="about-paragraph">
+                    What I enjoy most about development is the collaborative process of bringing someone's vision to life. Whether it's creating a web portal that streamlines operations for a local food pantry (my first project!) or building custom websites that help businesses establish their online presence, I thrive on understanding what people need and crafting something that works beautifully for them.
+                </p>
+
+                <p class="about-paragraph">
+                    My background spans full-stack development with Python, JavaScript, React, and more, plus experience in quality assurance that gives me a keen eye for detail and user experience. I believe great software isn't just about clean code—it's about truly understanding the people who will use it and having the perseverance to solve any problem that comes up.
+                </p>
+
+                <p class="about-paragraph">
+                    When I'm not coding, you'll find me at silent disco, salsa dancing, exploring new restaurants with my wife, or at home spoiling our two cats.
+                </p>
+
+                <p class="about-paragraph cta-paragraph">
+                    Let's build something great together. Whether you have a clear vision or just the spark of an idea, I'd love to help make it happen.
+                </p>
+
+                <div class="about-cta">
+                    <a href="/contact" class="btn btn-primary">Get In Touch</a>
+                    <a href="https://www.linkedin.com/in/shauna-saunders/" target="_blank" class="btn btn-secondary">View LinkedIn</a>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
 {% endblock %}
