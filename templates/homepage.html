@@ -7,6 +7,11 @@
 <div class="container">
     <nav class="main-nav">
         <a href="/" class="nav-brand-link"><h2 class="nav-brand">Shauna Saunders</h2></a>
+        <button class="hamburger" aria-label="Toggle navigation menu" aria-expanded="false">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
         <div class="nav-links">
             <a href="/" class="nav-link active">Home</a>
             <a href="/about-me" class="nav-link">About</a>
@@ -35,4 +40,40 @@
         </div>
     </main>
 </div>
+
+<script>
+// Mobile navigation toggle
+const hamburger = document.querySelector('.hamburger');
+const navLinks = document.querySelector('.nav-links');
+
+if (hamburger && navLinks) {
+    hamburger.addEventListener('click', () => {
+        hamburger.classList.toggle('active');
+        navLinks.classList.toggle('active');
+
+        // Update aria-expanded for accessibility
+        const isExpanded = hamburger.classList.contains('active');
+        hamburger.setAttribute('aria-expanded', isExpanded);
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!hamburger.contains(e.target) && !navLinks.contains(e.target)) {
+            hamburger.classList.remove('active');
+            navLinks.classList.remove('active');
+            hamburger.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    // Close menu when clicking a nav link
+    const navItems = navLinks.querySelectorAll('.nav-link');
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            hamburger.classList.remove('active');
+            navLinks.classList.remove('active');
+            hamburger.setAttribute('aria-expanded', 'false');
+        });
+    });
+}
+</script>
 {% endblock %}
