@@ -22,6 +22,23 @@
     </nav>
 
     <main class="hero-section">
+        <div class="code-animation-bg">
+            <div class="code-line code-line-pos-1" id="code-line-1"></div>
+            <div class="code-line code-line-pos-2" id="code-line-2"></div>
+            <div class="code-line code-line-pos-3" id="code-line-3"></div>
+            <div class="code-line code-line-pos-4" id="code-line-4"></div>
+            <div class="code-line code-line-pos-5" id="code-line-5"></div>
+            <div class="code-line code-line-pos-6" id="code-line-6"></div>
+            <div class="code-line code-line-pos-7" id="code-line-7"></div>
+            <div class="code-line code-line-pos-8" id="code-line-8"></div>
+            <div class="code-line code-line-pos-9" id="code-line-9"></div>
+            <div class="code-line code-line-pos-10" id="code-line-10"></div>
+            <div class="code-line code-line-pos-11" id="code-line-11"></div>
+            <div class="code-line code-line-pos-12" id="code-line-12"></div>
+            <div class="code-line code-line-pos-13" id="code-line-13"></div>
+            <div class="code-line code-line-pos-14" id="code-line-14"></div>
+            <div class="code-line code-line-pos-15" id="code-line-15"></div>
+        </div>
         <div class="hero-content">
             <div class="hero-text">
                 <h1 class="hero-title">Hi, I'm Shauna Saunders</h1>
@@ -74,6 +91,322 @@ if (hamburger && navLinks) {
             hamburger.setAttribute('aria-expanded', 'false');
         });
     });
+}
+
+// Code Animation - Longer, more realistic snippets
+const codeSnippets = [
+    // Python Flask App
+    [
+        '<span class="code-keyword">from</span> flask <span class="code-keyword">import</span> Flask, render_template, jsonify',
+        '<span class="code-keyword">from</span> flask_sqlalchemy <span class="code-keyword">import</span> SQLAlchemy',
+        '',
+        '<span class="code-keyword">def</span> <span class="code-function">create_app</span>(config_name):',
+        '    app <span class="code-operator">=</span> <span class="code-function">Flask</span>(<span class="code-variable">__name__</span>)',
+        '    app.config[<span class="code-string">\'SQLALCHEMY_DATABASE_URI\'</span>] <span class="code-operator">=</span> db_uri',
+        '    db.<span class="code-function">init_app</span>(app)',
+        '    <span class="code-keyword">return</span> app'
+    ],
+    // React Component
+    [
+        '<span class="code-keyword">import</span> React, { useState, useEffect } <span class="code-keyword">from</span> <span class="code-string">\'react\'</span>;',
+        '<span class="code-keyword">import</span> { fetchData } <span class="code-keyword">from</span> <span class="code-string">\'./api\'</span>;',
+        '',
+        '<span class="code-keyword">const</span> <span class="code-function">Dashboard</span> <span class="code-operator">=</span> () <span class="code-operator">=></span> {',
+        '  <span class="code-keyword">const</span> [data, setData] <span class="code-operator">=</span> <span class="code-function">useState</span>([]);',
+        '  <span class="code-keyword">const</span> [loading, setLoading] <span class="code-operator">=</span> <span class="code-function">useState</span>(<span class="code-string">true</span>);',
+        '  ',
+        '  <span class="code-keyword">useEffect</span>(() <span class="code-operator">=></span> {',
+        '    <span class="code-function">fetchData</span>().<span class="code-function">then</span>(res <span class="code-operator">=></span> <span class="code-function">setData</span>(res));',
+        '  }, []);'
+    ],
+    // SQL Complex Query
+    [
+        '<span class="code-keyword">SELECT</span> u.id, u.username, u.email,',
+        '       <span class="code-function">COUNT</span>(p.id) <span class="code-keyword">AS</span> project_count,',
+        '       <span class="code-function">MAX</span>(p.created_at) <span class="code-keyword">AS</span> last_project',
+        '<span class="code-keyword">FROM</span> users u',
+        '<span class="code-keyword">LEFT JOIN</span> projects p <span class="code-keyword">ON</span> u.id <span class="code-operator">=</span> p.user_id',
+        '<span class="code-keyword">WHERE</span> u.status <span class="code-operator">=</span> <span class="code-string">\'active\'</span>',
+        '  <span class="code-keyword">AND</span> p.published <span class="code-operator">=</span> <span class="code-string">true</span>',
+        '<span class="code-keyword">GROUP BY</span> u.id, u.username, u.email',
+        '<span class="code-keyword">ORDER BY</span> project_count <span class="code-keyword">DESC</span>',
+        '<span class="code-keyword">LIMIT</span> <span class="code-number">10</span>;'
+    ],
+    // Python Class with Methods
+    [
+        '<span class="code-keyword">class</span> <span class="code-function">WebApplication</span>:',
+        '    <span class="code-comment">"""Handle web app configuration and routing"""</span>',
+        '    ',
+        '    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(<span class="code-variable">self</span>, name, debug<span class="code-operator">=</span><span class="code-string">False</span>):',
+        '        <span class="code-variable">self</span>.name <span class="code-operator">=</span> name',
+        '        <span class="code-variable">self</span>.debug <span class="code-operator">=</span> debug',
+        '        <span class="code-variable">self</span>.routes <span class="code-operator">=</span> {}',
+        '    ',
+        '    <span class="code-keyword">def</span> <span class="code-function">route</span>(<span class="code-variable">self</span>, path, methods<span class="code-operator">=</span>[<span class="code-string">\'GET\'</span>]):',
+        '        <span class="code-keyword">def</span> <span class="code-function">decorator</span>(func):',
+        '            <span class="code-variable">self</span>.routes[path] <span class="code-operator">=</span> func',
+        '            <span class="code-keyword">return</span> func'
+    ],
+    // JavaScript Async/Await
+    [
+        '<span class="code-keyword">async</span> <span class="code-keyword">function</span> <span class="code-function">fetchUserData</span>(userId) {',
+        '  <span class="code-keyword">try</span> {',
+        '    <span class="code-keyword">const</span> response <span class="code-operator">=</span> <span class="code-keyword">await</span> <span class="code-function">fetch</span>(<span class="code-string">`/api/users/${userId}`</span>);',
+        '    <span class="code-keyword">const</span> data <span class="code-operator">=</span> <span class="code-keyword">await</span> response.<span class="code-function">json</span>();',
+        '    ',
+        '    <span class="code-keyword">if</span> (!response.ok) {',
+        '      <span class="code-keyword">throw</span> <span class="code-keyword">new</span> <span class="code-function">Error</span>(<span class="code-string">\'Failed to fetch user\'</span>);',
+        '    }',
+        '    ',
+        '    <span class="code-keyword">return</span> data;',
+        '  } <span class="code-keyword">catch</span> (error) {',
+        '    console.<span class="code-function">error</span>(<span class="code-string">\'Error:\'</span>, error);'
+    ],
+    // CSS Grid Layout
+    [
+        '<span class="code-keyword">.portfolio-grid</span> {',
+        '  <span class="code-variable">display</span>: <span class="code-string">grid</span>;',
+        '  <span class="code-variable">grid-template-columns</span>: <span class="code-function">repeat</span>(<span class="code-number">3</span>, <span class="code-number">1</span>fr);',
+        '  <span class="code-variable">gap</span>: <span class="code-number">2</span>rem;',
+        '  <span class="code-variable">padding</span>: <span class="code-number">2</span>rem;',
+        '}',
+        '',
+        '<span class="code-keyword">.portfolio-item</span> {',
+        '  <span class="code-variable">background</span>: <span class="code-function">linear-gradient</span>(<span class="code-number">135</span>deg, <span class="code-string">#667eea</span>, <span class="code-string">#764ba2</span>);',
+        '  <span class="code-variable">border-radius</span>: <span class="code-number">12</span>px;',
+        '  <span class="code-variable">transition</span>: <span class="code-string">transform 0.3s ease</span>;',
+        '}'
+    ],
+    // Python API Route
+    [
+        '<span class="code-comment">@app.route(\'/api/projects/<int:project_id>\', methods=[\'GET\', \'PUT\'])</span>',
+        '<span class="code-keyword">def</span> <span class="code-function">handle_project</span>(project_id):',
+        '    <span class="code-keyword">if</span> request.method <span class="code-operator">==</span> <span class="code-string">\'GET\'</span>:',
+        '        project <span class="code-operator">=</span> Project.<span class="code-function">query</span>.<span class="code-function">get_or_404</span>(project_id)',
+        '        <span class="code-keyword">return</span> <span class="code-function">jsonify</span>(project.<span class="code-function">to_dict</span>())',
+        '    ',
+        '    <span class="code-keyword">elif</span> request.method <span class="code-operator">==</span> <span class="code-string">\'PUT\'</span>:',
+        '        data <span class="code-operator">=</span> request.<span class="code-function">get_json</span>()',
+        '        project <span class="code-operator">=</span> Project.<span class="code-function">query</span>.<span class="code-function">get</span>(project_id)',
+        '        project.title <span class="code-operator">=</span> data.<span class="code-function">get</span>(<span class="code-string">\'title\'</span>, project.title)',
+        '        db.session.<span class="code-function">commit</span>()',
+        '        <span class="code-keyword">return</span> <span class="code-function">jsonify</span>({<span class="code-string">\'message\'</span>: <span class="code-string">\'Updated\'</span>}), <span class="code-number">200</span>'
+    ],
+    // React Hooks Advanced
+    [
+        '<span class="code-keyword">import</span> { useReducer, useCallback } <span class="code-keyword">from</span> <span class="code-string">\'react\'</span>;',
+        '',
+        '<span class="code-keyword">const</span> <span class="code-variable">initialState</span> <span class="code-operator">=</span> { count: <span class="code-number">0</span>, loading: <span class="code-string">false</span> };',
+        '',
+        '<span class="code-keyword">function</span> <span class="code-function">reducer</span>(state, action) {',
+        '  <span class="code-keyword">switch</span> (action.type) {',
+        '    <span class="code-keyword">case</span> <span class="code-string">\'increment\'</span>:',
+        '      <span class="code-keyword">return</span> { ...state, count: state.count <span class="code-operator">+</span> <span class="code-number">1</span> };',
+        '    <span class="code-keyword">case</span> <span class="code-string">\'decrement\'</span>:',
+        '      <span class="code-keyword">return</span> { ...state, count: state.count <span class="code-operator">-</span> <span class="code-number">1</span> };',
+        '    <span class="code-keyword">default</span>:',
+        '      <span class="code-keyword">return</span> state;'
+    ],
+    // SQL Database Schema
+    [
+        '<span class="code-keyword">CREATE TABLE</span> users (',
+        '  id <span class="code-keyword">SERIAL PRIMARY KEY</span>,',
+        '  username <span class="code-keyword">VARCHAR</span>(<span class="code-number">50</span>) <span class="code-keyword">UNIQUE NOT NULL</span>,',
+        '  email <span class="code-keyword">VARCHAR</span>(<span class="code-number">120</span>) <span class="code-keyword">UNIQUE NOT NULL</span>,',
+        '  password_hash <span class="code-keyword">VARCHAR</span>(<span class="code-number">255</span>) <span class="code-keyword">NOT NULL</span>,',
+        '  created_at <span class="code-keyword">TIMESTAMP DEFAULT CURRENT_TIMESTAMP</span>,',
+        '  updated_at <span class="code-keyword">TIMESTAMP DEFAULT CURRENT_TIMESTAMP</span>',
+        ');',
+        '',
+        '<span class="code-keyword">CREATE INDEX</span> idx_user_email <span class="code-keyword">ON</span> users(email);',
+        '<span class="code-keyword">CREATE INDEX</span> idx_username <span class="code-keyword">ON</span> users(username);'
+    ],
+    // JavaScript ES6 Features
+    [
+        '<span class="code-keyword">const</span> <span class="code-variable">projects</span> <span class="code-operator">=</span> [',
+        '  { id: <span class="code-number">1</span>, title: <span class="code-string">\'Portfolio\'</span>, tech: [<span class="code-string">\'React\'</span>, <span class="code-string">\'Node\'</span>] },',
+        '  { id: <span class="code-number">2</span>, title: <span class="code-string">\'E-commerce\'</span>, tech: [<span class="code-string">\'Vue\'</span>, <span class="code-string">\'Python\'</span>] }',
+        '];',
+        '',
+        '<span class="code-keyword">const</span> <span class="code-variable">activeProjects</span> <span class="code-operator">=</span> projects',
+        '  .<span class="code-function">filter</span>(p <span class="code-operator">=></span> p.status <span class="code-operator">===</span> <span class="code-string">\'active\'</span>)',
+        '  .<span class="code-function">map</span>(({ id, title, tech }) <span class="code-operator">=></span> ({',
+        '    id, title, technologies: tech.<span class="code-function">join</span>(<span class="code-string">\', \'</span>)',
+        '  }));'
+    ],
+    // Python Data Processing
+    [
+        '<span class="code-keyword">import</span> pandas <span class="code-keyword">as</span> pd',
+        '<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np',
+        '',
+        '<span class="code-keyword">def</span> <span class="code-function">process_data</span>(filename):',
+        '    df <span class="code-operator">=</span> pd.<span class="code-function">read_csv</span>(filename)',
+        '    df[<span class="code-string">\'date\'</span>] <span class="code-operator">=</span> pd.<span class="code-function">to_datetime</span>(df[<span class="code-string">\'date\'</span>])',
+        '    ',
+        '    <span class="code-comment"># Clean and transform data</span>',
+        '    df <span class="code-operator">=</span> df.<span class="code-function">dropna</span>()',
+        '    df[<span class="code-string">\'value\'</span>] <span class="code-operator">=</span> df[<span class="code-string">\'value\'</span>].<span class="code-function">apply</span>(<span class="code-keyword">lambda</span> x: x <span class="code-operator">*</span> <span class="code-number">1.1</span>)',
+        '    ',
+        '    <span class="code-keyword">return</span> df.<span class="code-function">groupby</span>(<span class="code-string">\'category\'</span>).<span class="code-function">sum</span>()'
+    ],
+    // HTML JSX Component
+    [
+        '<span class="code-keyword">return</span> (',
+        '  <span class="code-operator">&lt;</span><span class="code-keyword">div</span> <span class="code-variable">className</span><span class="code-operator">=</span><span class="code-string">"container"</span><span class="code-operator">&gt;</span>',
+        '    <span class="code-operator">&lt;</span><span class="code-keyword">header</span> <span class="code-variable">className</span><span class="code-operator">=</span><span class="code-string">"hero"</span><span class="code-operator">&gt;</span>',
+        '      <span class="code-operator">&lt;</span><span class="code-keyword">h1</span><span class="code-operator">&gt;</span>{title}<span class="code-operator">&lt;/</span><span class="code-keyword">h1</span><span class="code-operator">&gt;</span>',
+        '      <span class="code-operator">&lt;</span><span class="code-keyword">p</span><span class="code-operator">&gt;</span>{description}<span class="code-operator">&lt;/</span><span class="code-keyword">p</span><span class="code-operator">&gt;</span>',
+        '    <span class="code-operator">&lt;/</span><span class="code-keyword">header</span><span class="code-operator">&gt;</span>',
+        '    <span class="code-operator">&lt;</span><span class="code-keyword">main</span><span class="code-operator">&gt;</span>',
+        '      {projects.<span class="code-function">map</span>(p <span class="code-operator">=></span> <span class="code-operator">&lt;</span><span class="code-function">ProjectCard</span> key<span class="code-operator">=</span>{p.id} {...p} <span class="code-operator">/&gt;</span>)}',
+        '    <span class="code-operator">&lt;/</span><span class="code-keyword">main</span><span class="code-operator">&gt;</span>',
+        '  <span class="code-operator">&lt;/</span><span class="code-keyword">div</span><span class="code-operator">&gt;</span>',
+        ');'
+    ],
+    // Python Flask Blueprint
+    [
+        '<span class="code-keyword">from</span> flask <span class="code-keyword">import</span> Blueprint, request, jsonify',
+        '',
+        'api <span class="code-operator">=</span> <span class="code-function">Blueprint</span>(<span class="code-string">\'api\'</span>, <span class="code-variable">__name__</span>, url_prefix<span class="code-operator">=</span><span class="code-string">\'/api\'</span>)',
+        '',
+        '<span class="code-comment">@api.route(\'/projects\')</span>',
+        '<span class="code-keyword">def</span> <span class="code-function">get_projects</span>():',
+        '    page <span class="code-operator">=</span> request.args.<span class="code-function">get</span>(<span class="code-string">\'page\'</span>, <span class="code-number">1</span>, <span class="code-keyword">type</span><span class="code-operator">=</span>int)',
+        '    per_page <span class="code-operator">=</span> <span class="code-number">10</span>',
+        '    ',
+        '    projects <span class="code-operator">=</span> Project.<span class="code-function">query</span>.<span class="code-function">paginate</span>(page, per_page)',
+        '    <span class="code-keyword">return</span> <span class="code-function">jsonify</span>([p.<span class="code-function">to_dict</span>() <span class="code-keyword">for</span> p <span class="code-keyword">in</span> projects.items])'
+    ],
+    // CSS Animations
+    [
+        '<span class="code-comment">/* Smooth fade-in animation */</span>',
+        '<span class="code-keyword">@keyframes</span> fadeIn {',
+        '  <span class="code-number">0%</span> {',
+        '    <span class="code-variable">opacity</span>: <span class="code-number">0</span>;',
+        '    <span class="code-variable">transform</span>: <span class="code-function">translateY</span>(<span class="code-number">20</span>px);',
+        '  }',
+        '  <span class="code-number">100%</span> {',
+        '    <span class="code-variable">opacity</span>: <span class="code-number">1</span>;',
+        '    <span class="code-variable">transform</span>: <span class="code-function">translateY</span>(<span class="code-number">0</span>);',
+        '  }',
+        '}',
+        '',
+        '<span class="code-keyword">.fade-in</span> { <span class="code-variable">animation</span>: fadeIn <span class="code-number">0.6</span>s ease; }'
+    ],
+    // JavaScript Promise Chain
+    [
+        '<span class="code-function">fetchProjects</span>()',
+        '  .<span class="code-function">then</span>(response <span class="code-operator">=></span> response.<span class="code-function">json</span>())',
+        '  .<span class="code-function">then</span>(data <span class="code-operator">=></span> {',
+        '    <span class="code-keyword">const</span> filtered <span class="code-operator">=</span> data.<span class="code-function">filter</span>(p <span class="code-operator">=></span> p.published);',
+        '    <span class="code-function">setProjects</span>(filtered);',
+        '    <span class="code-function">setLoading</span>(<span class="code-string">false</span>);',
+        '  })',
+        '  .<span class="code-function">catch</span>(error <span class="code-operator">=></span> {',
+        '    console.<span class="code-function">error</span>(<span class="code-string">\'Error loading projects:\'</span>, error);',
+        '    <span class="code-function">setError</span>(error.message);',
+        '  })',
+        '  .<span class="code-function">finally</span>(() <span class="code-operator">=></span> <span class="code-function">cleanup</span>());'
+    ]
+];
+
+class CodeAnimator {
+    constructor() {
+        this.lines = [
+            document.getElementById('code-line-1'),
+            document.getElementById('code-line-2'),
+            document.getElementById('code-line-3'),
+            document.getElementById('code-line-4'),
+            document.getElementById('code-line-5'),
+            document.getElementById('code-line-6'),
+            document.getElementById('code-line-7'),
+            document.getElementById('code-line-8'),
+            document.getElementById('code-line-9'),
+            document.getElementById('code-line-10'),
+            document.getElementById('code-line-11'),
+            document.getElementById('code-line-12'),
+            document.getElementById('code-line-13'),
+            document.getElementById('code-line-14'),
+            document.getElementById('code-line-15')
+        ];
+        this.currentSnippetIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+        this.init();
+    }
+
+    async typeText(element, htmlText, delay = 40) {
+        const plainText = htmlText.replace(/<[^>]*>/g, '');
+        element.innerHTML = '';
+        element.classList.add('active');
+
+        let currentPos = 0;
+        let htmlPos = 0;
+
+        while (htmlPos < htmlText.length) {
+            if (htmlText[htmlPos] === '<') {
+                const closeTag = htmlText.indexOf('>', htmlPos);
+                const tag = htmlText.substring(htmlPos, closeTag + 1);
+                element.innerHTML += tag;
+                htmlPos = closeTag + 1;
+            } else {
+                element.innerHTML += htmlText[htmlPos];
+                htmlPos++;
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+    }
+
+    async fadeOut(element) {
+        element.classList.add('fade-out');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        element.classList.remove('active', 'fade-out');
+    }
+
+    async animateLine(lineIndex) {
+        const element = this.lines[lineIndex];
+        const snippetIndex = this.currentSnippetIndices[lineIndex];
+        const snippet = codeSnippets[snippetIndex];
+
+        // Type each line of the snippet
+        for (let line of snippet) {
+            // Skip empty lines immediately
+            if (line === '') {
+                element.innerHTML += '<br>';
+                continue;
+            }
+            await this.typeText(element, line, 20);
+            await new Promise(resolve => setTimeout(resolve, 800));
+        }
+
+        // Hold for a moment
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Fade out
+        await this.fadeOut(element);
+
+        // Update to next snippet
+        this.currentSnippetIndices[lineIndex] = (snippetIndex + 1) % codeSnippets.length;
+
+        // Wait a bit before next cycle
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Continue the loop
+        this.animateLine(lineIndex);
+    }
+
+    init() {
+        // Start each line with a different delay for staggered effect
+        // With 15 lines, use shorter delays
+        this.lines.forEach((_, index) => {
+            setTimeout(() => {
+                this.animateLine(index);
+            }, index * 1000);
+        });
+    }
+}
+
+// Start the animation when page loads
+if (document.querySelector('.code-animation-bg')) {
+    new CodeAnimator();
 }
 </script>
 {% endblock %}

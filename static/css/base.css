@@ -137,12 +137,167 @@ body::before {
 /* Homepage Hero Section */
 .hero-section {
     padding: 4rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Code Animation Background */
+.code-animation-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+    opacity: 0.5;
+}
+
+.code-line {
+    position: absolute;
+    font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    white-space: pre;
+    opacity: 0;
+    transition: opacity 0.6s ease-in-out;
+    filter: blur(0.2px);
+    text-shadow: 0 0 15px rgba(255, 107, 157, 0.4);
+    max-width: 500px;
+}
+
+/* Grid-like positioning across the entire hero section */
+.code-line-pos-1 {
+    top: 2%;
+    left: 1%;
+}
+
+.code-line-pos-2 {
+    top: 3%;
+    left: 35%;
+}
+
+.code-line-pos-3 {
+    top: 5%;
+    right: 2%;
+    text-align: right;
+}
+
+.code-line-pos-4 {
+    top: 22%;
+    left: 2%;
+}
+
+.code-line-pos-5 {
+    top: 20%;
+    right: 1%;
+    text-align: right;
+}
+
+.code-line-pos-6 {
+    top: 38%;
+    left: 1%;
+}
+
+.code-line-pos-7 {
+    top: 35%;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+}
+
+.code-line-pos-8 {
+    top: 40%;
+    right: 1%;
+    text-align: right;
+}
+
+.code-line-pos-9 {
+    top: 58%;
+    left: 2%;
+}
+
+.code-line-pos-10 {
+    top: 55%;
+    right: 2%;
+    text-align: right;
+}
+
+.code-line-pos-11 {
+    bottom: 18%;
+    left: 1%;
+}
+
+.code-line-pos-12 {
+    bottom: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+}
+
+.code-line-pos-13 {
+    bottom: 15%;
+    right: 1%;
+    text-align: right;
+}
+
+.code-line-pos-14 {
+    bottom: 5%;
+    left: 2%;
+}
+
+.code-line-pos-15 {
+    bottom: 3%;
+    right: 2%;
+    text-align: right;
+}
+
+.code-line.active {
+    opacity: 1;
+}
+
+.code-line.fade-out {
+    opacity: 0;
+}
+
+/* Syntax Highlighting Colors */
+.code-keyword {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.code-function {
+    color: var(--secondary-color);
+}
+
+.code-string {
+    color: var(--accent-color);
+}
+
+.code-variable {
+    color: var(--purple);
+}
+
+.code-comment {
+    color: #718096;
+    font-style: italic;
+}
+
+.code-operator {
+    color: var(--blue);
+}
+
+.code-number {
+    color: #F687B3;
 }
 
 .hero-content {
     display: flex;
     align-items: center;
     gap: 4rem;
+    position: relative;
+    z-index: 1;
 }
 
 .hero-text {
@@ -1190,6 +1345,15 @@ body::before {
         flex-direction: column-reverse;
         gap: 2rem;
         text-align: center;
+    }
+
+    /* Code Animation - Hide on mobile for better performance */
+    .code-animation-bg {
+        opacity: 0.2;
+    }
+
+    .code-line {
+        font-size: 0.7rem;
     }
 
     .hero-title {

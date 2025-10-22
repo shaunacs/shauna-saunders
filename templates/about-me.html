@@ -2,6 +2,7 @@
 {% block title %}About Me - Shauna Saunders{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="../static/css/base.css">
+<link rel="stylesheet" href="../static/css/timeline.css">
 {% endblock %}
 {% block body %}
 <div class="container">
@@ -21,43 +22,149 @@
         </div>
     </nav>
 
-    <main class="content">
-        <section class="about-section">
+    <main class="content timeline-content">
+        <header class="timeline-header">
+            <h1 class="page-title">My Journey</h1>
+            <p class="timeline-intro">From curious kid to full-stack developer, here's the story of how I got here.</p>
+        </header>
 
-            <div class="about-story">
-                <p class="about-paragraph">
-                    Hi, I'm Shauna! I'm a Software Engineer with a passion for turning ideas into reality through code.
-                </p>
+        <section class="timeline">
+            <div class="timeline-line"></div>
 
-                <p class="about-paragraph">
-                    My journey into development started long before I wrote my first line of code. As a kid, I was the one taking toys apart just to see how they worked. That curiosity has been with me my whole life, even when others didn't see my potential. Growing up, I learned early on that I'd have to prove myself and fight for opportunities that others took for granted—a lesson that's shaped my entire path.
-                </p>
-
-                <p class="about-paragraph">
-                    I didn't study computer science in college. Honestly, I didn't even know it was an option when I started at UNC-Chapel Hill with a focus on Human Development & Family Studies. But when I discovered software engineering, everything clicked. I made the leap, completed an intensive bootcamp at Hackbright Academy, and never looked back. My nontraditional background isn't a limitation—it's my strength. It taught me grit, determination, and how to learn anything I set my mind to.
-                </p>
-
-                <p class="about-paragraph">
-                    What I enjoy most about development is the collaborative process of bringing someone's vision to life. Whether it's creating a web portal that streamlines operations for a local food pantry (my first project!) or building custom websites that help businesses establish their online presence, I thrive on understanding what people need and crafting something that works beautifully for them.
-                </p>
-
-                <p class="about-paragraph">
-                    My background spans full-stack development with Python, JavaScript, React, and more, plus experience in quality assurance that gives me a keen eye for detail and user experience. I believe great software isn't just about clean code—it's about truly understanding the people who will use it and having the perseverance to solve any problem that comes up.
-                </p>
-
-                <p class="about-paragraph">
-                    When I'm not coding, you'll find me at silent disco, salsa dancing, exploring new restaurants with my wife, or at home spoiling our two cats.
-                </p>
-
-                <p class="about-paragraph cta-paragraph">
-                    Let's build something great together. Whether you have a clear vision or just the spark of an idea, I'd love to help make it happen.
-                </p>
-
-                <div class="about-cta">
-                    <a href="/contact" class="btn btn-primary">Get In Touch</a>
-                    <a href="https://www.linkedin.com/in/shauna-saunders/" target="_blank" class="btn btn-secondary">View LinkedIn</a>
+            <!-- Milestone 1: The Curious Kid (LEFT) -->
+            <article class="timeline-item timeline-item-left" data-aos="fade-right">
+                <div class="timeline-card">
+                    <div class="timeline-card-content">
+                        <h2 class="timeline-card-title">The Curious Kid</h2>
+                        <p class="timeline-card-text">
+                            My journey into development started long before I wrote my first line of code. As a kid, I was the one taking toys apart just to see how they worked. That curiosity has been with me my whole life, even when others didn't see my potential.
+                        </p>
+                    </div>
                 </div>
-            </div>
+                <div class="timeline-image">
+                    <img src="../static/img/shauna-child.JPG" alt="Shauna as a child">
+                </div>
+                <div class="timeline-dot"></div>
+            </article>
+
+            <!-- Milestone 2: Proving Myself (RIGHT) -->
+            <article class="timeline-item timeline-item-right" data-aos="fade-left">
+                <div class="timeline-image">
+                    <img src="../static/img/shauna-graduation.JPG" alt="Upward arrow symbolizing growth and determination">
+                </div>
+                <div class="timeline-card">
+                    <div class="timeline-card-content">
+                        <h2 class="timeline-card-title">Proving Myself</h2>
+                        <p class="timeline-card-text">
+                            Growing up, I learned early on that I'd have to prove myself and fight for opportunities that others took for granted—a lesson that's shaped my entire path.
+                        </p>
+                    </div>
+                </div>
+                <div class="timeline-dot"></div>
+            </article>
+
+            <!-- Milestone 3: The Unexpected Path (LEFT) -->
+            <article class="timeline-item timeline-item-left" data-aos="fade-right">
+                <div class="timeline-card">
+                    <div class="timeline-card-content">
+                        <h2 class="timeline-card-title">The Unexpected Path</h2>
+                        <p class="timeline-card-text">
+                            I didn't study computer science in college. Honestly, I didn't even know it was an option when I started at UNC-Chapel Hill with a focus on Human Development & Family Studies. But when I discovered software engineering, everything clicked.
+                        </p>
+                    </div>
+                </div>
+                <div class="timeline-image">
+                    <img src="../static/img/shauna-unc-grad.JPG" alt="UNC Chapel Hill campus or graduation cap representing college education">
+                </div>
+                <div class="timeline-dot"></div>
+            </article>
+
+            <!-- Milestone 4: The Leap (RIGHT) -->
+            <article class="timeline-item timeline-item-right" data-aos="fade-left">
+                <div class="timeline-image">
+                    <img src="../static/img/hackbright-certificate.png" alt="Hackbright Academy logo or rocket ship symbolizing taking the leap">
+                </div>
+                <div class="timeline-card">
+                    <div class="timeline-card-content">
+                        <h2 class="timeline-card-title">The Leap</h2>
+                        <p class="timeline-card-text">
+                            I made the leap, completed an intensive bootcamp at Hackbright Academy, and never looked back. My nontraditional background isn't a limitation—it's my strength. It taught me grit, determination, and how to learn anything I set my mind to.
+                        </p>
+                    </div>
+                </div>
+                <div class="timeline-dot"></div>
+            </article>
+
+            <!-- Milestone 5: Bringing Visions to Life (LEFT) -->
+            <article class="timeline-item timeline-item-left" data-aos="fade-right">
+                <div class="timeline-card">
+                    <div class="timeline-card-content">
+                        <h2 class="timeline-card-title">Bringing Visions to Life</h2>
+                        <p class="timeline-card-text">
+                            What I enjoy most about development is the collaborative process of bringing someone's vision to life. Whether it's creating a web portal that streamlines operations for a local food pantry (my first project!) or building custom websites that help businesses establish their online presence, I thrive on understanding what people need and crafting something that works beautifully for them.
+                        </p>
+                    </div>
+                </div>
+                <!-- <div class="timeline-image"> -->
+                    <!-- REPLACE WITH YOUR IMAGE: Add screenshot of food pantry project or collaborative work image -->
+                    <!-- <img src="../static/img/milestone-visions.jpg" alt="Screenshot of food pantry web portal project"> -->
+                <!-- </div> -->
+                <div class="timeline-dot"></div>
+            </article>
+
+            <!-- Milestone 6: Full-Stack Expertise (RIGHT) -->
+            <article class="timeline-item timeline-item-right" data-aos="fade-left">
+                <!-- <div class="timeline-image"> -->
+                    <!-- REPLACE WITH YOUR IMAGE: Add tech stack icons or code editor screenshot -->
+                    <!-- <img src="../static/img/milestone-fullstack.jpg" alt="Technology stack icons including Python, JavaScript, React"> -->
+                <!-- </div> -->
+                <div class="timeline-card">
+                    <div class="timeline-card-content">
+                        <h2 class="timeline-card-title">Full-Stack Expertise</h2>
+                        <p class="timeline-card-text">
+                            My background spans full-stack development with Python, JavaScript, React, and more, plus experience in quality assurance that gives me a keen eye for detail and user experience. I believe great software isn't just about clean code—it's about truly understanding the people who will use it and having the perseverance to solve any problem that comes up.
+                        </p>
+                    </div>
+                </div>
+                <div class="timeline-dot"></div>
+            </article>
+
+            <!-- Milestone 7: Life Outside Code (LEFT) -->
+            <article class="timeline-item timeline-item-left" data-aos="fade-right">
+                <div class="timeline-card">
+                    <div class="timeline-card-content">
+                        <h2 class="timeline-card-title">Life Outside Code</h2>
+                        <p class="timeline-card-text">
+                            When I'm not coding, you'll find me at silent disco, salsa dancing, exploring new restaurants with my wife, or at home spoiling our two cats.
+                        </p>
+                    </div>
+                </div>
+                <!-- <div class="timeline-image"> -->
+                    <!-- REPLACE WITH YOUR IMAGE: Add photo of you dancing, with your wife, or with cats -->
+                    <!-- <img src="../static/img/milestone-life.jpg" alt="Shauna dancing, with wife, or with cats enjoying life outside of coding"> -->
+                <!-- </div> -->
+                <div class="timeline-dot"></div>
+            </article>
+
+            <!-- Milestone 8: Let's Build Together (RIGHT) -->
+            <article class="timeline-item timeline-item-right" data-aos="fade-left">
+                <!-- <div class="timeline-image"> -->
+                    <!-- <img src="../static/img/shauna-headshot.JPG" alt="Shauna Saunders professional headshot or collaborative handshake"> -->
+                <!-- </div> -->
+                <div class="timeline-card timeline-card-cta">
+                    <div class="timeline-card-content">
+                        <h2 class="timeline-card-title">Let's Build Together</h2>
+                        <p class="timeline-card-text">
+                            Let's build something great together. Whether you have a clear vision or just the spark of an idea, I'd love to help make it happen.
+                        </p>
+                        <div class="timeline-card-buttons">
+                            <a href="/contact" class="btn btn-primary">Get In Touch</a>
+                            <a href="https://www.linkedin.com/in/shauna-saunders/" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">View LinkedIn</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="timeline-dot"></div>
+            </article>
         </section>
     </main>
 </div>
@@ -91,6 +198,58 @@ if (hamburger && navLinks) {
             hamburger.setAttribute('aria-expanded', 'false');
         });
     });
+}
+
+// Timeline Scroll Animation using Intersection Observer
+class TimelineAnimator {
+    constructor() {
+        this.items = document.querySelectorAll('.timeline-item');
+        this.options = {
+            threshold: 0.15,
+            rootMargin: '0px 0px -100px 0px'
+        };
+        this.init();
+    }
+
+    init() {
+        // Check for reduced motion preference
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (prefersReducedMotion) {
+            // If user prefers reduced motion, show all items immediately
+            this.items.forEach(item => {
+                item.classList.add('timeline-item-visible');
+            });
+            return;
+        }
+
+        // Create intersection observer
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('timeline-item-visible');
+                    // Optional: stop observing after animation (performance optimization)
+                    // observer.unobserve(entry.target);
+                }
+            });
+        }, this.options);
+
+        // Observe all timeline items
+        this.items.forEach(item => {
+            observer.observe(item);
+        });
+    }
+}
+
+// Initialize timeline animations when DOM is loaded
+if (document.querySelector('.timeline')) {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            new TimelineAnimator();
+        });
+    } else {
+        new TimelineAnimator();
+    }
 }
 </script>
 {% endblock %}
