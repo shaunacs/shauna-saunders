@@ -61,9 +61,356 @@
                     </a>
                 </div>
             </div>
+
+            <!-- Contact Form Section -->
+            <div class="contact-form-section">
+                <h2 class="form-title">Send Me a Message</h2>
+                <p class="form-intro">
+                    Fill out the form below and I'll get back to you within 24 hours.
+                </p>
+
+                <!-- Message Display Area -->
+                <div id="form-message" class="form-message" style="display: none;"></div>
+
+                <form id="contact-form" class="contact-form" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <!-- Honeypot field (hidden from users, bots will fill it) -->
+                    <div class="honeypot-field">
+                        <label for="website">Website</label>
+                        <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name" class="form-label">Name <span class="required">*</span></label>
+                            <input
+                                type="text"
+                                id="name"
+                                name="name"
+                                class="form-input"
+                                required
+                                maxlength="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email <span class="required">*</span></label>
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                class="form-input"
+                                required
+                                maxlength="100"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="interest" class="form-label">I'm interested in <span class="required">*</span></label>
+                            <select id="interest" name="interest" class="form-select" required>
+                                <option value="">Select an option...</option>
+                                <option value="Custom Website Development">Custom Website Development</option>
+                                <option value="Template-Based Website">Template-Based Website</option>
+                                <option value="Ongoing Maintenance & Support">Ongoing Maintenance & Support</option>
+                                <option value="As-Needed Maintenance">As-Needed Maintenance</option>
+                                <option value="Not Sure / Need Consultation">Not Sure / Need Consultation</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="timeline" class="form-label">Timeline <span class="required">*</span></label>
+                            <select id="timeline" name="timeline" class="form-select" required>
+                                <option value="">Select an option...</option>
+                                <option value="ASAP (1-2 weeks)">ASAP (1-2 weeks)</option>
+                                <option value="1-3 months">1-3 months</option>
+                                <option value="3-6 months">3-6 months</option>
+                                <option value="6+ months">6+ months</option>
+                                <option value="Just exploring options">Just exploring options</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="budget" class="form-label">Budget Range <span class="required">*</span></label>
+                        <select id="budget" name="budget" class="form-select" required>
+                            <option value="">Select an option...</option>
+                            <option value="Under $1,000">Under $1,000</option>
+                            <option value="$1,000 - $2,500">$1,000 - $2,500</option>
+                            <option value="$2,500 - $5,000">$2,500 - $5,000</option>
+                            <option value="$5,000+">$5,000+</option>
+                            <option value="Not sure yet">Not sure yet</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="project_description" class="form-label">Tell me about your project <span class="required">*</span></label>
+                        <textarea
+                            id="project_description"
+                            name="project_description"
+                            class="form-textarea"
+                            rows="6"
+                            required
+                            maxlength="2000"
+                            placeholder="What are you hoping to build? What challenges are you trying to solve?"
+                        ></textarea>
+                        <div class="char-counter">
+                            <span id="char-count">0</span> / 2000 characters
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-submit" id="submit-btn">
+                        <span class="btn-text">Send Message</span>
+                        <span class="btn-loading" style="display: none;">
+                            <svg class="spinner" viewBox="0 0 50 50">
+                                <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+                            </svg>
+                            Sending...
+                        </span>
+                    </button>
+                </form>
+            </div>
         </section>
     </main>
 </div>
+
+<style>
+/* Contact Form Styles */
+.contact-form-section {
+    margin-top: 4rem;
+    padding-top: 3rem;
+    border-top: 2px solid;
+    border-image: linear-gradient(90deg, var(--primary-color), var(--secondary-color)) 1;
+}
+
+.form-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+}
+
+.form-intro {
+    font-size: 1.125rem;
+    color: #A0AEC0;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+/* Honeypot field - hidden from users */
+.honeypot-field {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+.contact-form {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    color: var(--text-light);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.required {
+    color: var(--primary-color);
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background-color: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-light);
+    font-size: 1rem;
+    font-family: inherit;
+    transition: all 0.3s ease;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
+}
+
+.form-input:invalid:not(:placeholder-shown),
+.form-select:invalid:not(:placeholder-shown),
+.form-textarea:invalid:not(:placeholder-shown) {
+    border-color: #E53E3E;
+}
+
+.form-select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FF6B9D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1.25rem;
+    padding-right: 3rem;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.char-counter {
+    text-align: right;
+    font-size: 0.875rem;
+    color: #718096;
+    margin-top: 0.25rem;
+}
+
+.btn-submit {
+    width: 100%;
+    margin-top: 1rem;
+    font-size: 1.125rem;
+    padding: 1rem 2rem;
+    position: relative;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* Spinner Animation */
+.spinner {
+    animation: rotate 2s linear infinite;
+    width: 20px;
+    height: 20px;
+}
+
+.spinner .path {
+    stroke: var(--text-light);
+    stroke-linecap: round;
+    animation: dash 1.5s ease-in-out infinite;
+}
+
+@keyframes rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes dash {
+    0% {
+        stroke-dasharray: 1, 150;
+        stroke-dashoffset: 0;
+    }
+    50% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -35;
+    }
+    100% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -124;
+    }
+}
+
+/* Form Message Styles */
+.form-message {
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-weight: 500;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.form-message.success {
+    background-color: rgba(72, 187, 120, 0.1);
+    border: 2px solid #48BB78;
+    color: #68D391;
+}
+
+.form-message.error {
+    background-color: rgba(229, 62, 62, 0.1);
+    border: 2px solid #E53E3E;
+    color: #FC8181;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .form-title {
+        font-size: 1.75rem;
+    }
+
+    .form-intro {
+        font-size: 1rem;
+    }
+
+    .contact-form-section {
+        margin-top: 3rem;
+        padding-top: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-title {
+        font-size: 1.5rem;
+    }
+
+    .btn-submit {
+        font-size: 1rem;
+        padding: 0.875rem 1.5rem;
+    }
+}
+</style>
 
 <script>
 // Mobile navigation toggle
@@ -93,6 +440,87 @@ if (hamburger && navLinks) {
             navLinks.classList.remove('active');
             hamburger.setAttribute('aria-expanded', 'false');
         });
+    });
+}
+
+// Contact Form Handling
+const contactForm = document.getElementById('contact-form');
+const submitBtn = document.getElementById('submit-btn');
+const btnText = submitBtn.querySelector('.btn-text');
+const btnLoading = submitBtn.querySelector('.btn-loading');
+const formMessage = document.getElementById('form-message');
+const projectDescription = document.getElementById('project_description');
+const charCount = document.getElementById('char-count');
+
+// Character counter for textarea
+if (projectDescription && charCount) {
+    projectDescription.addEventListener('input', () => {
+        charCount.textContent = projectDescription.value.length;
+    });
+}
+
+// Form submission handler
+if (contactForm) {
+    contactForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Hide any previous messages
+        formMessage.style.display = 'none';
+        formMessage.className = 'form-message';
+
+        // Validate form
+        if (!contactForm.checkValidity()) {
+            contactForm.reportValidity();
+            return;
+        }
+
+        // Show loading state
+        submitBtn.disabled = true;
+        btnText.style.display = 'none';
+        btnLoading.style.display = 'flex';
+
+        try {
+            // Prepare form data
+            const formData = new FormData(contactForm);
+
+            // Submit form via fetch
+            const response = await fetch('/submit-contact', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            // Show message
+            formMessage.textContent = data.message;
+            formMessage.style.display = 'block';
+
+            if (data.success) {
+                formMessage.classList.add('success');
+                // Reset form on success
+                contactForm.reset();
+                charCount.textContent = '0';
+
+                // Scroll to message
+                formMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                formMessage.classList.add('error');
+                // Scroll to message
+                formMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+        } catch (error) {
+            console.error('Error submitting form:', error);
+            formMessage.textContent = 'An error occurred. Please try again or email me directly at shauna.saunders@alumni.unc.edu';
+            formMessage.className = 'form-message error';
+            formMessage.style.display = 'block';
+            formMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } finally {
+            // Reset button state
+            submitBtn.disabled = false;
+            btnText.style.display = 'inline';
+            btnLoading.style.display = 'none';
+        }
     });
 }
 </script>
