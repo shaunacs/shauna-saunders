@@ -1,0 +1,35 @@
+{% extends 'traitors/base_traitors.html' %}
+
+{% block title %}Predictions - Traitors{% endblock %}
+
+{% block content %}
+<div class="content-section">
+    <h1 class="page-title">Weekly Predictions</h1>
+
+    {% if locked_episodes %}
+        {% for episode in locked_episodes %}
+            <div class="episode-predictions-section">
+                <h2>Episode {{ episode }} Predictions</h2>
+
+                <div class="predictions-grid">
+                    {% for prediction in episode_predictions[episode] %}
+                        <div class="prediction-card">
+                            <div class="prediction-user">{{ prediction.username }}</div>
+                            <div class="prediction-cast">
+                                {% if prediction.image_filename %}
+                                    <img src="{{ url_for('traitors.serve_photo', filename=prediction.image_filename) }}" alt="{{ prediction.cast_member_name }}" class="prediction-photo">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename='img/placeholder-cast.png') }}" alt="{{ prediction.cast_member_name }}" class="prediction-photo">
+                                {% endif %}
+                                <span class="prediction-name">{{ prediction.cast_member_name }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="empty-state">No predictions have been locked yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

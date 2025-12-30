@@ -1,0 +1,176 @@
+{% extends 'traitors/base_traitors.html' %}
+
+{% block title %}Manage Cast - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <h1 class="page-title">Manage Cast Members</h1>
+
+    <div class="admin-section">
+        <h2 class="section-heading">Add New Cast Member</h2>
+        <form method="POST" enctype="multipart/form-data" class="admin-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="add">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="name">Name *</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="bio">Biography</label>
+                <textarea id="bio" name="bio" rows="4"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="photo">Photo (JPG, PNG, GIF, WEBP - Max 5MB)</label>
+                <input type="file" id="photo" name="photo" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+            </div>
+
+            <button type="submit" class="btn btn-primary">Add Cast Member</button>
+        </form>
+    </div>
+
+    <div class="admin-section">
+        <h2 class="section-heading">Existing Cast Members</h2>
+        <div class="cast-admin-grid">
+            {% for cast in cast_members %}
+                <div class="cast-admin-card">
+                    <div class="cast-admin-header">
+                        {% if cast.image_filename %}
+                            <img src="{{ url_for('traitors.serve_photo', filename=cast.image_filename) }}" alt="{{ cast.name }}" class="cast-admin-photo">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='img/placeholder-cast.png') }}" alt="{{ cast.name }}" class="cast-admin-photo">
+                        {% endif %}
+                        <h3>{{ cast.name }}</h3>
+                    </div>
+
+                    <div class="cast-admin-details">
+                        <div class="status-badges">
+                            <span class="status-badge {{ 'traitor' if cast.is_traitor else 'faithful' }}">
+                                {{ 'Traitor' if cast.is_traitor else 'Faithful' }}
+                            </span>
+                            <span class="status-badge {{ 'eliminated' if cast.is_eliminated else 'alive' }}">
+                                {{ 'Eliminated' if cast.is_eliminated else 'Alive' }}
+                            </span>
+                        </div>
+                        <p class="cast-bio-preview">{{ cast.bio[:100] }}{% if cast.bio and cast.bio|length > 100 %}...{% endif %}</p>
+                    </div>
+
+                    <div class="cast-admin-actions">
+                        <button class="btn btn-small btn-secondary" onclick="showEditModal({{ cast.id }})">Edit</button>
+                        <form method="POST" style="display: inline;" onsubmit="return confirm('Delete {{ cast.name }}? This cannot be undone!');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="cast_id" value="{{ cast.id }}">
+                            <button type="submit" class="btn btn-small btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Edit Cast Modal -->
+<div id="editCastModal" class="modal">
+    <div class="modal-content large-modal">
+        <span class="modal-close">&times;</span>
+        <h2>Edit Cast Member</h2>
+        <form method="POST" enctype="multipart/form-data" id="editCastForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" id="edit_cast_id" name="cast_id">
+
+            <div class="form-group">
+                <label for="edit_name">Name *</label>
+                <input type="text" id="edit_name" name="name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="edit_bio">Biography</label>
+                <textarea id="edit_bio" name="bio" rows="5"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="edit_photo">Update Photo (JPG, PNG, GIF, WEBP - Max 5MB)</label>
+                <input type="file" id="edit_photo" name="photo" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+                <small>Leave empty to keep current photo</small>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="edit_is_traitor" name="is_traitor">
+                        Is Traitor
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="edit_is_eliminated" name="is_eliminated">
+                        Is Eliminated
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="edit_elimination_episode">Elimination Episode</label>
+                    <input type="number" id="edit_elimination_episode" name="elimination_episode" min="1">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_placement">Final Placement</label>
+                    <input type="number" id="edit_placement" name="placement" min="1">
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const castData = {{ cast_members|tojson }};
+
+function showEditModal(castId) {
+    const cast = castData.find(c => c.id === castId);
+    if (!cast) return;
+
+    document.getElementById('edit_cast_id').value = cast.id;
+    document.getElementById('edit_name').value = cast.name;
+    document.getElementById('edit_bio').value = cast.bio || '';
+    document.getElementById('edit_is_traitor').checked = cast.is_traitor;
+    document.getElementById('edit_is_eliminated').checked = cast.is_eliminated;
+    document.getElementById('edit_elimination_episode').value = cast.elimination_episode || '';
+    document.getElementById('edit_placement').value = cast.placement || '';
+
+    document.getElementById('editCastModal').style.display = 'block';
+}
+
+function closeEditModal() {
+    document.getElementById('editCastModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('editCastModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Close modal with X button
+document.querySelector('.modal-close').onclick = function() {
+    closeEditModal();
+}
+</script>
+{% endblock %}

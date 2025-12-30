@@ -1,0 +1,116 @@
+{% extends 'traitors/base_traitors.html' %}
+
+{% block title %}Record Episode - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <h1 class="page-title">Record Episode Events</h1>
+
+    <form method="POST" class="admin-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+            <label for="episode_number">Episode Number</label>
+            <input type="number" id="episode_number" name="episode_number" value="{{ current_episode }}" min="1" required>
+        </div>
+
+        <div class="episode-events-grid">
+            <div class="event-section">
+                <h3>Murdered (−10 pts)</h3>
+                {% for cast in alive_cast %}
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="murdered" value="{{ cast.id }}">
+                        {{ cast.name }}
+                    </label>
+                {% endfor %}
+            </div>
+
+            <div class="event-section">
+                <h3>Banished at Round Table (−15 pts)</h3>
+                {% for cast in alive_cast %}
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="banished" value="{{ cast.id }}">
+                        {{ cast.name }}
+                    </label>
+                {% endfor %}
+            </div>
+
+            <div class="event-section">
+                <h3>Found a Shield (+8 pts)</h3>
+                {% for cast in alive_cast %}
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="shield_found" value="{{ cast.id }}">
+                        {{ cast.name }}
+                    </label>
+                {% endfor %}
+            </div>
+
+            <div class="event-section">
+                <h3>Revealed as Traitor - Episode 1 (+15 pts)</h3>
+                {% for cast in cast_members %}
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="traitor_revealed" value="{{ cast.id }}">
+                        {{ cast.name }}
+                    </label>
+                {% endfor %}
+            </div>
+
+            <div class="event-section">
+                <h3>Recruited as Traitor (+20 pts)</h3>
+                {% for cast in alive_cast %}
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="traitor_recruited" value="{{ cast.id }}">
+                        {{ cast.name }}
+                    </label>
+                {% endfor %}
+            </div>
+
+            <div class="event-section">
+                <h3>Faithful Voted Correctly for Traitor (+5 pts)</h3>
+                {% for cast in alive_cast %}
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="faithful_correct_vote" value="{{ cast.id }}">
+                        {{ cast.name }}
+                    </label>
+                {% endfor %}
+            </div>
+
+            <div class="event-section">
+                <h3>Traitor Survived Round Table (+10 pts)</h3>
+                {% for cast in alive_cast %}
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="traitor_survived_roundtable" value="{{ cast.id }}">
+                        {{ cast.name }}
+                    </label>
+                {% endfor %}
+            </div>
+
+            <div class="event-section">
+                <h3>Faithful Survived Round Table (+5 pts)</h3>
+                {% for cast in alive_cast %}
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="faithful_survived_roundtable" value="{{ cast.id }}">
+                        {{ cast.name }}
+                    </label>
+                {% endfor %}
+            </div>
+
+            <div class="event-section">
+                <h3>Won the Season (+20 pts)</h3>
+                {% for cast in alive_cast %}
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="won_season" value="{{ cast.id }}">
+                        {{ cast.name }}
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary" onclick="return confirm('Record these episode events? This will award/deduct points for all affected users.');">
+                Record Episode Events
+            </button>
+            <a href="{{ url_for('traitors.admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

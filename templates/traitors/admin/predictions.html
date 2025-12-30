@@ -1,0 +1,53 @@
+{% extends 'traitors/base_traitors.html' %}
+
+{% block title %}Manage Predictions - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <h1 class="page-title">Manage Predictions</h1>
+
+    <div class="admin-section">
+        <h2 class="section-heading">Episode {{ current_episode }} Predictions</h2>
+
+        <div class="prediction-status">
+            <p><strong>Status:</strong> {{ 'Locked' if predictions_locked else 'Open' }}</p>
+        </div>
+
+        <form method="POST" class="admin-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if predictions_locked %}
+                <input type="hidden" name="action" value="unlock">
+                <button type="submit" class="btn btn-primary">Unlock Predictions</button>
+            {% else %}
+                <input type="hidden" name="action" value="lock">
+                <button type="submit" class="btn btn-primary" onclick="return confirm('Lock predictions for episode {{ current_episode }}? Users will not be able to make or change predictions.');">
+                    Lock Predictions
+                </button>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="admin-section">
+        <h2 class="section-heading">Current Predictions</h2>
+        {% if current_predictions %}
+            <div class="predictions-grid">
+                {% for prediction in current_predictions %}
+                    <div class="prediction-card">
+                        <div class="prediction-user">{{ prediction.username }}</div>
+                        <div class="prediction-cast">
+                            {% if prediction.image_filename %}
+                                <img src="{{ url_for('traitors.serve_photo', filename=prediction.image_filename) }}" alt="{{ prediction.cast_member_name }}" class="prediction-photo">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='img/placeholder-cast.png') }}" alt="{{ prediction.cast_member_name }}" class="prediction-photo">
+                            {% endif %}
+                            <span class="prediction-name">{{ prediction.cast_member_name }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">No predictions submitted for this episode yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

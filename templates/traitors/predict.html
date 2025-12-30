@@ -1,0 +1,66 @@
+{% extends 'traitors/base_traitors.html' %}
+
+{% block title %}Weekly Prediction - Traitors{% endblock %}
+
+{% block content %}
+<div class="content-section">
+    <h1 class="page-title">Weekly Prediction</h1>
+
+    <div class="prediction-header">
+        <h2>Episode {{ current_episode }} Prediction</h2>
+        {% if predictions_locked %}
+            <div class="info-banner">
+                <strong>Predictions are locked for this episode.</strong> You cannot make or change predictions at this time.
+            </div>
+        {% endif %}
+    </div>
+
+    <form method="POST" class="prediction-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+            <label for="predicted_banished_id">Who will be banished at the round table?</label>
+            <div class="cast-select-grid">
+                {% for cast in available_cast %}
+                    <label class="cast-select-option">
+                        <input
+                            type="radio"
+                            name="predicted_banished_id"
+                            value="{{ cast.id }}"
+                            {% if existing_prediction and existing_prediction.predicted_banished_id == cast.id %}checked{% endif %}
+                            {% if predictions_locked %}disabled{% endif %}
+                            required
+                        >
+                        <div class="cast-select-card">
+                            {% if cast.image_filename %}
+                                <img src="{{ url_for('traitors.serve_photo', filename=cast.image_filename) }}" alt="{{ cast.name }}" class="cast-select-photo">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='img/placeholder-cast.png') }}" alt="{{ cast.name }}" class="cast-select-photo">
+                            {% endif %}
+                            <span class="cast-select-name">{{ cast.name }}</span>
+                        </div>
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if not predictions_locked %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    {% if existing_prediction %}Update Prediction{% else %}Submit Prediction{% endif %}
+                </button>
+                <a href="{{ url_for('traitors.dashboard') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        {% else %}
+            <div class="form-actions">
+                <a href="{{ url_for('traitors.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+            </div>
+        {% endif %}
+    </form>
+
+    {% if existing_prediction %}
+        <div class="current-prediction-info">
+            <p><strong>Your current prediction:</strong> You predicted that <strong>{{ available_cast|selectattr('id', 'equalto', existing_prediction.predicted_banished_id)|map(attribute='name')|first }}</strong> will be banished.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

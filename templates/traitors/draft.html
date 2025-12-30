@@ -1,0 +1,248 @@
+{% extends 'traitors/base_traitors.html' %}
+
+{% block title %}Draft - Traitors Fantasy Draft{% endblock %}
+
+{% block content %}
+<div class="draft-container">
+    <h1 class="page-title">Draft Your Team</h1>
+
+    {% if draft_locked %}
+        <div class="warning-banner">
+            <strong>Draft is LOCKED!</strong> Swapping a pick will cost you 20 points. Are you sure you want to make changes?
+        </div>
+    {% endif %}
+
+    <div class="draft-status">
+        <h2>Your Picks ({{ user_picks|length }}/5)</h2>
+        {% if user_picks|length < 5 %}
+            <p class="draft-instruction">Select {{ 5 - user_picks|length }} more cast member{{ 's' if (5 - user_picks|length) != 1 else '' }} to complete your draft.</p>
+        {% else %}
+            <p class="draft-instruction">Your draft is complete! You can swap picks {{ 'with a 20-point penalty' if draft_locked else 'for free' }}.</p>
+        {% endif %}
+    </div>
+
+    {% if user_picks %}
+        <div class="selected-picks">
+            <div class="cast-grid">
+                {% for pick in user_picks %}
+                    <div class="cast-card selected-card">
+                        {% if pick.image_filename %}
+                            <img src="{{ url_for('traitors.serve_photo', filename=pick.image_filename) }}" alt="{{ pick.name }}" class="cast-photo">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='img/placeholder-cast.png') }}" alt="{{ pick.name }}" class="cast-photo">
+                        {% endif %}
+                        <div class="cast-info">
+                            <h3 class="cast-name">{{ pick.name }}</h3>
+                            <div class="cast-actions">
+                                <button class="btn btn-small btn-secondary" onclick="showCastBio({{ pick.id }})">Learn More</button>
+                                {% if user_picks|length == 5 %}
+                                    <button class="btn btn-small btn-danger" onclick="showSwapModal({{ pick.id }}, '{{ pick.name }}')">Swap</button>
+                                {% else %}
+                                    <form method="POST" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="action" value="remove">
+                                        <input type="hidden" name="cast_member_id" value="{{ pick.id }}">
+                                        <button type="submit" class="btn btn-small btn-danger">Remove</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="selected-checkmark">✓</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="available-cast-section">
+        <h2>Available Cast Members</h2>
+        <div class="cast-grid">
+            {% for cast in cast_members %}
+                <div class="cast-card {% if cast.id in user_pick_ids %}already-selected{% endif %}" data-cast-id="{{ cast.id }}">
+                    {% if cast.image_filename %}
+                        <img src="{{ url_for('traitors.serve_photo', filename=cast.image_filename) }}" alt="{{ cast.name }}" class="cast-photo">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='img/placeholder-cast.png') }}" alt="{{ cast.name }}" class="cast-photo">
+                    {% endif %}
+                    <div class="cast-info">
+                        <h3 class="cast-name">{{ cast.name }}</h3>
+                        <div class="cast-actions">
+                            <button class="btn btn-small btn-secondary" onclick="showCastBio({{ cast.id }})">Learn More</button>
+                            {% if cast.id not in user_pick_ids %}
+                                {% if user_picks|length < 5 %}
+                                    <form method="POST" style="display: inline;" class="select-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="action" value="add">
+                                        <input type="hidden" name="cast_member_id" value="{{ cast.id }}">
+                                        <button type="submit" class="btn btn-small btn-primary">Select</button>
+                                    </form>
+                                {% else %}
+                                    <button class="btn btn-small btn-primary" disabled title="Draft is full. Swap instead.">Select</button>
+                                {% endif %}
+                            {% else %}
+                                <span class="selected-badge">Selected</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if cast.id in user_pick_ids %}
+                        <div class="selected-checkmark">✓</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Cast Member Bio Modal -->
+<div id="castBioModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+<!-- Swap Confirmation Modal -->
+<div id="swapModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeSwapModal()">&times;</span>
+        <h2>Swap Draft Pick</h2>
+        <p id="swapMessage"></p>
+        <form id="swapForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="swap">
+            <input type="hidden" id="oldCastId" name="old_cast_member_id">
+            <input type="hidden" id="newCastId" name="new_cast_member_id">
+        </form>
+        <div class="swap-selection">
+            <p><strong>Select a new cast member:</strong></p>
+            <div class="cast-grid" id="swapCastGrid"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const castData = {{ cast_members|tojson }};
+const userPickIds = {{ user_pick_ids|tojson }};
+const draftLocked = {{ 'true' if draft_locked else 'false' }};
+
+function showCastBio(castId) {
+    const cast = castData.find(c => c.id === castId);
+    if (!cast) return;
+
+    const modal = document.getElementById('castBioModal');
+    const modalBody = document.getElementById('modalBody');
+
+    const photoUrl = cast.image_filename
+        ? `{{ url_for('traitors.serve_photo', filename='PLACEHOLDER') }}`.replace('PLACEHOLDER', cast.image_filename)
+        : `{{ url_for('static', filename='img/placeholder-cast.png') }}`;
+
+    const isSelected = userPickIds.includes(castId);
+    const canSelect = {{ user_picks|length }} < 5 && !isSelected;
+
+    let actionButton = '';
+    if (isSelected) {
+        actionButton = '<span class="selected-badge">Already Selected</span>';
+    } else if (canSelect) {
+        actionButton = `
+            <form method="POST" style="margin-top: 1rem;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="add">
+                <input type="hidden" name="cast_member_id" value="${castId}">
+                <button type="submit" class="btn btn-primary">Add to Draft</button>
+            </form>
+        `;
+    }
+
+    modalBody.innerHTML = `
+        <div class="bio-modal-content">
+            <img src="${photoUrl}" alt="${cast.name}" class="bio-photo">
+            <h2>${cast.name}</h2>
+            <p class="bio-text">${cast.bio || 'No biography available.'}</p>
+            ${actionButton}
+        </div>
+    `;
+
+    modal.style.display = 'block';
+}
+
+function showSwapModal(oldCastId, oldCastName) {
+    const modal = document.getElementById('swapModal');
+    const swapMessage = document.getElementById('swapMessage');
+    const swapCastGrid = document.getElementById('swapCastGrid');
+
+    if (draftLocked) {
+        swapMessage.innerHTML = `
+            <strong class="warning-text">Warning!</strong> Swapping <strong>${oldCastName}</strong> will cost you <strong>20 points</strong>.<br>
+            Select a new cast member to complete the swap.
+        `;
+    } else {
+        swapMessage.innerHTML = `Select a new cast member to replace <strong>${oldCastName}</strong>.`;
+    }
+
+    document.getElementById('oldCastId').value = oldCastId;
+
+    // Build grid of available cast members
+    const availableCast = castData.filter(c => !userPickIds.includes(c.id));
+
+    swapCastGrid.innerHTML = availableCast.map(cast => {
+        const photoUrl = cast.image_filename
+            ? `{{ url_for('traitors.serve_photo', filename='PLACEHOLDER') }}`.replace('PLACEHOLDER', cast.image_filename)
+            : `{{ url_for('static', filename='img/placeholder-cast.png') }}`;
+
+        return `
+            <div class="cast-card swap-option" onclick="confirmSwap(${cast.id}, '${cast.name.replace(/'/g, "\\'")}')">
+                <img src="${photoUrl}" alt="${cast.name}" class="cast-photo">
+                <div class="cast-info">
+                    <h3 class="cast-name">${cast.name}</h3>
+                    <button type="button" class="btn btn-small btn-primary">Select</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    modal.style.display = 'block';
+}
+
+function confirmSwap(newCastId, newCastName) {
+    const oldCastName = castData.find(c => c.id == document.getElementById('oldCastId').value)?.name;
+
+    let confirmMessage;
+    if (draftLocked) {
+        confirmMessage = `Swap ${oldCastName} for ${newCastName}?\n\nThis will cost you 20 points!`;
+    } else {
+        confirmMessage = `Swap ${oldCastName} for ${newCastName}?`;
+    }
+
+    if (confirm(confirmMessage)) {
+        document.getElementById('newCastId').value = newCastId;
+        document.getElementById('swapForm').submit();
+    }
+}
+
+function closeSwapModal() {
+    document.getElementById('swapModal').style.display = 'none';
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    const bioModal = document.getElementById('castBioModal');
+    const swapModal = document.getElementById('swapModal');
+
+    if (event.target == bioModal) {
+        bioModal.style.display = 'none';
+    }
+    if (event.target == swapModal) {
+        swapModal.style.display = 'none';
+    }
+}
+
+// Close modal with X button
+document.querySelectorAll('.modal-close').forEach(btn => {
+    btn.onclick = function() {
+        this.closest('.modal').style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

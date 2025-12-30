@@ -1,0 +1,105 @@
+{% extends 'traitors/base_traitors.html' %}
+
+{% block title %}Game Settings - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <h1 class="page-title">Game Settings</h1>
+
+    <div class="settings-grid">
+        <div class="setting-card">
+            <h3>Draft Lock</h3>
+            <p class="setting-status">Currently: <strong>{{ 'Locked' if draft_locked else 'Unlocked' }}</strong></p>
+            <p class="setting-description">
+                {% if draft_locked %}
+                    Players can swap picks but will incur a 20-point penalty.
+                {% else %}
+                    Players can freely add, remove, and swap draft picks.
+                {% endif %}
+            </p>
+            <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="toggle_draft_lock">
+                <button type="submit" class="btn btn-primary">
+                    {{ 'Unlock Draft' if draft_locked else 'Lock Draft' }}
+                </button>
+            </form>
+        </div>
+
+        <div class="setting-card">
+            <h3>Game Started</h3>
+            <p class="setting-status">Currently: <strong>{{ 'Started' if game_started else 'Not Started' }}</strong></p>
+            <p class="setting-description">
+                {% if game_started %}
+                    All drafts are visible to all players.
+                {% else %}
+                    Drafts are hidden from other players.
+                {% endif %}
+            </p>
+            <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="toggle_game_started">
+                <button type="submit" class="btn btn-primary">
+                    {{ 'Stop Game' if game_started else 'Start Game' }}
+                </button>
+            </form>
+        </div>
+
+        <div class="setting-card">
+            <h3>Current Episode</h3>
+            <p class="setting-status">Episode: <strong>{{ current_episode }}</strong></p>
+            <p class="setting-description">Set the current episode number for tracking.</p>
+            <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="set_episode">
+                <div class="form-group">
+                    <label for="episode_number">Episode Number</label>
+                    <input type="number" id="episode_number" name="episode_number" value="{{ current_episode }}" min="0" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Update Episode</button>
+            </form>
+        </div>
+
+        <div class="setting-card">
+            <h3>Predictions Lock</h3>
+            <p class="setting-status">Currently: <strong>{{ 'Locked' if predictions_locked else 'Open' }}</strong></p>
+            <p class="setting-description">
+                {% if predictions_locked %}
+                    Players cannot make or change predictions.
+                {% else %}
+                    Players can submit and edit predictions.
+                {% endif %}
+            </p>
+            <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="toggle_predictions_lock">
+                <button type="submit" class="btn btn-primary">
+                    {{ 'Unlock Predictions' if predictions_locked else 'Lock Predictions' }}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="admin-section danger-zone">
+        <h2 class="section-heading danger-heading">Danger Zone</h2>
+        <div class="danger-card">
+            <h3>Reset Game</h3>
+            <p class="warning-text">
+                <strong>WARNING:</strong> This will delete ALL data including users, cast members, drafts, predictions, and episode events.
+                This action CANNOT be undone!
+            </p>
+            <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="reset_game">
+                <div class="form-group">
+                    <label for="confirm_reset">Type "RESET" to confirm</label>
+                    <input type="text" id="confirm_reset" name="confirm_reset" required>
+                </div>
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you absolutely sure? This will delete EVERYTHING!');">
+                    Reset Game
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

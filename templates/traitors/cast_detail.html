@@ -1,0 +1,69 @@
+{% extends 'traitors/base_traitors.html' %}
+
+{% block title %}{{ cast_member.name }} - Traitors{% endblock %}
+
+{% block content %}
+<div class="cast-detail-container">
+    <div class="cast-detail-card">
+        <div class="cast-detail-photo">
+            {% if cast_member.image_filename %}
+                <img src="{{ url_for('traitors.serve_photo', filename=cast_member.image_filename) }}" alt="{{ cast_member.name }}">
+            {% else %}
+                <img src="{{ url_for('static', filename='img/placeholder-cast.png') }}" alt="{{ cast_member.name }}">
+            {% endif %}
+        </div>
+
+        <div class="cast-detail-info">
+            <h1 class="cast-detail-name">{{ cast_member.name }}</h1>
+
+            <div class="cast-status-badges">
+                {% if cast_member.is_traitor %}
+                    <span class="status-badge traitor">Traitor</span>
+                {% else %}
+                    <span class="status-badge faithful">Faithful</span>
+                {% endif %}
+                {% if cast_member.is_eliminated %}
+                    <span class="status-badge eliminated">Eliminated (Episode {{ cast_member.elimination_episode }})</span>
+                {% else %}
+                    <span class="status-badge alive">Alive</span>
+                {% endif %}
+                {% if cast_member.placement %}
+                    <span class="status-badge placement">Placed {{ cast_member.placement }}{{ 'st' if cast_member.placement == 1 else ('nd' if cast_member.placement == 2 else ('rd' if cast_member.placement == 3 else 'th')) }}</span>
+                {% endif %}
+            </div>
+
+            <div class="cast-bio">
+                <h2>Biography</h2>
+                <p>{{ cast_member.bio or 'No biography available.' }}</p>
+            </div>
+
+            <div class="cast-actions">
+                {% if has_drafted %}
+                    <span class="selected-badge-large">You have drafted this cast member</span>
+                {% elif can_draft %}
+                    <form method="POST" action="{{ url_for('traitors.draft') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="action" value="add">
+                        <input type="hidden" name="cast_member_id" value="{{ cast_member.id }}">
+                        <button type="submit" class="btn btn-primary">Add to Draft</button>
+                    </form>
+                {% else %}
+                    <span class="info-text">Draft is full (5/5 picks)</span>
+                {% endif %}
+                <a href="{{ url_for('traitors.draft') }}" class="btn btn-secondary">Back to Draft</a>
+            </div>
+
+            {% if drafted_by %}
+                <div class="drafted-by-section">
+                    <h3>Drafted By:</h3>
+                    <ul class="drafted-by-list">
+                        {% for drafter in drafted_by %}
+                            <li>{{ drafter.username }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

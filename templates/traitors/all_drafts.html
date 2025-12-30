@@ -1,0 +1,50 @@
+{% extends 'traitors/base_traitors.html' %}
+
+{% block title %}All Drafts - Traitors{% endblock %}
+
+{% block content %}
+<div class="content-section">
+    <h1 class="page-title">All Player Drafts</h1>
+
+    {% for draft in all_drafts %}
+        <div class="player-draft-section">
+            <div class="player-draft-header">
+                <h2>{{ draft.user.username }}</h2>
+                <div class="player-stats">
+                    <span class="player-score {% if draft.score > 0 %}positive{% elif draft.score < 0 %}negative{% endif %}">
+                        Score: {{ draft.score }}
+                    </span>
+                    {% if draft.swap_count > 0 %}
+                        <span class="player-swaps">Swaps: {{ draft.swap_count }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if draft.picks %}
+                <div class="cast-grid">
+                    {% for pick in draft.picks %}
+                        <div class="cast-card">
+                            {% if pick.image_filename %}
+                                <img src="{{ url_for('traitors.serve_photo', filename=pick.image_filename) }}" alt="{{ pick.name }}" class="cast-photo">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='img/placeholder-cast.png') }}" alt="{{ pick.name }}" class="cast-photo">
+                            {% endif %}
+                            <div class="cast-info">
+                                <h3 class="cast-name">{{ pick.name }}</h3>
+                                {% if pick.is_traitor %}
+                                    <span class="status-badge traitor">Traitor</span>
+                                {% endif %}
+                                {% if pick.is_eliminated %}
+                                    <span class="status-badge eliminated">Eliminated</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="empty-state">No draft picks yet.</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

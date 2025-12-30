@@ -1,0 +1,68 @@
+{% extends 'traitors/base_traitors.html' %}
+
+{% block title %}Admin Dashboard - Traitors{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <h1 class="page-title">Admin Dashboard</h1>
+
+    <div class="admin-stats">
+        <div class="stat-card">
+            <div class="stat-label">Current Episode</div>
+            <div class="stat-value">{{ current_episode }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Draft Status</div>
+            <div class="stat-value">{{ 'Locked' if draft_locked else 'Unlocked' }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Game Status</div>
+            <div class="stat-value">{{ 'Started' if game_started else 'Not Started' }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Predictions</div>
+            <div class="stat-value">{{ 'Locked' if predictions_locked else 'Open' }}</div>
+        </div>
+    </div>
+
+    <div class="admin-sections">
+        <section class="admin-section">
+            <h2 class="section-heading">Management</h2>
+            <div class="admin-links">
+                <a href="{{ url_for('traitors.admin_cast') }}" class="admin-link-card">
+                    <h3>Cast Members</h3>
+                    <p>Add, edit, and manage cast members</p>
+                </a>
+                <a href="{{ url_for('traitors.admin_users') }}" class="admin-link-card">
+                    <h3>Users</h3>
+                    <p>Create and manage user accounts</p>
+                </a>
+                <a href="{{ url_for('traitors.admin_episode') }}" class="admin-link-card">
+                    <h3>Episode Events</h3>
+                    <p>Record episode events and award points</p>
+                </a>
+                <a href="{{ url_for('traitors.admin_predictions') }}" class="admin-link-card">
+                    <h3>Predictions</h3>
+                    <p>Manage weekly predictions</p>
+                </a>
+                <a href="{{ url_for('traitors.admin_game_settings') }}" class="admin-link-card">
+                    <h3>Game Settings</h3>
+                    <p>Configure game settings and locks</p>
+                </a>
+                <a href="{{ url_for('traitors.admin_audit') }}" class="admin-link-card">
+                    <h3>Audit Log</h3>
+                    <p>View all episode events and transactions</p>
+                </a>
+            </div>
+        </section>
+
+        <section class="admin-section">
+            <h2 class="section-heading">Quick Actions</h2>
+            <div class="action-buttons">
+                <a href="{{ url_for('traitors.dashboard') }}" class="btn btn-secondary">View Player Dashboard</a>
+                <a href="{{ url_for('traitors.all_drafts') }}" class="btn btn-secondary">View All Drafts</a>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

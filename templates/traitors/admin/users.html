@@ -1,0 +1,75 @@
+{% extends 'traitors/base_traitors.html' %}
+
+{% block title %}Manage Users - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <h1 class="page-title">Manage Users</h1>
+
+    <div class="admin-section">
+        <h2 class="section-heading">Create New User</h2>
+        <form method="POST" class="admin-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="create">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="username">Username *</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password (default: traitors123)</label>
+                    <input type="text" id="password" name="password" value="traitors123">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Create User</button>
+        </form>
+    </div>
+
+    <div class="admin-section">
+        <h2 class="section-heading">Existing Users</h2>
+        <table class="traitors-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Score</th>
+                    <th>Admin</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td class="score-cell {% if user.total_score > 0 %}positive{% elif user.total_score < 0 %}negative{% endif %}">
+                            {{ user.total_score }}
+                        </td>
+                        <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
+                        <td>{{ user.created_at[:10] }}</td>
+                        <td>
+                            <form method="POST" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="action" value="toggle_admin">
+                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                                <button type="submit" class="btn btn-small btn-secondary">
+                                    {{ 'Remove Admin' if user.is_admin else 'Make Admin' }}
+                                </button>
+                            </form>
+                            {% if user.id != session.user_id %}
+                                <form method="POST" style="display: inline;" onsubmit="return confirm('Delete user {{ user.username }}?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                                    <button type="submit" class="btn btn-small btn-danger">Delete</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

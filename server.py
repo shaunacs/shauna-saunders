@@ -15,6 +15,10 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev")
 csrf = CSRFProtect(app)
 
+# Register Traitors blueprint
+from traitors_blueprint import traitors_bp
+app.register_blueprint(traitors_bp)
+
 # Simple rate limiting: Store submission timestamps per IP
 submission_tracker = {}
 

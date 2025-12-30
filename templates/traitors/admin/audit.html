@@ -1,0 +1,86 @@
+{% extends 'traitors/base_traitors.html' %}
+
+{% block title %}Audit Log - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <h1 class="page-title">Audit Log</h1>
+
+    <div class="admin-section">
+        <h2 class="section-heading">Filter Events</h2>
+        <form method="GET" class="filter-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="user_id">User</label>
+                    <select id="user_id" name="user_id">
+                        <option value="">All Users</option>
+                        {% for user in users %}
+                            <option value="{{ user.id }}" {% if user_filter == user.id %}selected{% endif %}>
+                                {{ user.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="episode">Episode</label>
+                    <input type="number" id="episode" name="episode" value="{{ episode_filter or '' }}" placeholder="All">
+                </div>
+
+                <div class="form-group">
+                    <label for="event_type">Event Type</label>
+                    <select id="event_type" name="event_type">
+                        <option value="">All Types</option>
+                        {% for event_type in event_types %}
+                            <option value="{{ event_type }}" {% if event_type_filter == event_type %}selected{% endif %}>
+                                {{ event_type.replace('_', ' ').title() }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <a href="{{ url_for('traitors.admin_audit') }}" class="btn btn-secondary">Clear Filters</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="admin-section">
+        <h2 class="section-heading">Events (Last 100)</h2>
+        {% if events %}
+            <table class="traitors-table audit-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Episode</th>
+                        <th>User</th>
+                        <th>Cast Member</th>
+                        <th>Event Type</th>
+                        <th>Points</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for event in events %}
+                        <tr>
+                            <td>{{ event.created_at[:16] }}</td>
+                            <td>{{ event.episode_number }}</td>
+                            <td>{{ event.username }}</td>
+                            <td>{{ event.cast_member_name }}</td>
+                            <td>{{ event.event_type.replace('_', ' ').title() }}</td>
+                            <td class="score-cell {% if event.points > 0 %}positive{% elif event.points < 0 %}negative{% endif %}">
+                                {{ event.points }}
+                            </td>
+                            <td>{{ event.notes or '' }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="empty-state">No events found matching the filters.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

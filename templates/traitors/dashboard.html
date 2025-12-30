@@ -1,0 +1,171 @@
+{% extends 'traitors/base_traitors.html' %}
+
+{% block title %}Dashboard - Traitors Fantasy Draft{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1 class="page-title">Welcome, {{ session.username }}!</h1>
+    <p class="dashboard-subtitle">The Traitors US Season 4 Fantasy Draft</p>
+</div>
+
+<div class="dashboard-stats">
+    <div class="stat-card">
+        <div class="stat-value">{{ user_score }}</div>
+        <div class="stat-label">Your Score</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ user_picks|length }}/5</div>
+        <div class="stat-label">Draft Picks</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">Episode {{ current_episode }}</div>
+        <div class="stat-label">Current Episode</div>
+    </div>
+</div>
+
+<div class="dashboard-sections">
+    <section class="dashboard-section">
+        <div class="section-header">
+            <h2 class="section-heading">Quick Actions</h2>
+        </div>
+        <div class="action-buttons">
+            <a href="{{ url_for('traitors.draft') }}" class="btn btn-primary">
+                {% if draft_locked %}
+                    Edit Draft (Swap Penalty)
+                {% else %}
+                    {% if user_picks|length < 5 %}
+                        Complete Your Draft
+                    {% else %}
+                        View/Edit Draft
+                    {% endif %}
+                {% endif %}
+            </a>
+            {% if game_started %}
+                <a href="{{ url_for('traitors.all_drafts') }}" class="btn btn-secondary">View All Drafts</a>
+            {% endif %}
+            <a href="{{ url_for('traitors.predict') }}" class="btn btn-secondary">Make Prediction</a>
+            <a href="{{ url_for('traitors.change_password') }}" class="btn btn-secondary">Change Password</a>
+        </div>
+
+        {% if draft_locked %}
+            <div class="warning-banner">
+                <strong>Draft is LOCKED!</strong> Swapping picks will cost you 20 points each.
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="dashboard-section">
+        <div class="section-header">
+            <h2 class="section-heading">Leaderboard</h2>
+        </div>
+        <div class="leaderboard">
+            <table class="traitors-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Player</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in leaderboard %}
+                        <tr {% if user.id == session.user_id %}class="current-user"{% endif %}>
+                            <td class="rank-cell">
+                                {% if user.rank == 1 %}
+                                    <span class="rank-badge gold">{{ user.rank }}</span>
+                                {% elif user.rank == 2 %}
+                                    <span class="rank-badge silver">{{ user.rank }}</span>
+                                {% elif user.rank == 3 %}
+                                    <span class="rank-badge bronze">{{ user.rank }}</span>
+                                {% else %}
+                                    {{ user.rank }}
+                                {% endif %}
+                            </td>
+                            <td>{{ user.username }}</td>
+                            <td class="score-cell {% if user.total_score > 0 %}positive{% elif user.total_score < 0 %}negative{% endif %}">
+                                {{ user.total_score }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="dashboard-section">
+        <div class="section-header">
+            <h2 class="section-heading">Your Draft</h2>
+        </div>
+        {% if user_picks %}
+            <div class="cast-grid">
+                {% for pick in user_picks %}
+                    <div class="cast-card draft-pick-card">
+                        {% if pick.image_filename %}
+                            <img src="{{ url_for('traitors.serve_photo', filename=pick.image_filename) }}" alt="{{ pick.name }}" class="cast-photo">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='img/placeholder-cast.png') }}" alt="{{ pick.name }}" class="cast-photo">
+                        {% endif %}
+                        <div class="cast-info">
+                            <h3 class="cast-name">{{ pick.name }}</h3>
+                            {% if pick.is_traitor %}
+                                <span class="status-badge traitor">Traitor</span>
+                            {% endif %}
+                            {% if pick.is_eliminated %}
+                                <span class="status-badge eliminated">Eliminated</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="points-breakdown">
+                <h3>Points Breakdown</h3>
+                {% for pick in breakdown.picks %}
+                    <div class="breakdown-item">
+                        <span class="breakdown-name">{{ pick.name }}</span>
+                        <span class="breakdown-points {% if pick.total_points > 0 %}positive{% elif pick.total_points < 0 %}negative{% endif %}">
+                            {{ pick.total_points }}
+                        </span>
+                    </div>
+                {% endfor %}
+                {% if breakdown.swap_penalties != 0 %}
+                    <div class="breakdown-item penalty">
+                        <span class="breakdown-name">Draft Swap Penalties</span>
+                        <span class="breakdown-points negative">{{ breakdown.swap_penalties }}</span>
+                    </div>
+                {% endif %}
+                <div class="breakdown-item total">
+                    <span class="breakdown-name">Total</span>
+                    <span class="breakdown-points {% if user_score > 0 %}positive{% elif user_score < 0 %}negative{% endif %}">
+                        {{ user_score }}
+                    </span>
+                </div>
+            </div>
+        {% else %}
+            <p class="empty-state">You haven't drafted any cast members yet. <a href="{{ url_for('traitors.draft') }}">Start drafting!</a></p>
+        {% endif %}
+    </section>
+
+    <section class="dashboard-section">
+        <div class="section-header">
+            <h2 class="section-heading">Recent Activity</h2>
+        </div>
+        {% if recent_events %}
+            <div class="activity-feed">
+                {% for event in recent_events %}
+                    <div class="activity-item">
+                        <span class="activity-user">{{ event.username }}</span>
+                        <span class="activity-event">{{ event.event_type.replace('_', ' ').title() }}</span>
+                        <span class="activity-cast">{{ event.cast_member_name }}</span>
+                        <span class="activity-points {% if event.points > 0 %}positive{% else %}negative{% endif %}">
+                            {{ event.points }}
+                        </span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">No recent activity.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
