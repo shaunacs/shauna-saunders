@@ -1,0 +1,35 @@
+{% extends 'customers/base_customers.html' %}
+
+{% block title %}Payment Successful - Customer Portal{% endblock %}
+
+{% block content %}
+<div class="payment-result success">
+    <div class="result-card">
+        <div class="result-icon success-icon">✓</div>
+        <h1>Payment Successful!</h1>
+
+        {% if amount %}
+        <p class="result-amount">${{ "%.2f"|format(amount) }}</p>
+        {% endif %}
+
+        <p class="result-message">
+            Thank you for your payment! Your transaction has been completed successfully.
+            You should receive a confirmation email shortly.
+        </p>
+
+        {% if session_id %}
+        <p class="result-reference">
+            Reference ID: {{ session_id }}
+        </p>
+        {% endif %}
+
+        <div class="result-actions">
+            <a href="{{ url_for('customers.dashboard') }}" class="btn btn-primary">Return to Dashboard</a>
+        </div>
+
+        <p class="result-note">
+            If you have any questions about this payment, please contact your project manager.
+        </p>
+    </div>
+</div>
+{% endblock %}

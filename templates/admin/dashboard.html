@@ -1,0 +1,102 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <h1>Admin Dashboard</h1>
+    <p class="subtitle">Manage customers, projects, and payments</p>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Customers</div>
+            <div class="stat-value">{{ total_customers }}</div>
+            <div class="stat-detail">{{ active_customers }} active</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Active Projects</div>
+            <div class="stat-value">{{ active_projects_count }}</div>
+            <div class="stat-detail">{{ total_projects }} total</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Total Revenue</div>
+            <div class="stat-value">${{ "%.2f"|format(total_revenue) }}</div>
+            <div class="stat-detail">${{ "%.2f"|format(this_month_revenue) }} this month</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Pending Payments</div>
+            <div class="stat-value">${{ "%.2f"|format(pending_payments) }}</div>
+            <div class="stat-detail">Outstanding balance</div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dashboard-section">
+            <h2>Quick Actions</h2>
+            <div class="actions-list">
+                <a href="{{ url_for('admin.create_customer_route') }}" class="action-btn">+ New Customer</a>
+                <a href="{{ url_for('admin.create_project_route') }}" class="action-btn">+ New Project</a>
+                <a href="{{ url_for('admin.create_payment_link') }}" class="action-btn">+ Generate Payment Link</a>
+                <a href="{{ url_for('admin.customers') }}" class="action-btn">View All Customers</a>
+            </div>
+        </div>
+
+        <div class="dashboard-section">
+            <h2>Recent Payments</h2>
+            {% if recent_payments %}
+            <table class="simple-table">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in recent_payments[:5] %}
+                    <tr>
+                        <td>{{ payment.customer_name }}</td>
+                        <td>${{ "%.2f"|format(payment.amount) }}</td>
+                        <td><span class="badge badge-{{ payment.status }}">{{ payment.status }}</span></td>
+                        <td>{{ payment.created_at[:10] if payment.created_at else 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty-state">No payments yet</p>
+            {% endif %}
+        </div>
+
+        <div class="dashboard-section">
+            <h2>Recent Contact Submissions</h2>
+            {% if recent_contacts %}
+            <table class="simple-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contact in recent_contacts[:5] %}
+                    <tr>
+                        <td>{{ contact.name }}</td>
+                        <td>{{ contact.email }}</td>
+                        <td><span class="badge badge-{{ contact.status }}">{{ contact.status }}</span></td>
+                        <td>{{ contact.submitted_at[:10] if contact.submitted_at else 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <a href="{{ url_for('admin.contacts') }}" class="link-btn">View All →</a>
+            {% else %}
+            <p class="empty-state">No contact submissions yet</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

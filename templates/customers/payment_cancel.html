@@ -1,0 +1,25 @@
+{% extends 'customers/base_customers.html' %}
+
+{% block title %}Payment Cancelled - Customer Portal{% endblock %}
+
+{% block content %}
+<div class="payment-result cancel">
+    <div class="result-card">
+        <div class="result-icon cancel-icon">✕</div>
+        <h1>Payment Cancelled</h1>
+
+        <p class="result-message">
+            Your payment was cancelled and no charges were made.
+            You can return to your dashboard to try again or contact your project manager if you need assistance.
+        </p>
+
+        <div class="result-actions">
+            <a href="{{ url_for('customers.dashboard') }}" class="btn btn-primary">Return to Dashboard</a>
+        </div>
+
+        <p class="result-note">
+            If you experienced any issues during the payment process, please contact your project manager.
+        </p>
+    </div>
+</div>
+{% endblock %}

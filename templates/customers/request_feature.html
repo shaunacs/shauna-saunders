@@ -1,0 +1,216 @@
+{% extends 'customers/base_customers.html' %}
+
+{% block title %}Request Feature - {{ project.project_name }}{% endblock %}
+
+{% block content %}
+<div class="feature-request-page">
+    <div class="breadcrumb">
+        <a href="{{ url_for('customers.dashboard') }}">Dashboard</a> / 
+        <a href="{{ url_for('customers.project_detail', project_id=project.id) }}">{{ project.project_name }}</a> / 
+        Request Feature
+    </div>
+
+    <h1>Request Feature or Update</h1>
+    <h2>{{ project.project_name }}</h2>
+
+    <div class="request-form-card">
+        <form method="POST" class="feature-request-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="form-group">
+                <label for="title">What would you like us to work on? <span class="required">*</span></label>
+                <input type="text" id="title" name="title" required maxlength="200" 
+                       placeholder="Brief summary of your request" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="priority">Priority Level</label>
+                <select id="priority" name="priority" class="form-control">
+                    <option value="low">Low - Nice to have</option>
+                    <option value="medium" selected>Medium - Would be helpful</option>
+                    <option value="high">High - Important for my business</option>
+                    <option value="urgent">Urgent - Blocking my work</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Detailed Description <span class="required">*</span></label>
+                <textarea id="description" name="description" required rows="6" class="form-control"
+                          placeholder="Please provide as much detail as possible about what you need. Include:&#10;- What you're trying to accomplish&#10;- Any specific requirements&#10;- How it should work&#10;- Any examples or references"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="requested_completion">When do you need this completed?</label>
+                <input type="text" id="requested_completion" name="requested_completion" 
+                       placeholder="e.g., 'Next week', 'End of month', 'No specific deadline'"
+                       class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="additional_info">Additional Information</label>
+                <textarea id="additional_info" name="additional_info" rows="4" class="form-control"
+                          placeholder="Any other details, links, files to reference, or context that would be helpful"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Submit Request</button>
+                <a href="{{ url_for('customers.project_detail', project_id=project.id) }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="info-box">
+        <h3>What happens next?</h3>
+        <ul>
+            <li>We'll review your request and send you a confirmation email</li>
+            <li>You'll receive status updates via email as we work on your request</li>
+            <li>You can track progress in your customer portal</li>
+            <li>We'll notify you when the feature is complete</li>
+        </ul>
+    </div>
+</div>
+
+<style>
+.feature-request-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.breadcrumb {
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.breadcrumb a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.request-form-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 2rem 0;
+}
+
+.feature-request-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-light);
+}
+
+.required {
+    color: #ef4444;
+}
+
+.form-control {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-dark);
+    color: var(--text-light);
+    font-size: 1rem;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.1);
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.btn {
+    padding: 0.875rem 1.75rem;
+    border: none;
+    border-radius: 50px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    box-shadow: 0 4px 15px rgba(103, 232, 249, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(103, 232, 249, 0.5);
+}
+
+.btn-secondary {
+    background: var(--bg-dark);
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: var(--border-color);
+    color: var(--text-light);
+    text-decoration: none;
+}
+
+.info-box {
+    background: rgba(103, 232, 249, 0.1);
+    border: 1px solid rgba(103, 232, 249, 0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.info-box h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.info-box ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.info-box li {
+    padding: 0.25rem 0;
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.info-box li:before {
+    content: "✓";
+    color: var(--secondary-color);
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}
+</style>
+{% endblock %}

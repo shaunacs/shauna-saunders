@@ -17,7 +17,7 @@
 }
 
 .flash-success {
-    background-color: rgba(78, 205, 196, 0.2);
+    background-color: rgba(110, 231, 183, 0.2);
     border-left: 4px solid var(--secondary-color);
     color: var(--secondary-color);
 }
@@ -74,7 +74,7 @@
     max-width: 450px;
     width: 100%;
     border: 2px solid var(--border-color);
-    box-shadow: 0 8px 30px rgba(255, 107, 157, 0.2);
+    box-shadow: 0 8px 30px rgba(16, 185, 129, 0.2);
 }
 
 .login-subtitle {
@@ -152,7 +152,7 @@
 .stat-card:hover {
     transform: translateY(-3px);
     border-color: var(--primary-color);
-    box-shadow: 0 6px 20px rgba(255, 107, 157, 0.2);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.2);
 }
 
 .stat-value {
@@ -241,11 +241,11 @@
 }
 
 .traitors-table tr:hover {
-    background-color: rgba(255, 107, 157, 0.05);
+    background-color: rgba(16, 185, 129, 0.05);
 }
 
 .traitors-table .current-user {
-    background-color: rgba(78, 205, 196, 0.1);
+    background-color: rgba(110, 231, 183, 0.1);
 }
 
 .rank-cell {
@@ -307,7 +307,7 @@
 .cast-card:hover {
     transform: translateY(-5px);
     border-color: var(--primary-color);
-    box-shadow: 0 8px 30px rgba(255, 107, 157, 0.3);
+    box-shadow: 0 8px 30px rgba(16, 185, 129, 0.3);
 }
 
 .cast-photo {
@@ -362,7 +362,7 @@
     justify-content: center;
     font-size: 1.25rem;
     font-weight: 700;
-    box-shadow: 0 2px 8px rgba(78, 205, 196, 0.5);
+    box-shadow: 0 2px 8px rgba(110, 231, 183, 0.5);
 }
 
 .already-selected {
@@ -386,7 +386,7 @@
 }
 
 .status-badge.faithful {
-    background-color: rgba(78, 205, 196, 0.2);
+    background-color: rgba(110, 231, 183, 0.2);
     color: var(--secondary-color);
     border: 1px solid var(--secondary-color);
 }
@@ -398,7 +398,7 @@
 }
 
 .status-badge.alive {
-    background-color: rgba(78, 205, 196, 0.2);
+    background-color: rgba(110, 231, 183, 0.2);
     color: var(--secondary-color);
     border: 1px solid var(--secondary-color);
 }
@@ -529,7 +529,7 @@
 
 .selected-card {
     border-color: var(--secondary-color);
-    box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+    box-shadow: 0 4px 15px rgba(110, 231, 183, 0.3);
 }
 
 .available-cast-section {
@@ -754,8 +754,8 @@
 
 .cast-select-option input[type="radio"]:checked + .cast-select-card {
     border-color: var(--primary-color);
-    background: linear-gradient(135deg, rgba(255, 107, 157, 0.1), rgba(78, 205, 196, 0.1));
-    box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(110, 231, 183, 0.1));
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
 }
 
 .cast-select-card:hover {
@@ -918,7 +918,7 @@
 .admin-link-card:hover {
     transform: translateY(-3px);
     border-color: var(--primary-color);
-    box-shadow: 0 6px 20px rgba(255, 107, 157, 0.3);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
 }
 
 .admin-link-card h3 {
@@ -1137,12 +1137,12 @@
 .btn-primary {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: var(--text-light);
-    box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 107, 157, 0.5);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
 }
 
 .btn-secondary {

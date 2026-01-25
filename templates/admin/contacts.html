@@ -1,0 +1,63 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Contact Submissions - Admin{% endblock %}
+
+{% block content %}
+<h1>Contact Form Submissions</h1>
+<p class="subtitle">Manage inquiries from the contact form</p>
+
+{% if submissions %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Interest</th>
+            <th>Timeline</th>
+            <th>Budget</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for submission in submissions %}
+        <tr>
+            <td>{{ submission.submitted_at[:10] if submission.submitted_at else '-' }}</td>
+            <td>{{ submission.name }}</td>
+            <td>{{ submission.email }}</td>
+            <td>{{ submission.interest or '-' }}</td>
+            <td>{{ submission.timeline or '-' }}</td>
+            <td>{{ submission.budget or '-' }}</td>
+            <td><span class="badge badge-{{ submission.status }}">{{ submission.status|title }}</span></td>
+            <td>
+                {% if submission.status == 'new' %}
+                <details style="position:relative;">
+                    <summary class="btn btn-sm">Convert to Customer</summary>
+                    <form method="POST" action="{{ url_for('admin.convert_contact', submission_id=submission.id) }}" style="position:absolute; background:white; padding:1rem; border:1px solid var(--border-color); border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,0.1); z-index:10; min-width:200px;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <label style="display:block; margin-bottom:0.5rem; font-weight:500;">Set Password:</label>
+                        <input type="password" name="password" required minlength="8" placeholder="Min 8 characters" style="width:100%; padding:0.5rem; margin-bottom:0.5rem; border:1px solid var(--border-color); border-radius:4px;">
+                        <button class="btn btn-primary btn-sm" style="width:100%;">Create Customer</button>
+                    </form>
+                </details>
+                <form method="POST" action="{{ url_for('admin.archive_contact', submission_id=submission.id) }}" style="display:inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-sm">Archive</button>
+                </form>
+                {% elif submission.status == 'converted' and submission.converted_to_customer_id %}
+                <a href="{{ url_for('admin.customer_detail', customer_id=submission.converted_to_customer_id) }}" class="btn btn-sm">View Customer</a>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td colspan="8" style="background:var(--background-color); padding:0.5rem 1rem;">
+                <strong>Project Description:</strong> {{ submission.project_description or 'No description provided' }}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty-state">No contact submissions yet. When customers submit the contact form on your website, they will appear here.</p>
+{% endif %}
+{% endblock %}

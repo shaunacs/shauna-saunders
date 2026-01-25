@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin - Shauna Saunders{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="admin-nav">
+        <div class="nav-container">
+            <a href="{{ url_for('admin.dashboard') }}" class="nav-brand">Admin Panel</a>
+            <button class="hamburger" aria-label="Toggle navigation menu" aria-expanded="false">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="nav-links">
+                <a href="{{ url_for('admin.dashboard') }}" class="nav-link">Dashboard</a>
+                <a href="{{ url_for('admin.customers') }}" class="nav-link">Customers</a>
+                <a href="{{ url_for('admin.projects') }}" class="nav-link">Projects</a>
+                <a href="{{ url_for('admin.payments') }}" class="nav-link">Payments</a>
+                <a href="{{ url_for('admin.contacts') }}" class="nav-link">Contacts</a>
+                <a href="{{ url_for('traitors.dashboard') }}" class="nav-link">Traitors</a>
+                <a href="{{ url_for('render_homepage') }}" class="nav-link">Main Site</a>
+                <a href="{{ url_for('admin.logout') }}" class="nav-link nav-logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="admin-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">
+                            {{ message }}
+                            <button class="flash-close">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="admin-footer">
+        <p>&copy; 2021 Shauna Saunders. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Mobile navigation toggle
+        const hamburger = document.querySelector('.hamburger');
+        const navLinks = document.querySelector('.nav-links');
+
+        if (hamburger && navLinks) {
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('active');
+                navLinks.classList.toggle('active');
+                const isExpanded = hamburger.classList.contains('active');
+                hamburger.setAttribute('aria-expanded', isExpanded);
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!hamburger.contains(e.target) && !navLinks.contains(e.target)) {
+                    hamburger.classList.remove('active');
+                    navLinks.classList.remove('active');
+                    hamburger.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            const navItems = navLinks.querySelectorAll('.nav-link');
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    hamburger.classList.remove('active');
+                    navLinks.classList.remove('active');
+                    hamburger.setAttribute('aria-expanded', 'false');
+                });
+            });
+        }
+
+        // Auto-dismiss flash messages
+        const flashMessages = document.querySelectorAll('.flash');
+        flashMessages.forEach(flash => {
+            const closeBtn = flash.querySelector('.flash-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    flash.style.display = 'none';
+                });
+            }
+
+            setTimeout(() => {
+                flash.style.opacity = '0';
+                setTimeout(() => flash.remove(), 300);
+            }, 5000);
+        });
+
+        // Confirm delete actions
+        const deleteForms = document.querySelectorAll('form[data-confirm]');
+        deleteForms.forEach(form => {
+            form.addEventListener('submit', (e) => {
+                const message = form.dataset.confirm;
+                if (!confirm(message)) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

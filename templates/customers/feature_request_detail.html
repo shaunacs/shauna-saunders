@@ -1,0 +1,437 @@
+{% extends 'customers/base_customers.html' %}
+
+{% block title %}{{ feature_request.title }} - Feature Request{% endblock %}
+
+{% block content %}
+<div class="feature-request-detail">
+    <div class="breadcrumb">
+        <a href="{{ url_for('customers.dashboard') }}">Dashboard</a> / 
+        <a href="{{ url_for('customers.view_feature_requests', project_id=feature_request.project_id) }}">Feature Requests</a> / 
+        #{{ feature_request.id }}
+    </div>
+
+    <div class="request-header">
+        <div class="request-title-section">
+            <h1>{{ feature_request.title }}</h1>
+            <div class="request-meta">
+                <span class="request-id">#{{ feature_request.id }}</span>
+                <span class="project-name">{{ feature_request.project_name }}</span>
+                <span class="priority-badge priority-{{ feature_request.priority }}">{{ feature_request.priority|title }} Priority</span>
+            </div>
+        </div>
+        <div class="status-section">
+            <span class="status-badge status-{{ feature_request.status }}">
+                {% if feature_request.status == 'request_received' %}
+                    Request Received
+                {% elif feature_request.status == 'in_review' %}
+                    In Review
+                {% elif feature_request.status == 'approved' %}
+                    Approved
+                {% elif feature_request.status == 'in_progress' %}
+                    In Progress
+                {% elif feature_request.status == 'testing' %}
+                    Testing
+                {% elif feature_request.status == 'completed' %}
+                    Completed
+                {% elif feature_request.status == 'on_hold' %}
+                    On Hold
+                {% elif feature_request.status == 'rejected' %}
+                    Rejected
+                {% else %}
+                    {{ feature_request.status|title }}
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
+    <div class="request-content">
+        <div class="main-content">
+            <div class="content-section">
+                <h3>Description</h3>
+                <div class="description-text">
+                    {{ feature_request.description|replace('\n', '<br>')|safe }}
+                </div>
+            </div>
+
+            {% if feature_request.requested_completion %}
+            <div class="content-section">
+                <h3>Requested Completion</h3>
+                <p>{{ feature_request.requested_completion }}</p>
+            </div>
+            {% endif %}
+
+            {% if feature_request.additional_info %}
+            <div class="content-section">
+                <h3>Additional Information</h3>
+                <div class="additional-info">
+                    {{ feature_request.additional_info|replace('\n', '<br>')|safe }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if feature_request.admin_notes %}
+            <div class="content-section admin-notes">
+                <h3>Admin Notes</h3>
+                <div class="notes-content">
+                    {{ feature_request.admin_notes|replace('\n', '<br>')|safe }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="sidebar">
+            <div class="info-card">
+                <h3>Request Details</h3>
+                <div class="info-item">
+                    <span class="label">Submitted:</span>
+                    <span class="value">{{ feature_request.created_at|format_date }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Last Updated:</span>
+                    <span class="value">{{ feature_request.updated_at|format_date }}</span>
+                </div>
+                {% if feature_request.completed_at %}
+                <div class="info-item">
+                    <span class="label">Completed:</span>
+                    <span class="value">{{ feature_request.completed_at|format_date }}</span>
+                </div>
+                {% endif %}
+                {% if feature_request.estimated_hours %}
+                <div class="info-item">
+                    <span class="label">Estimated Hours:</span>
+                    <span class="value">{{ feature_request.estimated_hours }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if status_history %}
+    <div class="status-history">
+        <h3>Status History</h3>
+        <div class="timeline">
+            {% for history in status_history %}
+            <div class="timeline-item">
+                <div class="timeline-marker status-{{ history.new_status }}"></div>
+                <div class="timeline-content">
+                    <div class="timeline-header">
+                        <span class="status-change">
+                            {% if history.old_status %}
+                                Changed from {{ history.old_status|replace('_', ' ')|title }} to 
+                            {% endif %}
+                            {{ history.new_status|replace('_', ' ')|title }}
+                        </span>
+                        <span class="timeline-date">{{ history.created_at|format_date }}</span>
+                    </div>
+                    {% if history.status_message %}
+                    <div class="timeline-message">
+                        {{ history.status_message }}
+                    </div>
+                    {% endif %}
+                    {% if history.admin_notes %}
+                    <div class="timeline-admin-notes">
+                        {{ history.admin_notes }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="actions">
+        <a href="{{ url_for('customers.view_feature_requests', project_id=feature_request.project_id) }}" class="btn btn-secondary">Back to Requests</a>
+    </div>
+</div>
+
+<style>
+.feature-request-detail {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.breadcrumb {
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.breadcrumb a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.request-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.request-header h1 {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.request-meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.request-id {
+    background: var(--bg-dark);
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: monospace;
+    font-weight: 600;
+}
+
+.project-name {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.priority-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.priority-low { background: rgba(156, 163, 175, 0.2); color: #9CA3AF; }
+.priority-medium { background: rgba(251, 191, 36, 0.2); color: var(--warning-color); }
+.priority-high { background: rgba(239, 68, 68, 0.2); color: #FCA5A5; }
+.priority-urgent { background: rgba(239, 68, 68, 0.3); color: #FCA5A5; font-weight: 700; }
+
+.status-badge {
+    padding: 0.75rem 1.25rem;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.status-request_received { background: rgba(156, 163, 175, 0.2); color: #9CA3AF; }
+.status-in_review { background: rgba(251, 191, 36, 0.2); color: var(--warning-color); }
+.status-approved { background: rgba(16, 185, 129, 0.2); color: var(--secondary-color); }
+.status-in_progress { background: rgba(103, 232, 249, 0.2); color: var(--primary-color); }
+.status-testing { background: rgba(139, 92, 246, 0.2); color: #A78BFA; }
+.status-completed { background: rgba(16, 185, 129, 0.3); color: var(--secondary-color); }
+.status-on_hold { background: rgba(251, 191, 36, 0.3); color: var(--warning-color); }
+.status-rejected { background: rgba(239, 68, 68, 0.2); color: #FCA5A5; }
+
+.request-content {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+@media (max-width: 768px) {
+    .request-content {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+.content-section {
+    margin-bottom: 2rem;
+}
+
+.content-section h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.description-text, .additional-info, .notes-content {
+    background: var(--bg-card);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    line-height: 1.6;
+}
+
+.admin-notes {
+    background: rgba(103, 232, 249, 0.05);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(103, 232, 249, 0.2);
+}
+
+.info-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.5rem;
+    position: sticky;
+    top: 2rem;
+}
+
+.info-card h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item .label {
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.info-item .value {
+    color: var(--text-light);
+    text-align: right;
+}
+
+.status-history {
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.status-history h3 {
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border-color);
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -10px;
+    top: 4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-card);
+}
+
+.timeline-marker.status-request_received { background: #9CA3AF; }
+.timeline-marker.status-in_review { background: var(--warning-color); }
+.timeline-marker.status-approved { background: var(--secondary-color); }
+.timeline-marker.status-in_progress { background: var(--primary-color); }
+.timeline-marker.status-testing { background: #A78BFA; }
+.timeline-marker.status-completed { background: var(--secondary-color); }
+.timeline-marker.status-on_hold { background: var(--warning-color); }
+.timeline-marker.status-rejected { background: #FCA5A5; }
+
+.timeline-content {
+    background: var(--bg-dark);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.status-change {
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+.timeline-date {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.timeline-message, .timeline-admin-notes {
+    margin-top: 0.5rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.timeline-admin-notes {
+    background: rgba(103, 232, 249, 0.1);
+    padding: 0.75rem;
+    border-radius: 6px;
+    border-left: 3px solid var(--primary-color);
+}
+
+.actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.btn {
+    padding: 0.875rem 1.75rem;
+    border: none;
+    border-radius: 50px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-secondary {
+    background: var(--bg-dark);
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: var(--border-color);
+    color: var(--text-light);
+    text-decoration: none;
+}
+</style>
+{% endblock %}

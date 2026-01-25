@@ -1,0 +1,298 @@
+{% extends 'customers/base_customers.html' %}
+
+{% block title %}Feature Requests - {{ project.project_name }}{% endblock %}
+
+{% block content %}
+<div class="feature-requests-page">
+    <div class="breadcrumb">
+        <a href="{{ url_for('customers.dashboard') }}">Dashboard</a> / 
+        <a href="{{ url_for('customers.project_detail', project_id=project.id) }}">{{ project.project_name }}</a> / 
+        Feature Requests
+    </div>
+
+    <div class="page-header">
+        <div>
+            <h1>Feature Requests</h1>
+            <h2>{{ project.project_name }}</h2>
+        </div>
+        <a href="{{ url_for('customers.request_feature', project_id=project.id) }}" class="btn btn-primary">
+            New Request
+        </a>
+    </div>
+
+    {% if feature_requests %}
+    <div class="requests-list">
+        {% for request in feature_requests %}
+        <div class="request-card">
+            <div class="request-header">
+                <div class="request-title-section">
+                    <h3><a href="{{ url_for('customers.view_feature_request', request_id=request.id) }}">{{ request.title }}</a></h3>
+                    <div class="request-meta">
+                        <span class="request-id">#{{ request.id }}</span>
+                        <span class="request-date">{{ request.created_at|format_date }}</span>
+                        <span class="priority-badge priority-{{ request.priority }}">{{ request.priority|title }}</span>
+                    </div>
+                </div>
+                <div class="status-section">
+                    <span class="status-badge status-{{ request.status }}">
+                        {% if request.status == 'request_received' %}
+                            Request Received
+                        {% elif request.status == 'in_review' %}
+                            In Review
+                        {% elif request.status == 'approved' %}
+                            Approved
+                        {% elif request.status == 'in_progress' %}
+                            In Progress
+                        {% elif request.status == 'testing' %}
+                            Testing
+                        {% elif request.status == 'completed' %}
+                            Completed
+                        {% elif request.status == 'on_hold' %}
+                            On Hold
+                        {% elif request.status == 'rejected' %}
+                            Rejected
+                        {% else %}
+                            {{ request.status|title }}
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="request-description">
+                <p>{{ request.description[:200] }}{% if request.description|length > 200 %}...{% endif %}</p>
+            </div>
+
+            <div class="request-footer">
+                <span class="request-updated">Updated: {{ request.updated_at|format_date }}</span>
+                <a href="{{ url_for('customers.view_feature_request', request_id=request.id) }}" class="btn btn-small">View Details</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📝</div>
+        <h3>No feature requests yet</h3>
+        <p>You haven't submitted any feature requests for this project.</p>
+        <a href="{{ url_for('customers.request_feature', project_id=project.id) }}" class="btn btn-primary">Submit Your First Request</a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.feature-requests-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.breadcrumb {
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.breadcrumb a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.page-header h1 {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.page-header h2 {
+    color: var(--text-muted);
+    font-weight: 400;
+    font-size: 1.25rem;
+}
+
+.requests-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.request-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.request-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.request-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.request-title-section h3 {
+    margin: 0 0 0.5rem 0;
+}
+
+.request-title-section a {
+    color: var(--text-light);
+    text-decoration: none;
+}
+
+.request-title-section a:hover {
+    color: var(--primary-color);
+}
+
+.request-meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.request-id {
+    background: var(--bg-dark);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-family: monospace;
+}
+
+.request-date {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.priority-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.priority-low { background: rgba(156, 163, 175, 0.2); color: #9CA3AF; }
+.priority-medium { background: rgba(251, 191, 36, 0.2); color: var(--warning-color); }
+.priority-high { background: rgba(239, 68, 68, 0.2); color: #FCA5A5; }
+.priority-urgent { background: rgba(239, 68, 68, 0.3); color: #FCA5A5; font-weight: 700; }
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-request_received { background: rgba(156, 163, 175, 0.2); color: #9CA3AF; }
+.status-in_review { background: rgba(251, 191, 36, 0.2); color: var(--warning-color); }
+.status-approved { background: rgba(16, 185, 129, 0.2); color: var(--secondary-color); }
+.status-in_progress { background: rgba(103, 232, 249, 0.2); color: var(--primary-color); }
+.status-testing { background: rgba(139, 92, 246, 0.2); color: #A78BFA; }
+.status-completed { background: rgba(16, 185, 129, 0.3); color: var(--secondary-color); }
+.status-on_hold { background: rgba(251, 191, 36, 0.3); color: var(--warning-color); }
+.status-rejected { background: rgba(239, 68, 68, 0.2); color: #FCA5A5; }
+
+.request-description {
+    margin: 1rem 0;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.request-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.request-updated {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.btn {
+    padding: 0.875rem 1.75rem;
+    border: none;
+    border-radius: 50px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    box-shadow: 0 4px 15px rgba(103, 232, 249, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(103, 232, 249, 0.5);
+    color: white;
+    text-decoration: none;
+}
+
+.btn:hover {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--bg-card);
+    border: 2px dashed var(--border-color);
+    border-radius: 16px;
+    margin-top: 2rem;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    color: var(--text-light);
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+</style>
+{% endblock %}

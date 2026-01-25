@@ -1,0 +1,176 @@
+{% extends 'customers/base_customers.html' %}
+
+{% block title %}Dashboard - Customer Portal{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>Welcome, {{ customer.name }}!</h1>
+        <p class="dashboard-subtitle">Manage your projects and payments</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Active Projects</div>
+            <div class="stat-value">{{ projects|length }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Total Paid</div>
+            <div class="stat-value">${{ "%.2f"|format(total_paid) }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Outstanding Balance</div>
+            <div class="stat-value">${{ "%.2f"|format(outstanding_balance) }}</div>
+        </div>
+    </div>
+
+    {% if payment_links %}
+    <section class="section">
+        <h2>Payment Links</h2>
+        <p class="section-subtitle">Your project manager has created payment links for you</p>
+
+        <div class="payment-links-list">
+            {% for link in payment_links %}
+            <div class="payment-link-card">
+                <div class="payment-link-info">
+                    <h3>${{ "%.2f"|format(link.amount) }}</h3>
+                    <p>{{ link.description or 'Project Payment' }}</p>
+                    {% if link.expires_at %}
+                    <p class="expires">Expires: {{ link.expires_at[:10] }}</p>
+                    {% endif %}
+                </div>
+                <a href="{{ link.stripe_checkout_url }}" class="btn btn-primary">Pay Now</a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="section">
+        <h2>Your Projects</h2>
+
+        {% if projects %}
+        <div class="projects-grid">
+            {% for project in projects %}
+            <div class="project-card">
+                <div class="project-header">
+                    <h3>{{ project.project_name }}</h3>
+                    <span class="project-status status-{{ project.status }}">{{ project.status|title }}</span>
+                </div>
+
+                <div class="project-body">
+                    <p class="project-type">{{ project.project_type|replace('_', ' ')|title }}</p>
+
+                    {% if project.is_subscription %}
+                        <div class="subscription-info" style="padding:1rem; background:var(--bg-dark); border-radius:8px; margin:1rem 0; border:1px solid var(--border-color);">
+                            <div class="financial-item" style="margin-bottom:0.5rem;">
+                                <span class="label">Monthly Rate:</span>
+                                <span class="value">${{ "%.2f"|format(project.total_amount) }}/month</span>
+                            </div>
+                            <div class="financial-item">
+                                <span class="label">Status:</span>
+                                <span class="value">
+                                    {% if project.subscription_status == 'active' %}
+                                        <span style="color:#10b981;">Active</span>
+                                    {% elif project.subscription_status == 'cancelled' %}
+                                        <span style="color:#ef4444;">Cancelled</span>
+                                    {% else %}
+                                        <span style="color:#f59e0b;">Not Subscribed</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            {% if project.next_payment_date and project.subscription_status == 'active' %}
+                            <div class="financial-item">
+                                <span class="label">Next Payment:</span>
+                                <span class="value">{{ project.next_payment_date|format_date }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: {{ project.completion_percentage }}%"></div>
+                        </div>
+                        <p class="progress-label">{{ project.completion_percentage }}% Complete</p>
+
+                        <div class="project-financials">
+                            <div class="financial-item">
+                                <span class="label">Total:</span>
+                                <span class="value">${{ "%.2f"|format(project.total_amount) }}</span>
+                            </div>
+                            <div class="financial-item">
+                                <span class="label">Paid:</span>
+                                <span class="value">${{ "%.2f"|format(project.amount_paid) }}</span>
+                            </div>
+                            <div class="financial-item">
+                                <span class="label">Remaining:</span>
+                                <span class="value">${{ "%.2f"|format(project.total_amount - project.amount_paid) }}</span>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="project-footer">
+                    {% if project.is_subscription %}
+                        {% if project.subscription_status == 'active' %}
+                            <a href="{{ url_for('customers.manage_subscription', project_id=project.id) }}" class="btn btn-secondary btn-sm">Manage Subscription</a>
+                        {% elif project.subscription_status == 'cancelled' %}
+                            <div class="cancelled-subscription-info">
+                                <p style="margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">
+                                    Would you like to resubscribe? 
+                                    <a href="mailto:shauna.saunders@alumni.unc.edu?subject=Resubscribe Request - {{ project.project_name }}&body=Hi Shauna,%0A%0AI would like to resubscribe to {{ project.project_name }}.%0A%0APlease let me know the next steps.%0A%0AThanks!" 
+                                       style="color: var(--primary-color); text-decoration: none;">
+                                        Reach out here
+                                    </a>
+                                </p>
+                            </div>
+                        {% else %}
+                            <form method="POST" action="{{ url_for('customers.create_checkout_session') }}" style="display:inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="project_id" value="{{ project.id }}">
+                                <button type="submit" class="btn btn-primary btn-sm">Subscribe Now</button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <a href="{{ url_for('customers.project_detail', project_id=project.id) }}" class="btn btn-secondary btn-sm">View Details</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>You don't have any projects yet. Your project manager will create one for you soon!</p>
+        </div>
+        {% endif %}
+    </section>
+
+    {% if recent_payments %}
+    <section class="section">
+        <h2>Recent Payments</h2>
+
+        <div class="payments-table-container">
+            <table class="payments-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in recent_payments %}
+                    <tr>
+                        <td>{{ payment.created_at[:10] if payment.created_at else 'N/A' }}</td>
+                        <td>${{ "%.2f"|format(payment.amount) }}</td>
+                        <td><span class="payment-status status-{{ payment.status }}">{{ payment.status|title }}</span></td>
+                        <td>{{ payment.description or 'Payment' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

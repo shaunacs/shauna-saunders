@@ -1,0 +1,42 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Projects - Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Projects</h1>
+    <a href="{{ url_for('admin.create_project_route') }}" class="btn btn-primary">+ New Project</a>
+</div>
+
+{% if projects %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Project Name</th>
+            <th>Customer</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Total</th>
+            <th>Paid</th>
+            <th>Remaining</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for project in projects %}
+        <tr>
+            <td>{{ project.project_name }}</td>
+            <td>{{ project.customer_name }}</td>
+            <td>{{ project.project_type|replace('_', ' ')|title }}</td>
+            <td><span class="badge badge-{{ project.status }}">{{ project.status|title }}</span></td>
+            <td>${{ "%.2f"|format(project.total_amount) }}</td>
+            <td>${{ "%.2f"|format(project.amount_paid) }}</td>
+            <td>${{ "%.2f"|format(project.total_amount - project.amount_paid) }}</td>
+            <td><a href="{{ url_for('admin.project_detail', project_id=project.id) }}" class="btn btn-sm">View</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty-state">No projects yet. <a href="{{ url_for('admin.create_project_route') }}">Create your first project</a></p>
+{% endif %}
+{% endblock %}

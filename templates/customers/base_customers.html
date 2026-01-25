@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Customer Portal - Shauna Saunders{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/customers.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="customer-nav">
+        <div class="nav-container">
+            <a href="{{ url_for('customers.dashboard') }}" class="nav-brand">Shauna Saunders | Customer Portal</a>
+            <button class="hamburger" aria-label="Toggle navigation menu" aria-expanded="false">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="nav-links">
+                {% if session.get('customer_id') %}
+                    <a href="{{ url_for('customers.dashboard') }}" class="nav-link">Dashboard</a>
+                    <a href="{{ url_for('customers.change_password') }}" class="nav-link">Change Password</a>
+                    <a href="{{ url_for('customers.logout') }}" class="nav-link">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('customers.login') }}" class="nav-link">Login</a>
+                {% endif %}
+                <a href="{{ url_for('render_homepage') }}" class="nav-link">Main Site</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">
+                            {{ message }}
+                            <button class="flash-close">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="customer-footer">
+        <p>&copy; 2021 Shauna Saunders. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Mobile navigation toggle
+        const hamburger = document.querySelector('.hamburger');
+        const navLinks = document.querySelector('.nav-links');
+
+        if (hamburger && navLinks) {
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('active');
+                navLinks.classList.toggle('active');
+                const isExpanded = hamburger.classList.contains('active');
+                hamburger.setAttribute('aria-expanded', isExpanded);
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!hamburger.contains(e.target) && !navLinks.contains(e.target)) {
+                    hamburger.classList.remove('active');
+                    navLinks.classList.remove('active');
+                    hamburger.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            const navItems = navLinks.querySelectorAll('.nav-link');
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    hamburger.classList.remove('active');
+                    navLinks.classList.remove('active');
+                    hamburger.setAttribute('aria-expanded', 'false');
+                });
+            });
+        }
+
+        // Auto-dismiss flash messages
+        const flashMessages = document.querySelectorAll('.flash');
+        flashMessages.forEach(flash => {
+            const closeBtn = flash.querySelector('.flash-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    flash.style.display = 'none';
+                });
+            }
+
+            setTimeout(() => {
+                flash.style.opacity = '0';
+                setTimeout(() => flash.remove(), 300);
+            }, 5000);
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

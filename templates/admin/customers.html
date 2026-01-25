@@ -1,0 +1,27 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Customers - Admin{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Customers</h1>
+    <a href="{{ url_for('admin.create_customer_route') }}" class="btn btn-primary">+ New Customer</a>
+</div>
+{% if customers %}
+<table class="data-table">
+    <thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Status</th><th>Projects</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for customer in customers %}
+    <tr>
+        <td>{{ customer.name }}</td>
+        <td>{{ customer.email }}</td>
+        <td>{{ customer.company or '-' }}</td>
+        <td><span class="badge badge-{% if customer.is_active %}success{% else %}inactive{% endif %}">{% if customer.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+        <td>{{ customer.projects_count or 0 }}</td>
+        <td><a href="{{ url_for('admin.customer_detail', customer_id=customer.id) }}" class="btn btn-sm">View</a></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty-state">No customers yet. <a href="{{ url_for('admin.create_customer_route') }}">Create your first customer</a></p>
+{% endif %}
+{% endblock %}

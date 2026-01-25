@@ -1,0 +1,130 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}{{ project.project_name }} - Admin{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('admin.projects') }}">Projects</a> / {{ project.project_name }}
+</div>
+
+<div class="page-header">
+    <h1>{{ project.project_name }}</h1>
+    <div>
+        <a href="{{ url_for('admin.edit_project', project_id=project.id) }}" class="btn btn-secondary">Edit Project</a>
+        <form method="POST" action="{{ url_for('admin.delete_project_route', project_id=project.id) }}" style="display:inline" data-confirm="Are you sure you want to delete this project?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-secondary" style="background:#E74C3C">Delete</button>
+        </form>
+    </div>
+</div>
+
+<div class="info-grid">
+    <div><strong>Customer:</strong> <a href="{{ url_for('admin.customer_detail', customer_id=customer.id) }}">{{ customer.name }}</a></div>
+    <div><strong>Type:</strong> {{ project.project_type|replace('_', ' ')|title }}</div>
+    <div><strong>Status:</strong> <span class="badge badge-{{ project.status }}">{{ project.status|title }}</span></div>
+    <div><strong>Payment Plan:</strong> {{ project.payment_plan|replace('_', ' ')|title if project.payment_plan else '-' }}</div>
+    <div><strong>Total Amount:</strong> ${{ "%.2f"|format(project.total_amount) }}</div>
+    <div><strong>Amount Paid:</strong> ${{ "%.2f"|format(project.amount_paid) }}</div>
+    <div><strong>Remaining:</strong> ${{ "%.2f"|format(project.total_amount - project.amount_paid) }}</div>
+    <div><strong>Completion:</strong> {{ completion_percentage }}%</div>
+</div>
+
+{% if project.description %}
+<div style="margin:2rem 0; padding:1.5rem; background:var(--background-color); border-radius:8px;">
+    <strong>Description:</strong>
+    <p>{{ project.description }}</p>
+</div>
+{% endif %}
+
+<h2>Milestones</h2>
+
+<form method="POST" action="{{ url_for('admin.create_milestone_route', project_id=project.id) }}" class="form-standard" style="max-width:100%; margin-bottom:2rem;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h3>Add Milestone</h3>
+    <div style="display:grid; grid-template-columns:1fr 2fr 1fr 1fr auto; gap:1rem; align-items:end;">
+        <div class="form-group" style="margin:0;">
+            <label>Milestone Name *</label>
+            <input type="text" name="milestone_name" required>
+        </div>
+        <div class="form-group" style="margin:0;">
+            <label>Description</label>
+            <input type="text" name="description">
+        </div>
+        <div class="form-group" style="margin:0;">
+            <label>
+                <input type="checkbox" name="is_payment_milestone"> Payment Milestone
+            </label>
+        </div>
+        <div class="form-group" style="margin:0;">
+            <label>Amount</label>
+            <input type="number" name="payment_amount" step="0.01" placeholder="0.00">
+        </div>
+        <button type="submit" class="btn btn-primary">Add</button>
+    </div>
+</form>
+
+{% if milestones %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Milestone</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Payment Milestone</th>
+            <th>Amount</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for milestone in milestones %}
+        <tr>
+            <td>{{ milestone.milestone_name }}</td>
+            <td>{{ milestone.description or '-' }}</td>
+            <td><span class="badge badge-{{ milestone.status }}">{{ milestone.status|title }}</span></td>
+            <td>{% if milestone.is_payment_milestone %}Yes{% else %}No{% endif %}</td>
+            <td>{% if milestone.payment_amount %}${{ "%.2f"|format(milestone.payment_amount) }}{% else %}-{% endif %}</td>
+            <td>
+                {% if milestone.status != 'completed' %}
+                <form method="POST" action="{{ url_for('admin.complete_milestone', milestone_id=milestone.id) }}" style="display:inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-sm">Complete</button>
+                </form>
+                {% endif %}
+                <form method="POST" action="{{ url_for('admin.delete_milestone_route', milestone_id=milestone.id) }}" style="display:inline" data-confirm="Delete this milestone?">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-sm" style="background:#E74C3C">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty-state">No milestones yet. Add one above.</p>
+{% endif %}
+
+{% if payments %}
+<h2>Payment History</h2>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Method</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for payment in payments %}
+        <tr>
+            <td>{{ payment.created_at[:10] if payment.created_at else '-' }}</td>
+            <td>${{ "%.2f"|format(payment.amount) }}</td>
+            <td><span class="badge badge-{{ payment.status }}">{{ payment.status|title }}</span></td>
+            <td>{{ payment.payment_method or '-' }}</td>
+            <td>{{ payment.description or '-' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

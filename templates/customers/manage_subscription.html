@@ -1,0 +1,249 @@
+{% extends 'customers/base_customers.html' %}
+
+{% block title %}Manage Subscription - Customer Portal{% endblock %}
+
+{% block content %}
+<div class="subscription-management">
+    <div class="breadcrumb">
+        <a href="{{ url_for('customers.dashboard') }}">Dashboard</a> / Manage Subscription
+    </div>
+
+    <h1>Manage Subscription</h1>
+    <h2>{{ project.project_name }}</h2>
+
+    <div class="subscription-details-card">
+        <div class="subscription-header">
+            <h3>Subscription Details</h3>
+            <span class="subscription-status status-{{ project.subscription_status }}">
+                {{ project.subscription_status|title }}
+            </span>
+        </div>
+
+        <div class="subscription-info">
+            <div class="info-item">
+                <span class="label">Service:</span>
+                <span class="value">{{ project.project_type|replace('_', ' ')|title }}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Monthly Rate:</span>
+                <span class="value">${{ "%.2f"|format(project.total_amount) }}</span>
+            </div>
+
+            {% if subscription %}
+            <div class="info-item">
+                <span class="label">Status:</span>
+                <span class="value">
+                    {% if subscription.status == 'active' %}
+                        <span style="color:#10b981;">Active</span>
+                    {% elif subscription.status == 'canceled' %}
+                        <span style="color:#ef4444;">Cancelled</span>
+                    {% elif subscription.status == 'past_due' %}
+                        <span style="color:#f59e0b;">Past Due</span>
+                    {% else %}
+                        {{ subscription.status|title }}
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="info-item">
+                <span class="label">Started:</span>
+                <span class="value">{{ subscription.created|timestamp_to_date }}</span>
+            </div>
+
+            {% if subscription.current_period_end %}
+            <div class="info-item">
+                <span class="label">{% if subscription.cancel_at_period_end %}Expires{% else %}Next Billing{% endif %}:</span>
+                <span class="value">{{ subscription.current_period_end|timestamp_to_date }}</span>
+            </div>
+            {% elif project.next_payment_date and project.subscription_status == 'active' %}
+            <div class="info-item">
+                <span class="label">Next Payment:</span>
+                <span class="value">{{ project.next_payment_date|format_date }}</span>
+            </div>
+            {% endif %}
+
+            {% if subscription.cancel_at_period_end %}
+            <div class="alert alert-warning" style="margin-top:1rem;">
+                Your subscription will be cancelled at the end of the current billing period.
+            </div>
+            {% endif %}
+            {% endif %}
+
+            {% if project.description %}
+            <div class="info-item" style="border-top:1px solid var(--border-color); padding-top:1rem; margin-top:1rem;">
+                <span class="label">Description:</span>
+                <p class="value" style="margin-top:0.5rem;">{{ project.description }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if subscription and subscription.status == 'active' and not subscription.cancel_at_period_end %}
+        <div class="subscription-actions">
+            <h3>Manage Subscription</h3>
+            <p>Need to cancel your subscription? You can do so below. Your access will continue until the end of your current billing period.</p>
+
+            {% set end_date = subscription.current_period_end|timestamp_to_date if subscription.current_period_end else 'the end of your billing period' %}
+            <form method="POST" action="{{ url_for('customers.cancel_subscription', project_id=project.id) }}" style="margin-top:1rem;" onsubmit="return confirm('Are you sure you want to cancel your subscription? You will continue to have access until {{ end_date }}.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger">Cancel Subscription</button>
+            </form>
+        </div>
+        {% elif project.subscription_status == 'cancelled' or (subscription and subscription.status == 'canceled') %}
+        <div class="alert alert-info">
+            This subscription has been cancelled.
+            <a href="{{ url_for('customers.dashboard') }}">Return to dashboard</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div style="margin-top:2rem;">
+        <a href="{{ url_for('customers.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</div>
+
+<style>
+.subscription-management {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.subscription-management h1 {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.subscription-management h2 {
+    color: var(--text-muted);
+    font-weight: 400;
+    font-size: 1.25rem;
+}
+
+.subscription-details-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.subscription-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.subscription-header h3 {
+    color: var(--primary-color);
+}
+
+.subscription-status {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.subscription-status.status-active {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--secondary-color);
+}
+
+.subscription-status.status-cancelled,
+.subscription-status.status-canceled {
+    background: rgba(239, 68, 68, 0.2);
+    color: #FCA5A5;
+}
+
+.subscription-status.status-inactive {
+    background: rgba(251, 191, 36, 0.2);
+    color: var(--warning-color);
+}
+
+.subscription-info {
+    margin-top: 1.5rem;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item .label {
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.info-item .value {
+    text-align: right;
+    color: var(--text-light);
+}
+
+.subscription-actions {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--border-color);
+}
+
+.subscription-actions h3 {
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+}
+
+.subscription-actions p {
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #EF4444, #DC2626);
+    color: white;
+    border: none;
+    padding: 0.875rem 1.75rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 12px;
+    margin: 1rem 0;
+}
+
+.alert-warning {
+    background: rgba(251, 191, 36, 0.15);
+    color: var(--warning-color);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.alert-info {
+    background: rgba(103, 232, 249, 0.15);
+    color: #67E8F9;
+    border: 1px solid rgba(103, 232, 249, 0.3);
+}
+
+.alert-info a {
+    color: var(--primary-color);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends 'customers/base_customers.html' %}
+
+{% block title %}{{ project.project_name }} - Customer Portal{% endblock %}
+
+{% block content %}
+<div class="project-detail">
+    <div class="breadcrumb">
+        <a href="{{ url_for('customers.dashboard') }}">Dashboard</a>
+        <span>/</span>
+        <span>{{ project.project_name }}</span>
+    </div>
+
+    <div class="project-header">
+        <div>
+            <h1>{{ project.project_name }}</h1>
+            <p class="project-meta">
+                <span class="project-type">{{ project.project_type|replace('_', ' ')|title }}</span>
+                <span class="divider">•</span>
+                <span class="project-status status-{{ project.status }}">{{ project.status|title }}</span>
+            </p>
+        </div>
+    </div>
+
+    {% if project.description %}
+    <section class="section">
+        <h2>Project Description</h2>
+        <p>{{ project.description }}</p>
+    </section>
+    {% endif %}
+
+    <div class="project-grid">
+        <div class="project-main">
+            <section class="section">
+                <h2>Project Progress</h2>
+
+                <div class="progress-container">
+                    <div class="progress-bar-large">
+                        <div class="progress-fill" style="width: {{ completion_percentage }}%"></div>
+                    </div>
+                    <p class="progress-label-large">{{ completion_percentage }}% Complete</p>
+                </div>
+
+                {% if milestones %}
+                <div class="milestones-list">
+                    <h3>Milestones</h3>
+                    {% for milestone in milestones %}
+                    <div class="milestone-item milestone-{{ milestone.status }}">
+                        <div class="milestone-icon">
+                            {% if milestone.status == 'completed' %}
+                            <span class="icon-check">✓</span>
+                            {% elif milestone.status == 'in_progress' %}
+                            <span class="icon-progress">◐</span>
+                            {% else %}
+                            <span class="icon-pending">○</span>
+                            {% endif %}
+                        </div>
+                        <div class="milestone-content">
+                            <h4>{{ milestone.milestone_name }}</h4>
+                            {% if milestone.description %}
+                            <p>{{ milestone.description }}</p>
+                            {% endif %}
+                            {% if milestone.due_date %}
+                            <p class="milestone-due">Due: {{ milestone.due_date[:10] }}</p>
+                            {% endif %}
+                            {% if milestone.completed_at %}
+                            <p class="milestone-completed">Completed: {{ milestone.completed_at[:10] }}</p>
+                            {% endif %}
+                        </div>
+                        {% if milestone.is_payment_milestone and milestone.payment_amount %}
+                        <div class="milestone-payment">
+                            <span class="payment-badge">${{ "%.2f"|format(milestone.payment_amount) }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="empty-state">No milestones have been set yet.</p>
+                {% endif %}
+            </section>
+        </div>
+
+        <div class="project-sidebar">
+            <section class="section">
+                <h3>Payment Summary</h3>
+
+                <div class="payment-summary">
+                    <div class="summary-item">
+                        <span class="label">Total Project Cost:</span>
+                        <span class="value">${{ "%.2f"|format(project.total_amount) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Amount Paid:</span>
+                        <span class="value">${{ "%.2f"|format(project.amount_paid) }}</span>
+                    </div>
+                    <div class="summary-item summary-total">
+                        <span class="label">Remaining Balance:</span>
+                        <span class="value">${{ "%.2f"|format(remaining_balance) }}</span>
+                    </div>
+                </div>
+
+                {% if remaining_balance > 0 %}
+                <form method="POST" action="{{ url_for('customers.create_checkout_session') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="project_id" value="{{ project.id }}">
+                    <button type="submit" class="btn btn-primary btn-block">Make Payment</button>
+                </form>
+                {% endif %}
+
+                {% if project.payment_plan %}
+                <p class="payment-plan-info">
+                    <strong>Payment Plan:</strong><br>
+                    {{ project.payment_plan|replace('_', ' ')|title }}
+                </p>
+                {% endif %}
+            </section>
+
+            {% if payments %}
+            <section class="section">
+                <h3>Payment History</h3>
+
+                <div class="payment-history">
+                    {% for payment in payments %}
+                    <div class="payment-item">
+                        <div class="payment-date">{{ payment.created_at[:10] if payment.created_at else 'N/A' }}</div>
+                        <div class="payment-amount">${{ "%.2f"|format(payment.amount) }}</div>
+                        <div class="payment-status status-{{ payment.status }}">{{ payment.status|title }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            {% if project.start_date or project.end_date %}
+            <section class="section">
+                <h3>Timeline</h3>
+                <div class="timeline-info">
+                    {% if project.start_date %}
+                    <p><strong>Start Date:</strong> {{ project.start_date[:10] }}</p>
+                    {% endif %}
+                    {% if project.end_date %}
+                    <p><strong>Target Completion:</strong> {{ project.end_date[:10] }}</p>
+                    {% endif %}
+                </div>
+            </section>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

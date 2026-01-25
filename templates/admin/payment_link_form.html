@@ -1,0 +1,54 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Generate Payment Link - Admin{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('admin.dashboard') }}">Dashboard</a> / Generate Payment Link
+</div>
+
+<h1>Generate Payment Link</h1>
+<p class="subtitle">Create a Stripe payment link for a customer</p>
+
+<form method="POST" class="form-standard">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="form-group">
+        <label for="customer_id">Customer *</label>
+        <select id="customer_id" name="customer_id" required>
+            <option value="">Select a customer...</option>
+            {% for customer in customers %}
+            <option value="{{ customer.id }}" {% if request.args.get('customer_id') == customer.id|string %}selected{% endif %}>
+                {{ customer.name }} ({{ customer.email }})
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="project_id">Project (Optional)</label>
+        <select id="project_id" name="project_id">
+            <option value="">None - General Payment</option>
+        </select>
+        <small>Projects will be loaded when you select a customer</small>
+    </div>
+
+    <div class="form-group">
+        <label for="amount">Amount *</label>
+        <input type="number" id="amount" name="amount" step="0.01" min="0.01" required>
+    </div>
+
+    <div class="form-group">
+        <label for="description">Description</label>
+        <input type="text" id="description" name="description" placeholder="e.g., Website Development Payment, Design Deposit, Monthly Maintenance">
+    </div>
+
+    <div style="padding:1rem; background:var(--background-color); border-radius:8px; margin-bottom:1.5rem;">
+        <p><strong>Note:</strong> The payment link will be valid for 7 days and will be sent to the customer's email address via Stripe.</p>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Generate Payment Link</button>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

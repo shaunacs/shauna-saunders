@@ -1,0 +1,323 @@
+/* Admin Interface Styles - Simple and functional */
+@import url('customers.css');
+
+/* Override primary color for admin */
+:root {
+    --admin-primary: #059669;
+    --admin-secondary: #10B981;
+}
+
+.admin-nav {
+    background-color: var(--bg-card);
+    border-bottom: 2px solid transparent;
+    border-image: linear-gradient(90deg, var(--admin-primary), var(--admin-secondary)) 1;
+}
+
+.admin-nav .nav-brand {
+    background: linear-gradient(135deg, var(--admin-primary), var(--admin-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.admin-nav .nav-link {
+    color: var(--text-light);
+}
+
+.admin-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    min-height: calc(100vh - 160px);
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    margin: 0;
+    background: linear-gradient(135deg, var(--admin-primary), var(--admin-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.breadcrumb {
+    margin-bottom: 1rem;
+    color: var(--text-light);
+}
+
+.breadcrumb a {
+    color: var(--admin-secondary);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.stat-detail {
+    font-size: 0.875rem;
+    color: var(--text-light);
+    margin-top: 0.5rem;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+}
+
+.dashboard-section {
+    background: var(--bg-card);
+    padding: 2rem;
+    border-radius: 16px;
+    border: 2px solid var(--border-color);
+}
+
+.dashboard-section h2 {
+    margin-bottom: 1.5rem;
+    color: var(--admin-secondary);
+}
+
+.actions-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.action-btn {
+    display: block;
+    padding: 1rem;
+    background: var(--bg-dark);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-light);
+    font-weight: 500;
+    transition: all 0.3s;
+    border: 1px solid var(--border-color);
+}
+
+.action-btn:hover {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: var(--admin-secondary);
+    color: var(--admin-secondary);
+    transform: translateY(-2px);
+}
+
+/* Tables */
+.data-table, .simple-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-card);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.data-table thead, .simple-table thead {
+    background: linear-gradient(135deg, var(--admin-primary), var(--admin-secondary));
+}
+
+.data-table th, .simple-table th {
+    text-align: left;
+    padding: 1rem;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+.data-table td, .simple-table td {
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+    color: #CBD5E0;
+}
+
+.data-table tr:hover {
+    background: rgba(16, 185, 129, 0.05);
+}
+
+/* Badges */
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.badge-success, .badge-succeeded, .badge-active {
+    background: rgba(16, 185, 129, 0.2);
+    color: #6EE7B7;
+}
+
+.badge-pending, .badge-new {
+    background: rgba(251, 191, 36, 0.2);
+    color: #FBBF24;
+}
+
+.badge-in_progress, .badge-processing {
+    background: rgba(103, 232, 249, 0.2);
+    color: #67E8F9;
+}
+
+.badge-completed {
+    background: rgba(16, 185, 129, 0.2);
+    color: #6EE7B7;
+}
+
+.badge-cancelled, .badge-failed, .badge-inactive {
+    background: rgba(239, 68, 68, 0.2);
+    color: #FCA5A5;
+}
+
+.badge-archived, .badge-converted {
+    background: rgba(107, 114, 128, 0.2);
+    color: #9CA3AF;
+}
+
+/* Forms */
+.form-standard {
+    max-width: 600px;
+    background: var(--bg-card);
+    padding: 2rem;
+    border-radius: 16px;
+    border: 2px solid var(--border-color);
+}
+
+.form-standard .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-standard label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-standard input,
+.form-standard select,
+.form-standard textarea {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: var(--bg-dark);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    color: var(--text-light);
+    transition: border-color 0.3s ease;
+}
+
+.form-standard input:focus,
+.form-standard select:focus,
+.form-standard textarea:focus {
+    outline: none;
+    border-color: var(--admin-secondary);
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+/* Info Grid */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--bg-dark);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+/* Actions Section */
+.actions-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Link Button */
+.link-btn {
+    display: inline-block;
+    margin-top: 1rem;
+    color: var(--admin-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.link-btn:hover {
+    text-decoration: underline;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+
+.empty-state a {
+    color: var(--admin-secondary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.empty-state a:hover {
+    text-decoration: underline;
+}
+
+/* Subtitle */
+.subtitle {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+
+/* Footer */
+.admin-footer {
+    background-color: var(--bg-card);
+    color: var(--text-muted);
+    text-align: center;
+    padding: 2rem;
+    margin-top: 4rem;
+    border-top: 2px solid transparent;
+    border-image: linear-gradient(90deg, var(--admin-primary), var(--admin-secondary)) 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .data-table {
+        font-size: 0.875rem;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.5rem;
+    }
+}

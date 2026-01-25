@@ -1,0 +1,126 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}{% if project %}Edit Project{% else %}New Project{% endif %} - Admin{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('admin.projects') }}">Projects</a> / {% if project %}Edit{% else %}New{% endif %}
+</div>
+
+<h1>{% if project %}Edit Project{% else %}Create New Project{% endif %}</h1>
+
+<form method="POST" class="form-standard">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    {% if not project %}
+    <div class="form-group">
+        <label for="customer_id">Customer *</label>
+        <select id="customer_id" name="customer_id" required>
+            <option value="">Select a customer...</option>
+            {% for customer in customers %}
+            <option value="{{ customer.id }}">{{ customer.name }} ({{ customer.email }})</option>
+            {% endfor %}
+        </select>
+    </div>
+    {% endif %}
+
+    <div class="form-group">
+        <label for="project_name">Project Name *</label>
+        <input type="text" id="project_name" name="project_name" value="{{ project.project_name if project else '' }}" required>
+    </div>
+
+    <div class="form-group">
+        <label for="project_type">Project Type *</label>
+        <select id="project_type" name="project_type" required>
+            <option value="custom_website" {% if project and project.project_type == 'custom_website' %}selected{% endif %}>Custom Website Development</option>
+            <option value="template_website" {% if project and project.project_type == 'template_website' %}selected{% endif %}>Template-Based Website</option>
+            <option value="ongoing_maintenance" {% if project and project.project_type == 'ongoing_maintenance' %}selected{% endif %}>Ongoing Maintenance</option>
+            <option value="as_needed_maintenance" {% if project and project.project_type == 'as_needed_maintenance' %}selected{% endif %}>As-Needed Maintenance</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="total_amount">Total Amount *</label>
+        <input type="number" id="total_amount" name="total_amount" value="{{ project.total_amount if project else '' }}" step="0.01" min="0" required>
+    </div>
+
+    <div class="form-group">
+        <label for="payment_plan">Payment Plan</label>
+        <select id="payment_plan" name="payment_plan">
+            <option value="">None</option>
+            <option value="50_50" {% if project and project.payment_plan == '50_50' %}selected{% endif %}>50/50 Split</option>
+            <option value="milestone" {% if project and project.payment_plan == 'milestone' %}selected{% endif %}>Milestone-Based</option>
+            <option value="4_month" {% if project and project.payment_plan == '4_month' %}selected{% endif %}>4-Month Payment Plan</option>
+            <option value="full_upfront" {% if project and project.payment_plan == 'full_upfront' %}selected{% endif %}>Full Payment Upfront</option>
+        </select>
+    </div>
+
+    <div class="form-group" style="border-top:1px solid var(--border-color); padding-top:1.5rem; margin-top:1.5rem;">
+        <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+            <input type="checkbox" id="is_subscription" name="is_subscription" value="1" {% if project and project.is_subscription %}checked{% endif %}>
+            <span><strong>This is a recurring subscription</strong></span>
+        </label>
+        <small style="display:block; margin-top:0.25rem; color:#666;">Check this for recurring services like ongoing maintenance. Customers will subscribe via Stripe.</small>
+    </div>
+
+    <div class="form-group" id="subscription-fields" style="display:none; background:var(--background-color); padding:1rem; border-radius:8px;">
+        <label for="stripe_price_id">Stripe Price ID *</label>
+        <input type="text" id="stripe_price_id" name="stripe_price_id" value="{{ project.stripe_price_id if project else '' }}" placeholder="price_1A2b3C4d5E6f7G8h">
+        <small style="display:block; margin-top:0.5rem;">
+            Create a recurring price in your <a href="https://dashboard.stripe.com/products" target="_blank" rel="noopener">Stripe Dashboard</a>,
+            then paste the Price ID here (starts with "price_"). The Total Amount above should match the monthly price.
+        </small>
+    </div>
+
+    {% if project %}
+    <div class="form-group">
+        <label for="status">Status</label>
+        <select id="status" name="status">
+            <option value="pending" {% if project.status == 'pending' %}selected{% endif %}>Pending</option>
+            <option value="in_progress" {% if project.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+            <option value="completed" {% if project.status == 'completed' %}selected{% endif %}>Completed</option>
+            <option value="cancelled" {% if project.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+        </select>
+    </div>
+    {% endif %}
+
+    <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="4">{{ project.description if project else '' }}</textarea>
+    </div>
+
+    <div class="form-group">
+        <label for="notes">Internal Notes</label>
+        <textarea id="notes" name="notes" rows="3">{{ project.notes if project else '' }}</textarea>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+            {% if project %}Update Project{% else %}Create Project{% endif %}
+        </button>
+        <a href="{% if project %}{{ url_for('admin.project_detail', project_id=project.id) }}{% else %}{{ url_for('admin.projects') }}{% endif %}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+<script>
+// Toggle subscription fields based on checkbox
+const subscriptionCheckbox = document.getElementById('is_subscription');
+const subscriptionFields = document.getElementById('subscription-fields');
+const stripePriceInput = document.getElementById('stripe_price_id');
+
+function toggleSubscriptionFields() {
+    if (subscriptionCheckbox.checked) {
+        subscriptionFields.style.display = 'block';
+        stripePriceInput.required = true;
+    } else {
+        subscriptionFields.style.display = 'none';
+        stripePriceInput.required = false;
+    }
+}
+
+// Initialize on page load
+toggleSubscriptionFields();
+
+// Toggle when checkbox changes
+subscriptionCheckbox.addEventListener('change', toggleSubscriptionFields);
+</script>
+{% endblock %}
