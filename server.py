@@ -677,4 +677,4 @@ This inquiry was submitted on {current_time.strftime('%B %d, %Y at %I:%M %p')}
 
 if __name__ == '__main__':
     # Use port 5001 to avoid conflict with macOS AirPlay on port 5000
-    app.run(port=5001)
+    app.run()
