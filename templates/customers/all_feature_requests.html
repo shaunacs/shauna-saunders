@@ -15,7 +15,7 @@
         <div class="feature-request-card">
             <div class="request-header">
                 <div class="request-title-section">
-                    <h3>{{ request.title }}</h3>
+                    <h3><a href="{{ url_for('customers.view_feature_request', request_id=request.id) }}" class="request-title-link">{{ request.title }}</a></h3>
                     <div class="request-meta">
                         <span class="request-project">{{ request.project_name }}</span>
                         <span class="request-date">{{ request.created_at[:10] if request.created_at else 'N/A' }}</span>
@@ -63,13 +63,12 @@
                 {% endif %}
             </div>
 
-            {% if request.status not in ['completed', 'cancelled'] %}
             <div class="request-footer">
                 <small class="last-updated">
                     Last updated: {{ request.updated_at[:10] if request.updated_at else request.created_at[:10] if request.created_at else 'N/A' }}
                 </small>
+                <a href="{{ url_for('customers.view_feature_request', request_id=request.id) }}" class="view-details-link">View Details &rarr;</a>
             </div>
-            {% endif %}
         </div>
         {% endfor %}
     </div>
@@ -143,6 +142,17 @@
     color: var(--text-light);
     margin: 0 0 0.5rem 0;
     font-size: 1.2rem;
+}
+
+.request-title-link {
+    color: var(--text-light);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.request-title-link:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
 }
 
 .request-meta {
@@ -281,11 +291,26 @@
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .last-updated {
     color: var(--text-muted);
     font-size: 0.8rem;
+}
+
+.view-details-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.view-details-link:hover {
+    text-decoration: underline;
 }
 
 .pagination-info {

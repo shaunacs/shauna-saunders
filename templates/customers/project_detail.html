@@ -151,6 +151,19 @@
                     View Agreement
                 </a>
             </section>
+
+            <section class="section">
+                <h3>Notification Settings</h3>
+                <form method="POST" action="{{ url_for('customers.update_project_email', project_id=project.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label for="project_email" style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">Project Email</label>
+                        <input type="email" id="project_email" name="project_email" value="{{ project.email or '' }}" placeholder="Optional: notifications@example.com" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <p style="font-size: 0.75rem; color: #666; margin: 0.5rem 0;">Feature request updates will be sent to this email. Leave blank to use your account email.</p>
+                    <button type="submit" class="btn btn-secondary btn-block" style="margin-top: 0.5rem;">Update Email</button>
+                </form>
+            </section>
         </div>
     </div>
 </div>

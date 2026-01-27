@@ -285,6 +285,7 @@ def create_project_route():
         payment_plan = request.form.get('payment_plan')
         description = request.form.get('description', '').strip() or None
         notes = request.form.get('notes', '').strip() or None
+        email = request.form.get('email', '').strip() or None
         is_subscription = request.form.get('is_subscription') == '1'
         stripe_price_id = request.form.get('stripe_price_id', '').strip() or None
 
@@ -316,7 +317,8 @@ def create_project_route():
             description=description,
             notes=notes,
             is_subscription=is_subscription,
-            stripe_price_id=stripe_price_id
+            stripe_price_id=stripe_price_id,
+            email=email
         )
 
         flash(f'Project "{project_name}" created successfully!', 'success')
@@ -374,6 +376,7 @@ def edit_project(project_id):
         payment_plan = request.form.get('payment_plan')
         description = request.form.get('description', '').strip() or None
         notes = request.form.get('notes', '').strip() or None
+        email = request.form.get('email', '').strip() or None
         is_subscription = request.form.get('is_subscription') == '1'
         stripe_price_id = request.form.get('stripe_price_id', '').strip() or None
 
@@ -403,6 +406,7 @@ def edit_project(project_id):
             payment_plan=payment_plan,
             description=description,
             notes=notes,
+            email=email,
             is_subscription=is_subscription,
             stripe_price_id=stripe_price_id
         )
@@ -426,6 +430,155 @@ def delete_project_route(project_id):
     delete_project(project_id)
     flash(f'Project "{project["project_name"]}" deleted.', 'success')
     return redirect(url_for('admin.projects'))
+
+
+# Subscription Management
+
+@admin_bp.route('/projects/<int:project_id>/subscription', methods=['GET', 'POST'])
+@admin_required
+def manage_subscription(project_id):
+    """Manage subscription details for a project"""
+    project = get_project_by_id(project_id)
+    if not project:
+        flash('Project not found.', 'error')
+        return redirect(url_for('admin.projects'))
+
+    customer = get_customer_by_id(project['customer_id'])
+
+    # Get current Stripe subscription info if exists
+    stripe_subscription = None
+    if project.get('stripe_subscription_id'):
+        try:
+            stripe_subscription = stripe.Subscription.retrieve(project['stripe_subscription_id'])
+        except stripe.error.StripeError:
+            pass
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        if action == 'update_details':
+            # Manual update of subscription details
+            subscription_status = request.form.get('subscription_status')
+            stripe_subscription_id = request.form.get('stripe_subscription_id', '').strip() or None
+            next_payment_date_str = request.form.get('next_payment_date', '').strip()
+
+            next_payment_date = None
+            if next_payment_date_str:
+                try:
+                    next_payment_date = datetime.strptime(next_payment_date_str, '%Y-%m-%d')
+                except ValueError:
+                    flash('Invalid date format for next payment date.', 'error')
+                    return redirect(url_for('admin.manage_subscription', project_id=project_id))
+
+            update_project(
+                project_id,
+                subscription_status=subscription_status,
+                stripe_subscription_id=stripe_subscription_id,
+                next_payment_date=next_payment_date
+            )
+            flash('Subscription details updated successfully!', 'success')
+            return redirect(url_for('admin.manage_subscription', project_id=project_id))
+
+        elif action == 'create_stripe_subscription':
+            # Create a Stripe subscription with a future billing date
+            if not project.get('stripe_price_id'):
+                flash('Stripe Price ID is required to create a subscription.', 'error')
+                return redirect(url_for('admin.manage_subscription', project_id=project_id))
+
+            first_payment_date_str = request.form.get('first_payment_date', '').strip()
+            if not first_payment_date_str:
+                flash('First payment date is required.', 'error')
+                return redirect(url_for('admin.manage_subscription', project_id=project_id))
+
+            try:
+                first_payment_date = datetime.strptime(first_payment_date_str, '%Y-%m-%d')
+                # Stripe requires trial_end to be at least 48 hours in the future
+                min_date = datetime.now() + timedelta(hours=48)
+                if first_payment_date < min_date:
+                    flash('First payment date must be at least 48 hours in the future.', 'error')
+                    return redirect(url_for('admin.manage_subscription', project_id=project_id))
+                billing_anchor = int(first_payment_date.timestamp())
+            except ValueError:
+                flash('Invalid date format.', 'error')
+                return redirect(url_for('admin.manage_subscription', project_id=project_id))
+
+            try:
+                # Find or create Stripe customer
+                stripe_customers = stripe.Customer.list(email=customer['email'], limit=1)
+                if stripe_customers.data:
+                    stripe_customer = stripe_customers.data[0]
+                else:
+                    stripe_customer = stripe.Customer.create(
+                        email=customer['email'],
+                        name=customer['name'],
+                        metadata={
+                            'customer_id': str(customer['id']),
+                            'project_id': str(project_id)
+                        }
+                    )
+
+                # Create subscription with future billing anchor
+                # Using trial_end to delay the first charge
+                subscription = stripe.Subscription.create(
+                    customer=stripe_customer.id,
+                    items=[{'price': project['stripe_price_id']}],
+                    trial_end=billing_anchor,
+                    metadata={
+                        'customer_id': str(customer['id']),
+                        'project_id': str(project_id)
+                    }
+                )
+
+                # Update project with subscription info
+                update_project(
+                    project_id,
+                    stripe_subscription_id=subscription.id,
+                    subscription_status='active',
+                    next_payment_date=first_payment_date
+                )
+
+                flash(f'Stripe subscription created! First payment on {first_payment_date_str}. Subscription ID: {subscription.id}', 'success')
+                return redirect(url_for('admin.manage_subscription', project_id=project_id))
+
+            except stripe.error.StripeError as e:
+                flash(f'Stripe error: {str(e)}', 'error')
+                return redirect(url_for('admin.manage_subscription', project_id=project_id))
+
+        elif action == 'sync_from_stripe':
+            # Sync local data from Stripe subscription
+            if not project.get('stripe_subscription_id'):
+                flash('No Stripe subscription ID to sync from.', 'error')
+                return redirect(url_for('admin.manage_subscription', project_id=project_id))
+
+            try:
+                sub = stripe.Subscription.retrieve(project['stripe_subscription_id'])
+                next_payment = datetime.fromtimestamp(sub.current_period_end)
+
+                status_map = {
+                    'active': 'active',
+                    'past_due': 'past_due',
+                    'canceled': 'cancelled',
+                    'unpaid': 'past_due',
+                    'trialing': 'active'
+                }
+                local_status = status_map.get(sub.status, 'inactive')
+
+                update_project(
+                    project_id,
+                    subscription_status=local_status,
+                    next_payment_date=next_payment
+                )
+                flash(f'Synced from Stripe! Status: {local_status}, Next payment: {next_payment.strftime("%Y-%m-%d")}', 'success')
+            except stripe.error.StripeError as e:
+                flash(f'Stripe error: {str(e)}', 'error')
+
+            return redirect(url_for('admin.manage_subscription', project_id=project_id))
+
+    return render_template('admin/subscription_form.html',
+                          project=project,
+                          customer=customer,
+                          stripe_subscription=stripe_subscription,
+                          now=datetime.now())
 
 
 # Milestone Management

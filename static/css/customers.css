@@ -35,6 +35,7 @@ body {
     padding: 1.25rem 0;
     border-bottom: 2px solid transparent;
     border-image: linear-gradient(90deg, var(--primary-color), var(--secondary-color)) 1;
+    position: relative;
 }
 
 .nav-container {

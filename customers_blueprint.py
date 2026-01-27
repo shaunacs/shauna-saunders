@@ -6,8 +6,7 @@ from werkzeug.security import generate_password_hash
 from functools import wraps
 from datetime import datetime, timedelta
 import stripe
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+from ses_helper import send_email as ses_send_email
 
 from customers_db import (
     get_db, verify_customer, get_customer_by_id, get_projects_by_customer,
@@ -261,6 +260,30 @@ def project_detail(project_id):
                          remaining_balance=remaining_balance)
 
 
+@customers_bp.route('/projects/<int:project_id>/update-email', methods=['POST'])
+@customer_login_required
+def update_project_email(project_id):
+    """Update project notification email"""
+    customer_id = session['customer_id']
+    project = get_project_by_id(project_id)
+
+    # Security: Ensure project belongs to logged-in customer
+    if not project or project['customer_id'] != customer_id:
+        flash('Project not found.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    email = request.form.get('project_email', '').strip() or None
+
+    update_project(project_id, email=email)
+
+    if email:
+        flash(f'Project notification email updated to {email}.', 'success')
+    else:
+        flash('Project notification email cleared. Updates will be sent to your account email.', 'success')
+
+    return redirect(url_for('customers.project_detail', project_id=project_id))
+
+
 # Stripe Payment Routes
 
 @customers_bp.route('/create-checkout-session', methods=['POST'])
@@ -506,12 +529,10 @@ def send_cancellation_notification(customer_id, project):
     """Send email notification when a subscription is cancelled"""
     try:
         customer = get_customer_by_id(customer_id)
-        sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
-        
-        if not sendgrid_api_key or not customer:
-            print("SendGrid not configured or customer not found for cancellation notification")
+        if not customer:
+            print("Customer not found for cancellation notification")
             return
-        
+
         email_body = f"""
 Subscription Cancellation Notification
 
@@ -529,16 +550,16 @@ Customer Contact Information:
 This is an automated notification from your customer management system.
 """
 
-        message = Mail(
-            from_email='noreply@shaunasaunders.com',
-            to_emails='shauna.saunders@alumni.unc.edu',
+        result = ses_send_email(
+            to_email='shauna.saunders@alumni.unc.edu',
             subject=f'Subscription Cancelled: {customer["name"]} - {project["project_name"]}',
-            plain_text_content=email_body
+            body=email_body
         )
 
-        sg = SendGridAPIClient(sendgrid_api_key)
-        response = sg.send(message)
-        print(f"Cancellation notification sent for customer {customer['name']}")
+        if result['success']:
+            print(f"Cancellation notification sent for customer {customer['name']}")
+        else:
+            print(f"Failed to send cancellation notification: {result.get('error')}")
 
     except Exception as e:
         print(f"Error sending cancellation notification: {str(e)}")
@@ -709,12 +730,6 @@ def send_feature_request_notification(feature_request_id):
             print("Feature request not found for notification")
             return
 
-        sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
-        
-        if not sendgrid_api_key:
-            print("SendGrid not configured for feature request notification")
-            return
-        
         email_body = f"""
 New Feature Request Submitted
 
@@ -738,19 +753,21 @@ You can manage this request in your admin panel.
 This is an automated notification from your customer management system.
 """
 
-        message = Mail(
-            from_email='noreply@shaunasaunders.com',
-            to_emails='shauna.saunders@alumni.unc.edu',
+        result = ses_send_email(
+            to_email='shauna.saunders@alumni.unc.edu',
             subject=f'New Feature Request: {feature_request["title"]} - {feature_request["customer_name"]}',
-            plain_text_content=email_body
+            body=email_body
         )
 
-        sg = SendGridAPIClient(sendgrid_api_key)
-        response = sg.send(message)
-        print(f"Feature request notification sent for request #{feature_request_id}")
+        if result['success']:
+            print(f"Feature request notification sent for request #{feature_request_id}")
+        else:
+            print(f"Failed to send feature request notification: {result.get('error')}")
 
     except Exception as e:
-        print(f"Error sending feature request notification: {str(e)}")
+        import traceback
+        print(f"ERROR sending feature request notification: {str(e)}")
+        print(f"Traceback: {traceback.format_exc()}")
 
 
 def send_status_update_notification(feature_request_id, old_status, new_status, status_message=None):
@@ -761,11 +778,8 @@ def send_status_update_notification(feature_request_id, old_status, new_status, 
             print("Feature request not found for status update notification")
             return
 
-        sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
-
-        if not sendgrid_api_key:
-            print("SendGrid not configured for status update notification")
-            return
+        # Use project-specific email if defined, otherwise fall back to customer email
+        recipient_email = feature_request.get('project_email') or feature_request['customer_email']
 
         # Create user-friendly status names
         status_names = {
@@ -781,6 +795,9 @@ def send_status_update_notification(feature_request_id, old_status, new_status, 
 
         old_status_name = status_names.get(old_status, old_status.replace('_', ' ').title())
         new_status_name = status_names.get(new_status, new_status.replace('_', ' ').title())
+
+        # Build the link to the feature request detail page
+        feature_request_url = f"{BASE_URL}/customers/feature-request/{feature_request_id}"
 
         email_body = f"""
 Feature Request Status Update
@@ -798,22 +815,23 @@ Status changed from "{old_status_name}" to "{new_status_name}"
 
 {f"Admin Notes: {feature_request['admin_notes']}" if feature_request.get('admin_notes') else ""}
 
-You can view the full details and history at: [Your customer portal link]
+You can view the full details and history at: {feature_request_url}
 
 Thanks,
 Shauna Saunders
 """
 
-        message = Mail(
-            from_email='noreply@shaunasaunders.com',
-            to_emails=feature_request['customer_email'],
+        result = ses_send_email(
+            to_email=recipient_email,
             subject=f'Status Update: {feature_request["title"]} - Now {new_status_name}',
-            plain_text_content=email_body
+            body=email_body,
+            reply_to='shauna.saunders@alumni.unc.edu'
         )
 
-        sg = SendGridAPIClient(sendgrid_api_key)
-        response = sg.send(message)
-        print(f"Status update notification sent to {feature_request['customer_email']} for request #{feature_request_id}")
+        if result['success']:
+            print(f"Status update notification sent to {recipient_email} for request #{feature_request_id}")
+        else:
+            print(f"Failed to send status update notification: {result.get('error')}")
 
     except Exception as e:
         print(f"Error sending status update notification: {str(e)}")

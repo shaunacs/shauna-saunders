@@ -50,6 +50,7 @@ def init_db():
             end_date TIMESTAMP,
             description TEXT,
             notes TEXT,
+            email TEXT,
             is_subscription BOOLEAN DEFAULT 0,
             stripe_price_id TEXT,
             stripe_subscription_id TEXT,
@@ -216,6 +217,25 @@ def init_db():
     conn.commit()
     conn.close()
 
+    # Run migrations for existing databases
+    migrate_db()
+
+
+def migrate_db():
+    """Run migrations to add new columns to existing tables"""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Check if email column exists in projects table
+    cursor.execute("PRAGMA table_info(projects)")
+    columns = [column[1] for column in cursor.fetchall()]
+
+    if 'email' not in columns:
+        cursor.execute('ALTER TABLE projects ADD COLUMN email TEXT')
+        conn.commit()
+
+    conn.close()
+
 
 # Customer Management Functions
 
@@ -342,17 +362,17 @@ def delete_customer(customer_id):
 # Project Management Functions
 
 def create_project(customer_id, project_name, project_type, total_amount, payment_plan=None,
-                   description=None, notes=None, is_subscription=False, stripe_price_id=None):
+                   description=None, notes=None, is_subscription=False, stripe_price_id=None, email=None):
     """Create a new project for a customer"""
     conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute('''
         INSERT INTO projects (customer_id, project_name, project_type, total_amount,
-                              payment_plan, description, notes, is_subscription, stripe_price_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                              payment_plan, description, notes, is_subscription, stripe_price_id, email)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (customer_id, project_name, project_type, total_amount, payment_plan, description, notes,
-          is_subscription, stripe_price_id))
+          is_subscription, stripe_price_id, email))
 
     conn.commit()
     project_id = cursor.lastrowid
@@ -403,7 +423,7 @@ def update_project(project_id, **kwargs):
     cursor = conn.cursor()
 
     allowed_fields = ['project_name', 'project_type', 'status', 'total_amount',
-                     'payment_plan', 'start_date', 'end_date', 'description', 'notes',
+                     'payment_plan', 'start_date', 'end_date', 'description', 'notes', 'email',
                      'is_subscription', 'stripe_price_id', 'stripe_subscription_id', 'subscription_status', 'next_payment_date']
     updates = []
     values = []
@@ -912,8 +932,8 @@ def get_feature_request_by_id(request_id):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT fr.*, c.name as customer_name, c.email as customer_email, 
-               p.project_name
+        SELECT fr.*, c.name as customer_name, c.email as customer_email,
+               p.project_name, p.email as project_email
         FROM feature_requests fr
         JOIN customers c ON fr.customer_id = c.id
         JOIN projects p ON fr.project_id = p.id

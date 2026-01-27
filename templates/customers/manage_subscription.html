@@ -14,6 +14,11 @@
     <div class="subscription-details-card">
         <div class="subscription-header">
             <h3>Subscription Details</h3>
+            {% if subscription and subscription.status == 'trialing' %}
+            <span class="subscription-status status-trialing">
+                Scheduled
+            </span>
+            {% else %}
             <span class="subscription-status status-{{ project.subscription_status }}">
                 {% if project.subscription_status == 'cancel_pending' %}
                     Cancelling
@@ -21,6 +26,7 @@
                     {{ project.subscription_status|title }}
                 {% endif %}
             </span>
+            {% endif %}
         </div>
 
         <div class="subscription-info">
@@ -71,6 +77,13 @@
                 Your subscription will be cancelled at the end of the current billing period.
             </div>
             {% endif %}
+
+            {% if subscription.status == 'trialing' %}
+            <div class="alert alert-info" style="margin-top:1rem;">
+                Your subscription is scheduled to start billing on {{ subscription.trial_end|timestamp_to_date if subscription.trial_end else project.next_payment_date|format_date }}.
+                Please ensure you have a valid payment method on file before this date.
+            </div>
+            {% endif %}
             {% endif %}
 
             {% if project.description %}
@@ -81,10 +94,10 @@
             {% endif %}
         </div>
 
-        {% if subscription and subscription.status == 'active' and not subscription.cancel_at_period_end %}
+        {% if subscription and subscription.status in ['active', 'trialing'] and not subscription.cancel_at_period_end %}
         <div class="subscription-actions">
             <h3>Manage Subscription</h3>
-            
+
             <div class="action-section">
                 <h4>Update Payment Information</h4>
                 <p>Update your credit card or payment method through our secure portal.</p>
@@ -94,6 +107,7 @@
                 </form>
             </div>
 
+            {% if subscription.status == 'active' %}
             <div class="action-section">
                 <h4>Cancel Subscription</h4>
                 <p>Need to cancel your subscription? You can do so below. Your access will continue until the end of your current billing period.</p>
@@ -104,6 +118,7 @@
                     <button type="submit" class="btn btn-danger">Cancel Subscription</button>
                 </form>
             </div>
+            {% endif %}
         </div>
         {% elif project.subscription_status == 'cancelled' or (subscription and subscription.status == 'canceled') %}
         <div class="alert alert-info">
@@ -186,6 +201,11 @@
 .subscription-status.status-inactive {
     background: rgba(251, 191, 36, 0.2);
     color: var(--warning-color);
+}
+
+.subscription-status.status-trialing {
+    background: rgba(103, 232, 249, 0.2);
+    color: #67E8F9;
 }
 
 .subscription-info {

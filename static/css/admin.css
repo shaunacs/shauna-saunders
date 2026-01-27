@@ -184,6 +184,16 @@
     color: #9CA3AF;
 }
 
+.badge-cancel_pending {
+    background: rgba(251, 146, 60, 0.2);
+    color: #FB923C;
+}
+
+.badge-past_due {
+    background: rgba(239, 68, 68, 0.3);
+    color: #F87171;
+}
+
 /* Forms */
 .form-standard {
     max-width: 600px;

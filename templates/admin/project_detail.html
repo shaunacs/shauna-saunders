@@ -22,11 +22,41 @@
     <div><strong>Type:</strong> {{ project.project_type|replace('_', ' ')|title }}</div>
     <div><strong>Status:</strong> <span class="badge badge-{{ project.status }}">{{ project.status|title }}</span></div>
     <div><strong>Payment Plan:</strong> {{ project.payment_plan|replace('_', ' ')|title if project.payment_plan else '-' }}</div>
-    <div><strong>Total Amount:</strong> ${{ "%.2f"|format(project.total_amount) }}</div>
+    <div><strong>Total Amount:</strong> ${{ "%.2f"|format(project.total_amount) }}{% if project.is_subscription %}/month{% endif %}</div>
     <div><strong>Amount Paid:</strong> ${{ "%.2f"|format(project.amount_paid) }}</div>
     <div><strong>Remaining:</strong> ${{ "%.2f"|format(project.total_amount - project.amount_paid) }}</div>
     <div><strong>Completion:</strong> {{ completion_percentage }}%</div>
+    <div><strong>Project Email:</strong> {{ project.email if project.email else '(uses customer email)' }}</div>
 </div>
+
+{% if project.is_subscription %}
+<div style="margin:2rem 0; padding:1.5rem; background:#e8f4fd; border:1px solid #b8daff; border-radius:8px;">
+    <div style="display:flex; justify-content:space-between; align-items:start; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h3 style="margin:0 0 0.5rem 0;">Subscription Details</h3>
+            <div class="info-grid" style="margin:0;">
+                <div><strong>Subscription Status:</strong>
+                    <span class="badge badge-{{ project.subscription_status or 'inactive' }}">
+                        {{ (project.subscription_status or 'inactive')|replace('_', ' ')|title }}
+                    </span>
+                </div>
+                <div><strong>Stripe Price ID:</strong> {{ project.stripe_price_id or 'Not set' }}</div>
+                <div><strong>Stripe Subscription ID:</strong> {{ project.stripe_subscription_id or 'Not set' }}</div>
+                <div><strong>Next Payment:</strong>
+                    {% if project.next_payment_date %}
+                        {{ project.next_payment_date[:10] if project.next_payment_date is string else project.next_payment_date.strftime('%Y-%m-%d') }}
+                    {% else %}
+                        Not set
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div>
+            <a href="{{ url_for('admin.manage_subscription', project_id=project.id) }}" class="btn btn-primary">Manage Subscription</a>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 {% if project.description %}
 <div style="margin:2rem 0; padding:1.5rem; background:var(--background-color); border-radius:8px;">

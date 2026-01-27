@@ -1,0 +1,151 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Manage Subscription - {{ project.project_name }} - Admin{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('admin.projects') }}">Projects</a> /
+    <a href="{{ url_for('admin.project_detail', project_id=project.id) }}">{{ project.project_name }}</a> /
+    Subscription
+</div>
+
+<div class="page-header">
+    <h1>Manage Subscription</h1>
+    <a href="{{ url_for('admin.project_detail', project_id=project.id) }}" class="btn btn-secondary">Back to Project</a>
+</div>
+
+<div class="info-grid" style="margin-bottom:2rem;">
+    <div><strong>Project:</strong> {{ project.project_name }}</div>
+    <div><strong>Customer:</strong> <a href="{{ url_for('admin.customer_detail', customer_id=customer.id) }}">{{ customer.name }}</a> ({{ customer.email }})</div>
+    <div><strong>Monthly Amount:</strong> ${{ "%.2f"|format(project.total_amount) }}</div>
+    <div><strong>Stripe Price ID:</strong> {{ project.stripe_price_id or 'Not set' }}</div>
+</div>
+
+<!-- Current Subscription Status -->
+<div style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:8px; padding:1.5rem; margin-bottom:2rem;">
+    <h2 style="margin-top:0;">Current Status</h2>
+    <div class="info-grid">
+        <div><strong>Subscription Status:</strong>
+            <span class="badge badge-{{ project.subscription_status or 'inactive' }}">
+                {{ (project.subscription_status or 'inactive')|replace('_', ' ')|title }}
+            </span>
+        </div>
+        <div><strong>Stripe Subscription ID:</strong> {{ project.stripe_subscription_id or 'Not set' }}</div>
+        <div><strong>Next Payment Date:</strong>
+            {% if project.next_payment_date %}
+                {{ project.next_payment_date[:10] if project.next_payment_date is string else project.next_payment_date.strftime('%Y-%m-%d') }}
+            {% else %}
+                Not set
+            {% endif %}
+        </div>
+        {% if stripe_subscription %}
+        <div><strong>Stripe Status:</strong>
+            <span class="badge">{{ stripe_subscription.status }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if project.stripe_subscription_id %}
+    <form method="POST" style="margin-top:1rem;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="sync_from_stripe">
+        <button type="submit" class="btn btn-secondary">Sync from Stripe</button>
+    </form>
+    {% endif %}
+</div>
+
+<!-- Manual Update Form -->
+<div style="background:#fff; border:1px solid #dee2e6; border-radius:8px; padding:1.5rem; margin-bottom:2rem;">
+    <h2 style="margin-top:0;">Update Subscription Details</h2>
+    <p style="color:#666; margin-bottom:1.5rem;">Manually update local subscription records. Use this for customers who have been paying via other methods (Venmo, check, etc.).</p>
+
+    <form method="POST" class="form-standard" style="max-width:100%;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="update_details">
+
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.5rem;">
+            <div class="form-group" style="margin:0;">
+                <label for="subscription_status">Subscription Status</label>
+                <select id="subscription_status" name="subscription_status">
+                    <option value="inactive" {% if project.subscription_status == 'inactive' or not project.subscription_status %}selected{% endif %}>Inactive</option>
+                    <option value="active" {% if project.subscription_status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="cancel_pending" {% if project.subscription_status == 'cancel_pending' %}selected{% endif %}>Cancel Pending</option>
+                    <option value="cancelled" {% if project.subscription_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                    <option value="past_due" {% if project.subscription_status == 'past_due' %}selected{% endif %}>Past Due</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin:0;">
+                <label for="stripe_subscription_id">Stripe Subscription ID</label>
+                <input type="text" id="stripe_subscription_id" name="stripe_subscription_id"
+                       value="{{ project.stripe_subscription_id or '' }}"
+                       placeholder="sub_1A2b3C4d5E6f7G8h">
+                <small style="display:block; margin-top:0.25rem; color:#666;">Leave blank if no Stripe subscription exists</small>
+            </div>
+
+            <div class="form-group" style="margin:0;">
+                <label for="next_payment_date">Next Payment Date</label>
+                <input type="date" id="next_payment_date" name="next_payment_date"
+                       value="{% if project.next_payment_date %}{{ project.next_payment_date[:10] if project.next_payment_date is string else project.next_payment_date.strftime('%Y-%m-%d') }}{% endif %}">
+            </div>
+        </div>
+
+        <div style="margin-top:1.5rem;">
+            <button type="submit" class="btn btn-primary">Update Subscription Details</button>
+        </div>
+    </form>
+</div>
+
+<!-- Create Stripe Subscription -->
+{% if project.stripe_price_id and not project.stripe_subscription_id %}
+<div style="background:#e8f4fd; border:1px solid #b8daff; border-radius:8px; padding:1.5rem; margin-bottom:2rem;">
+    <h2 style="margin-top:0;">Create Stripe Subscription</h2>
+    <p style="color:#666; margin-bottom:1.5rem;">
+        Create a new Stripe subscription for this customer with a future first payment date.
+        This is useful when a customer has already been paying you through other means (Venmo, check, etc.)
+        and you want to transition them to Stripe billing without charging them immediately.
+    </p>
+
+    <form method="POST" class="form-standard" style="max-width:100%;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="create_stripe_subscription">
+
+        <div class="form-group">
+            <label for="first_payment_date">First Payment Date *</label>
+            <input type="date" id="first_payment_date" name="first_payment_date" required>
+            <small style="display:block; margin-top:0.5rem; color:#666;">
+                The customer will not be charged until this date. Stripe will create a subscription
+                in "trialing" status until the first payment date. Must be at least 48 hours in the future.
+            </small>
+        </div>
+
+        <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:4px; padding:1rem; margin:1rem 0;">
+            <strong>Note:</strong> This will create a real Stripe subscription using Price ID: <code>{{ project.stripe_price_id }}</code>
+            <br>Customer: {{ customer.name }} ({{ customer.email }})
+            <br>Amount: ${{ "%.2f"|format(project.total_amount) }}/month
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create Stripe Subscription</button>
+    </form>
+</div>
+{% elif not project.stripe_price_id %}
+<div style="background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:1.5rem; margin-bottom:2rem;">
+    <h2 style="margin-top:0;">Create Stripe Subscription</h2>
+    <p style="margin:0;">
+        <strong>Stripe Price ID Required:</strong> To create a Stripe subscription, you must first
+        <a href="{{ url_for('admin.edit_project', project_id=project.id) }}">edit this project</a>
+        and add a Stripe Price ID. Create a recurring price in your
+        <a href="https://dashboard.stripe.com/products" target="_blank" rel="noopener">Stripe Dashboard</a> first.
+    </p>
+</div>
+{% elif project.stripe_subscription_id %}
+<div style="background:#d4edda; border:1px solid #c3e6cb; border-radius:8px; padding:1.5rem; margin-bottom:2rem;">
+    <h2 style="margin-top:0;">Stripe Subscription Active</h2>
+    <p style="margin:0;">
+        This project already has a Stripe subscription: <code>{{ project.stripe_subscription_id }}</code>
+        <br><br>
+        <a href="https://dashboard.stripe.com/subscriptions/{{ project.stripe_subscription_id }}"
+           target="_blank" rel="noopener" class="btn btn-secondary">View in Stripe Dashboard</a>
+    </p>
+</div>
+{% endif %}
+{% endblock %}
