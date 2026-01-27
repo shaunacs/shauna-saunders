@@ -181,6 +181,38 @@ def init_db():
         )
     ''')
 
+    # Create project_agreements table (versioned agreements)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS project_agreements (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id INTEGER NOT NULL,
+            version INTEGER NOT NULL DEFAULT 1,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            agreement_type TEXT NOT NULL,
+            is_active BOOLEAN DEFAULT 1,
+            created_by_admin_id INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            superseded_at TIMESTAMP,
+            FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+        )
+    ''')
+
+    # Create agreement_signatures table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS agreement_signatures (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agreement_id INTEGER NOT NULL,
+            customer_id INTEGER NOT NULL,
+            signature_name TEXT NOT NULL,
+            signature_ip TEXT,
+            signed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (agreement_id) REFERENCES project_agreements(id) ON DELETE CASCADE,
+            FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+            UNIQUE(agreement_id, customer_id)
+        )
+    ''')
+
     conn.commit()
     conn.close()
 
@@ -1015,7 +1047,7 @@ def update_feature_request(request_id, **kwargs):
     conn = get_db()
     cursor = conn.cursor()
 
-    allowed_fields = ['title', 'description', 'priority', 'requested_completion', 
+    allowed_fields = ['title', 'description', 'priority', 'requested_completion',
                      'additional_info', 'admin_notes', 'estimated_hours', 'actual_hours']
     updates = []
     values = []
@@ -1035,3 +1067,375 @@ def update_feature_request(request_id, **kwargs):
         conn.commit()
 
     conn.close()
+
+
+# Agreement Management Functions
+
+def create_agreement(project_id, title, content, agreement_type, created_by_admin_id=None):
+    """Create a new agreement for a project. Supersedes any existing active agreement."""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Get the current highest version for this project
+    cursor.execute('''
+        SELECT MAX(version) as max_version FROM project_agreements WHERE project_id = ?
+    ''', (project_id,))
+    result = cursor.fetchone()
+    new_version = (result['max_version'] or 0) + 1
+
+    # Supersede any existing active agreements for this project
+    cursor.execute('''
+        UPDATE project_agreements
+        SET is_active = 0, superseded_at = ?
+        WHERE project_id = ? AND is_active = 1
+    ''', (datetime.now(), project_id))
+
+    # Create the new agreement
+    cursor.execute('''
+        INSERT INTO project_agreements (project_id, version, title, content, agreement_type, created_by_admin_id)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (project_id, new_version, title, content, agreement_type, created_by_admin_id))
+
+    conn.commit()
+    agreement_id = cursor.lastrowid
+    conn.close()
+    return agreement_id
+
+
+def get_agreement_by_id(agreement_id):
+    """Get agreement by ID"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT a.*, p.project_name, c.name as customer_name, c.id as customer_id
+        FROM project_agreements a
+        JOIN projects p ON a.project_id = p.id
+        JOIN customers c ON p.customer_id = c.id
+        WHERE a.id = ?
+    ''', (agreement_id,))
+    agreement = cursor.fetchone()
+    conn.close()
+    return dict(agreement) if agreement else None
+
+
+def get_active_agreement_for_project(project_id):
+    """Get the current active agreement for a project"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT a.*, p.project_name, c.name as customer_name, c.id as customer_id
+        FROM project_agreements a
+        JOIN projects p ON a.project_id = p.id
+        JOIN customers c ON p.customer_id = c.id
+        WHERE a.project_id = ? AND a.is_active = 1
+    ''', (project_id,))
+    agreement = cursor.fetchone()
+    conn.close()
+    return dict(agreement) if agreement else None
+
+
+def get_agreements_by_project(project_id):
+    """Get all agreements for a project (including superseded versions)"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT a.*,
+               (SELECT COUNT(*) FROM agreement_signatures WHERE agreement_id = a.id) as signature_count
+        FROM project_agreements a
+        WHERE a.project_id = ?
+        ORDER BY a.version DESC
+    ''', (project_id,))
+    agreements = cursor.fetchall()
+    conn.close()
+    return [dict(a) for a in agreements]
+
+
+def get_all_agreements(include_inactive=False):
+    """Get all agreements with project and customer info"""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    if include_inactive:
+        cursor.execute('''
+            SELECT a.*, p.project_name, c.name as customer_name, c.id as customer_id,
+                   (SELECT COUNT(*) FROM agreement_signatures WHERE agreement_id = a.id) as signature_count
+            FROM project_agreements a
+            JOIN projects p ON a.project_id = p.id
+            JOIN customers c ON p.customer_id = c.id
+            ORDER BY a.created_at DESC
+        ''')
+    else:
+        cursor.execute('''
+            SELECT a.*, p.project_name, c.name as customer_name, c.id as customer_id,
+                   (SELECT COUNT(*) FROM agreement_signatures WHERE agreement_id = a.id) as signature_count
+            FROM project_agreements a
+            JOIN projects p ON a.project_id = p.id
+            JOIN customers c ON p.customer_id = c.id
+            WHERE a.is_active = 1
+            ORDER BY a.created_at DESC
+        ''')
+
+    agreements = cursor.fetchall()
+    conn.close()
+    return [dict(a) for a in agreements]
+
+
+def get_unsigned_agreements_for_customer(customer_id):
+    """Get all active agreements that the customer has not signed"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT a.*, p.project_name
+        FROM project_agreements a
+        JOIN projects p ON a.project_id = p.id
+        WHERE p.customer_id = ?
+        AND a.is_active = 1
+        AND a.id NOT IN (
+            SELECT agreement_id FROM agreement_signatures WHERE customer_id = ?
+        )
+        ORDER BY a.created_at DESC
+    ''', (customer_id, customer_id))
+    agreements = cursor.fetchall()
+    conn.close()
+    return [dict(a) for a in agreements]
+
+
+def get_signed_agreements_for_customer(customer_id):
+    """Get all agreements that the customer has signed"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT a.*, p.project_name, s.signature_name, s.signed_at, s.signature_ip
+        FROM project_agreements a
+        JOIN projects p ON a.project_id = p.id
+        JOIN agreement_signatures s ON a.id = s.agreement_id
+        WHERE s.customer_id = ?
+        ORDER BY s.signed_at DESC
+    ''', (customer_id,))
+    agreements = cursor.fetchall()
+    conn.close()
+    return [dict(a) for a in agreements]
+
+
+def sign_agreement(agreement_id, customer_id, signature_name, signature_ip=None):
+    """Sign an agreement"""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Check if already signed
+    cursor.execute('''
+        SELECT id FROM agreement_signatures
+        WHERE agreement_id = ? AND customer_id = ?
+    ''', (agreement_id, customer_id))
+
+    if cursor.fetchone():
+        conn.close()
+        return None  # Already signed
+
+    cursor.execute('''
+        INSERT INTO agreement_signatures (agreement_id, customer_id, signature_name, signature_ip)
+        VALUES (?, ?, ?, ?)
+    ''', (agreement_id, customer_id, signature_name, signature_ip))
+
+    conn.commit()
+    signature_id = cursor.lastrowid
+    conn.close()
+    return signature_id
+
+
+def get_agreement_signature(agreement_id, customer_id):
+    """Get signature for an agreement by customer"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT * FROM agreement_signatures
+        WHERE agreement_id = ? AND customer_id = ?
+    ''', (agreement_id, customer_id))
+    signature = cursor.fetchone()
+    conn.close()
+    return dict(signature) if signature else None
+
+
+def get_all_signatures_for_agreement(agreement_id):
+    """Get all signatures for an agreement"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT s.*, c.name as customer_name, c.email as customer_email
+        FROM agreement_signatures s
+        JOIN customers c ON s.customer_id = c.id
+        WHERE s.agreement_id = ?
+        ORDER BY s.signed_at DESC
+    ''', (agreement_id,))
+    signatures = cursor.fetchall()
+    conn.close()
+    return [dict(s) for s in signatures]
+
+
+def replace_agreement_placeholders(content, customer_name, project_name, amount, date=None):
+    """Replace placeholders in agreement content"""
+    if date is None:
+        date = datetime.now().strftime('%B %d, %Y')
+
+    replacements = {
+        '[CUSTOMER_NAME]': customer_name,
+        '[PROJECT_NAME]': project_name,
+        '[AMOUNT]': f"${amount:,.2f}" if isinstance(amount, (int, float)) else str(amount),
+        '[DATE]': date
+    }
+
+    for placeholder, value in replacements.items():
+        content = content.replace(placeholder, value)
+
+    return content
+
+
+def get_agreement_template(agreement_type):
+    """Get template content for a specific agreement type"""
+    templates = {
+        'custom_website': '''SERVICE AGREEMENT FOR CUSTOM WEBSITE DEVELOPMENT
+
+This Service Agreement ("Agreement") is entered into as of [DATE] between Shauna Saunders ("Developer") and [CUSTOMER_NAME] ("Client").
+
+1. PROJECT DESCRIPTION
+Developer agrees to design and develop a custom website for Client as described in the project scope for "[PROJECT_NAME]".
+
+2. COMPENSATION
+Client agrees to pay Developer the total sum of [AMOUNT] for the services described herein.
+
+3. PAYMENT TERMS
+Payment shall be made according to the agreed payment plan. A 50% deposit is required before work begins, with the remaining balance due upon project completion.
+
+4. TIMELINE
+Developer will provide estimated timelines for project milestones. While Developer will make reasonable efforts to meet these timelines, delays may occur due to factors outside Developer's control.
+
+5. CLIENT RESPONSIBILITIES
+Client agrees to:
+- Provide all necessary content, images, and information in a timely manner
+- Review and provide feedback on deliverables within 5 business days
+- Provide access to any required third-party accounts or services
+
+6. INTELLECTUAL PROPERTY
+Upon receipt of full payment, Client shall own all rights to the final website design and code. Developer retains the right to display the work in portfolio and marketing materials.
+
+7. REVISIONS
+This Agreement includes up to 3 rounds of revisions per milestone. Additional revisions will be billed at Developer's hourly rate.
+
+8. TERMINATION
+Either party may terminate this Agreement with 14 days written notice. Client shall pay for all work completed up to the termination date.
+
+9. LIMITATION OF LIABILITY
+Developer's liability shall be limited to the total amount paid under this Agreement.
+
+10. GOVERNING LAW
+This Agreement shall be governed by the laws of the State of North Carolina.
+
+By signing below, both parties agree to the terms and conditions set forth in this Agreement.''',
+
+        'ongoing_maintenance': '''ONGOING WEBSITE MAINTENANCE AGREEMENT
+
+This Ongoing Maintenance Agreement ("Agreement") is entered into as of [DATE] between Shauna Saunders ("Developer") and [CUSTOMER_NAME] ("Client").
+
+1. SERVICES PROVIDED
+Developer agrees to provide ongoing website maintenance services for "[PROJECT_NAME]" including:
+- Regular security updates and patches
+- Performance monitoring and optimization
+- Bug fixes and error resolution
+- Content updates as requested (within monthly hour allocation)
+- Monthly backup verification
+- Uptime monitoring and issue response
+
+2. MONTHLY SUBSCRIPTION
+Client agrees to pay [AMOUNT] per month for the services described herein. Payment is due on the first of each month and will be automatically charged to the payment method on file.
+
+3. SERVICE LEVEL
+Developer will respond to critical issues within 24 hours on business days. Non-critical requests will be addressed within 3-5 business days.
+
+4. HOUR ALLOCATION
+The monthly subscription includes up to 4 hours of development/update work per month. Additional hours will be billed at Developer's standard hourly rate. Unused hours do not roll over to subsequent months.
+
+5. FEATURE REQUESTS
+Client may submit feature requests through the customer portal. Developer will review requests and provide estimates. Feature requests exceeding the monthly hour allocation will require additional payment.
+
+6. TERM AND RENEWAL
+This Agreement begins on the date signed and continues on a month-to-month basis. Either party may cancel with 30 days written notice.
+
+7. CANCELLATION
+Upon cancellation:
+- Client will receive access to final backups
+- Developer will provide documentation for site handover
+- No refunds for partial months
+
+8. CLIENT RESPONSIBILITIES
+Client agrees to:
+- Maintain valid payment information
+- Report issues promptly through proper channels
+- Not make unauthorized changes that may compromise site security
+
+9. LIMITATION OF LIABILITY
+Developer is not responsible for data loss, downtime, or damages caused by:
+- Third-party services or hosting providers
+- Client modifications made outside this Agreement
+- Force majeure events
+
+10. GOVERNING LAW
+This Agreement shall be governed by the laws of the State of North Carolina.
+
+By signing below, Client agrees to the terms and conditions set forth in this Agreement.''',
+
+        'consultation': '''CONSULTATION SERVICES AGREEMENT
+
+This Consultation Agreement ("Agreement") is entered into as of [DATE] between Shauna Saunders ("Consultant") and [CUSTOMER_NAME] ("Client").
+
+1. SERVICES
+Consultant agrees to provide consultation services for "[PROJECT_NAME]" as described in the project scope.
+
+2. COMPENSATION
+Client agrees to pay Consultant [AMOUNT] for the services described herein.
+
+3. CONFIDENTIALITY
+Consultant agrees to keep all Client information confidential and will not disclose it to third parties without written consent.
+
+4. TERM
+This Agreement is effective from the date of signing and continues until services are completed or terminated by either party with 7 days written notice.
+
+5. INTELLECTUAL PROPERTY
+All recommendations, strategies, and advice provided remain the intellectual property of Client upon full payment.
+
+6. LIMITATION OF LIABILITY
+Consultant's recommendations are provided as professional guidance. Client is responsible for implementation decisions. Consultant's liability is limited to the amount paid under this Agreement.
+
+7. GOVERNING LAW
+This Agreement shall be governed by the laws of the State of North Carolina.
+
+By signing below, both parties agree to the terms and conditions set forth in this Agreement.''',
+
+        'generic': '''SERVICE AGREEMENT
+
+This Service Agreement ("Agreement") is entered into as of [DATE] between Shauna Saunders ("Service Provider") and [CUSTOMER_NAME] ("Client").
+
+1. SERVICES
+Service Provider agrees to provide services for "[PROJECT_NAME]" as described in the project scope.
+
+2. COMPENSATION
+Client agrees to pay Service Provider [AMOUNT] for the services described herein.
+
+3. PAYMENT TERMS
+Payment shall be made according to the agreed payment plan.
+
+4. TERM
+This Agreement is effective from the date of signing and continues until services are completed or terminated by either party with written notice.
+
+5. CONFIDENTIALITY
+Both parties agree to keep confidential any proprietary information shared during the course of this engagement.
+
+6. LIMITATION OF LIABILITY
+Service Provider's liability shall be limited to the total amount paid under this Agreement.
+
+7. GOVERNING LAW
+This Agreement shall be governed by the laws of the State of North Carolina.
+
+By signing below, both parties agree to the terms and conditions set forth in this Agreement.'''
+    }
+
+    return templates.get(agreement_type, templates['generic'])
