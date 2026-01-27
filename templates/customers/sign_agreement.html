@@ -1,0 +1,273 @@
+{% extends 'customers/base_customers.html' %}
+
+{% block title %}Sign Agreement - Customer Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .agreement-header {
+        background: var(--bg-dark, #1a1a2e);
+        border: 2px solid #f59e0b;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .agreement-header h1 {
+        margin: 0 0 0.5rem 0;
+        color: #fbbf24;
+    }
+    .agreement-meta {
+        color: var(--text-muted, #9ca3af);
+    }
+    .agreement-meta strong {
+        color: var(--text-color, #e0e0e0);
+    }
+    h2 {
+        color: var(--text-color, #e0e0e0);
+    }
+    .agreement-content {
+        background: var(--bg-color, #0f0f1a);
+        border: 1px solid var(--border-color, #2d2d44);
+        border-radius: 8px;
+        padding: 2rem;
+        white-space: pre-wrap;
+        font-family: Georgia, serif;
+        line-height: 1.8;
+        margin-bottom: 2rem;
+        max-height: 500px;
+        overflow-y: auto;
+        color: var(--text-color, #e0e0e0);
+    }
+    .signature-form {
+        background: var(--bg-dark, #1a1a2e);
+        border: 2px solid var(--primary-color, #6366f1);
+        border-radius: 8px;
+        padding: 2rem;
+        margin-top: 2rem;
+    }
+    .signature-form h2 {
+        color: var(--primary-color, #6366f1);
+        margin-top: 0;
+    }
+    .signature-input {
+        font-family: 'Brush Script MT', cursive;
+        font-size: 1.5rem;
+        padding: 1rem;
+        border: 2px solid var(--border-color, #2d2d44);
+        border-radius: 8px;
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 1rem;
+        background: var(--bg-color, #0f0f1a);
+        color: var(--primary-color, #6366f1);
+    }
+    .signature-input:focus {
+        border-color: var(--primary-color, #6366f1);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+    .signature-input::placeholder {
+        color: var(--text-muted, #9ca3af);
+        font-family: inherit;
+    }
+    .signature-preview {
+        background: var(--bg-color, #0f0f1a);
+        border: 1px dashed var(--border-color, #2d2d44);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    .signature-preview p {
+        color: var(--text-muted, #9ca3af);
+    }
+    .signature-preview-text {
+        font-family: 'Brush Script MT', cursive;
+        font-size: 2rem;
+        color: var(--primary-color, #6366f1);
+        min-height: 3rem;
+    }
+    .checkbox-group {
+        background: var(--bg-color, #0f0f1a);
+        border: 1px solid var(--border-color, #2d2d44);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        color: var(--text-color, #e0e0e0);
+    }
+    .checkbox-group label {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        cursor: pointer;
+    }
+    .checkbox-group input[type="checkbox"] {
+        margin-top: 0.25rem;
+        width: 1.25rem;
+        height: 1.25rem;
+        accent-color: var(--primary-color, #6366f1);
+    }
+    .legal-notice {
+        background: var(--bg-color, #0f0f1a);
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.875rem;
+        color: var(--text-color, #e0e0e0);
+    }
+    .legal-notice strong {
+        color: #fbbf24;
+    }
+    .scroll-notice {
+        text-align: center;
+        color: var(--text-muted, #9ca3af);
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
+    .form-group label {
+        color: var(--text-color, #e0e0e0);
+    }
+    .form-group p {
+        color: var(--text-muted, #9ca3af);
+    }
+    .form-group p strong {
+        color: var(--text-color, #e0e0e0);
+    }
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .form-actions .btn-secondary {
+        background: var(--bg-color, #0f0f1a);
+        border: 1px solid var(--border-color, #2d2d44);
+        color: var(--text-color, #e0e0e0);
+    }
+    .form-actions .btn-secondary:hover {
+        background: var(--bg-darker, #12121f);
+        border-color: var(--text-muted, #9ca3af);
+    }
+    .breadcrumb {
+        color: var(--text-muted, #9ca3af);
+    }
+    .breadcrumb a {
+        color: var(--primary-color, #6366f1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('customers.agreements') }}">Agreements</a>
+    <span>/</span>
+    <span>Sign Agreement</span>
+</div>
+
+<div class="agreement-header">
+    <h1>Agreement Review & Signature</h1>
+    <p class="agreement-meta">
+        <strong>Project:</strong> {{ agreement.project_name }} |
+        <strong>Type:</strong> {{ agreement.agreement_type|replace('_', ' ')|title }}
+    </p>
+</div>
+
+<h2>{{ agreement.title }}</h2>
+
+<p class="scroll-notice">Please read the entire agreement below before signing.</p>
+
+<div class="agreement-content" id="agreement-content">{{ agreement.content }}</div>
+
+<form method="POST" class="signature-form" id="signature-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <h2>Electronic Signature</h2>
+
+    <div class="legal-notice">
+        <strong>Legal Notice:</strong> By typing your name below and clicking "Sign Agreement", you acknowledge that you have read and understood the terms of this agreement, and you agree to be legally bound by its terms. This electronic signature has the same legal effect as a handwritten signature.
+    </div>
+
+    <div class="form-group">
+        <label for="signature_name">Type your full legal name as your signature:</label>
+        <input type="text" name="signature_name" id="signature_name" class="signature-input"
+               placeholder="Your Full Legal Name" required autocomplete="off">
+    </div>
+
+    <div class="signature-preview">
+        <p style="margin: 0; color: #6b7280; font-size: 0.875rem;">Signature Preview:</p>
+        <div class="signature-preview-text" id="signature-preview"></div>
+    </div>
+
+    <div class="checkbox-group">
+        <label>
+            <input type="checkbox" name="agree_terms" id="agree_terms" required>
+            <span>
+                I, <strong>{{ customer.name }}</strong>, have read and agree to the terms and conditions
+                outlined in this agreement. I understand that this electronic signature constitutes my
+                legal signature and acceptance of this agreement.
+            </span>
+        </label>
+    </div>
+
+    <div class="form-group">
+        <p style="color: #6b7280; font-size: 0.875rem;">
+            <strong>Signing as:</strong> {{ customer.name }} ({{ customer.email }})<br>
+            <strong>Date:</strong> <span id="current-date"></span><br>
+            <strong>Your IP address will be recorded for verification purposes.</strong>
+        </p>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="sign-btn" disabled>
+            Sign Agreement
+        </button>
+        <a href="{{ url_for('customers.agreements') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Signature preview
+const signatureInput = document.getElementById('signature_name');
+const signaturePreview = document.getElementById('signature-preview');
+const agreeCheckbox = document.getElementById('agree_terms');
+const signBtn = document.getElementById('sign-btn');
+const agreementContent = document.getElementById('agreement-content');
+
+signatureInput.addEventListener('input', function() {
+    signaturePreview.textContent = this.value || '';
+    updateSignButton();
+});
+
+agreeCheckbox.addEventListener('change', updateSignButton);
+
+function updateSignButton() {
+    const hasSignature = signatureInput.value.trim().length > 0;
+    const hasAgreed = agreeCheckbox.checked;
+    signBtn.disabled = !(hasSignature && hasAgreed);
+}
+
+// Set current date
+document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+});
+
+// Confirm before signing
+document.getElementById('signature-form').addEventListener('submit', function(e) {
+    if (!confirm('Are you sure you want to sign this agreement? This action cannot be undone.')) {
+        e.preventDefault();
+    }
+});
+
+// Scroll indicator
+let hasScrolledToBottom = false;
+agreementContent.addEventListener('scroll', function() {
+    if (this.scrollTop + this.clientHeight >= this.scrollHeight - 10) {
+        hasScrolledToBottom = true;
+    }
+});
+</script>
+{% endblock %}

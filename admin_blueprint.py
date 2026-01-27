@@ -6,7 +6,21 @@ from datetime import datetime, timedelta
 from functools import wraps
 import stripe
 
-from customers_db import *
+from customers_db import (
+    get_db, get_all_customers, get_customer_by_id, create_customer, update_customer,
+    deactivate_customer, activate_customer, delete_customer, get_all_projects,
+    get_project_by_id, create_project, update_project, delete_project, get_projects_by_customer,
+    get_milestones_by_project, get_milestone_by_id, create_milestone, mark_milestone_complete,
+    delete_milestone, get_payments_by_customer, get_payments_by_project, get_payment_history,
+    get_payment_links_by_customer, save_payment_link, get_customer_total_paid,
+    get_outstanding_balance, get_project_completion_percentage, get_all_contact_submissions,
+    convert_contact_to_customer, update_contact_submission_status, get_all_feature_requests,
+    get_feature_request_by_id, update_feature_request_status, update_feature_request,
+    get_feature_request_history, get_all_agreements, get_agreement_by_id, create_agreement,
+    get_agreements_by_project, get_all_signatures_for_agreement, get_agreement_template,
+    replace_agreement_placeholders, get_active_agreement_for_project, get_agreement_signature
+)
+from customers_blueprint import send_status_update_notification
 
 # Import database functions from traitors_db for admin authentication
 import sys
@@ -327,12 +341,20 @@ def project_detail(project_id):
 
     completion_percentage = get_project_completion_percentage(project_id)
 
+    # Get agreement info
+    agreement = get_active_agreement_for_project(project_id)
+    agreement_signature = None
+    if agreement:
+        agreement_signature = get_agreement_signature(agreement['id'], customer['id'])
+
     return render_template('admin/project_detail.html',
                          project=project,
                          customer=customer,
                          milestones=milestones,
                          payments=payments,
-                         completion_percentage=completion_percentage)
+                         completion_percentage=completion_percentage,
+                         agreement=agreement,
+                         agreement_signature=agreement_signature)
 
 
 @admin_bp.route('/projects/<int:project_id>/edit', methods=['GET', 'POST'])
@@ -604,3 +626,383 @@ def archive_contact(submission_id):
     update_contact_submission_status(submission_id, 'archived')
     flash('Contact archived.', 'success')
     return redirect(url_for('admin.contacts'))
+
+
+# Feature Request Management
+
+@admin_bp.route('/feature-requests')
+@admin_required
+def feature_requests():
+    """View all feature requests"""
+    status_filter = request.args.get('status')
+    requests = get_all_feature_requests(status=status_filter)
+    
+    # Get status options
+    status_options = [
+        ('', 'All Requests'),
+        ('request_received', 'Request Received'),
+        ('in_review', 'In Review'),
+        ('approved', 'Approved'),
+        ('in_progress', 'In Progress'),
+        ('testing', 'Testing'),
+        ('completed', 'Completed'),
+        ('on_hold', 'On Hold'),
+        ('rejected', 'Rejected')
+    ]
+    
+    return render_template('admin/feature_requests.html', 
+                         requests=requests, 
+                         status_options=status_options,
+                         current_status=status_filter)
+
+
+@admin_bp.route('/feature-requests/<int:request_id>')
+@admin_required
+def feature_request_detail(request_id):
+    """View feature request details"""
+    feature_request = get_feature_request_by_id(request_id)
+    if not feature_request:
+        flash('Feature request not found.', 'error')
+        return redirect(url_for('admin.feature_requests'))
+    
+    # Get status history
+    status_history = get_feature_request_history(request_id)
+    
+    return render_template('admin/feature_request_detail.html',
+                         feature_request=feature_request,
+                         status_history=status_history)
+
+
+@admin_bp.route('/feature-requests/<int:request_id>/update-status', methods=['POST'])
+@admin_required
+def update_feature_request_status_route(request_id):
+    """Update feature request status"""
+    feature_request = get_feature_request_by_id(request_id)
+    if not feature_request:
+        flash('Feature request not found.', 'error')
+        return redirect(url_for('admin.feature_requests'))
+    
+    new_status = request.form.get('status')
+    status_message = request.form.get('status_message', '').strip() or None
+    admin_notes = request.form.get('admin_notes', '').strip() or None
+    estimated_hours = request.form.get('estimated_hours', '').strip()
+    actual_hours = request.form.get('actual_hours', '').strip()
+    
+    # Parse hours
+    try:
+        estimated_hours = float(estimated_hours) if estimated_hours else None
+    except ValueError:
+        estimated_hours = None
+        
+    try:
+        actual_hours = float(actual_hours) if actual_hours else None
+    except ValueError:
+        actual_hours = None
+    
+    # Update status and send notification
+    old_status = feature_request['status']
+    success = update_feature_request_status(
+        request_id, 
+        new_status, 
+        status_message=status_message,
+        admin_notes=admin_notes,
+        admin_id=session.get('user_id')
+    )
+    
+    if success:
+        # Update additional fields
+        update_data = {}
+        if estimated_hours is not None:
+            update_data['estimated_hours'] = estimated_hours
+        if actual_hours is not None:
+            update_data['actual_hours'] = actual_hours
+        if admin_notes:
+            update_data['admin_notes'] = admin_notes
+            
+        if update_data:
+            update_feature_request(request_id, **update_data)
+        
+        # Send status update notification to customer
+        send_status_update_notification(request_id, old_status, new_status, status_message)
+        
+        flash('Feature request updated and customer notified!', 'success')
+    else:
+        flash('Error updating feature request.', 'error')
+    
+    return redirect(url_for('admin.feature_request_detail', request_id=request_id))
+
+
+@admin_bp.route('/feature-requests/<int:request_id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_feature_request(request_id):
+    """Edit feature request details"""
+    feature_request = get_feature_request_by_id(request_id)
+    if not feature_request:
+        flash('Feature request not found.', 'error')
+        return redirect(url_for('admin.feature_requests'))
+    
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        priority = request.form.get('priority')
+        requested_completion = request.form.get('requested_completion', '').strip() or None
+        additional_info = request.form.get('additional_info', '').strip() or None
+        admin_notes = request.form.get('admin_notes', '').strip() or None
+        estimated_hours = request.form.get('estimated_hours', '').strip()
+        actual_hours = request.form.get('actual_hours', '').strip()
+        
+        if not title or not description:
+            flash('Title and description are required.', 'error')
+            return render_template('admin/feature_request_form.html', feature_request=feature_request)
+        
+        # Parse hours
+        try:
+            estimated_hours = float(estimated_hours) if estimated_hours else None
+        except ValueError:
+            estimated_hours = None
+            
+        try:
+            actual_hours = float(actual_hours) if actual_hours else None
+        except ValueError:
+            actual_hours = None
+        
+        # Update feature request
+        update_feature_request(
+            request_id,
+            title=title,
+            description=description,
+            priority=priority,
+            requested_completion=requested_completion,
+            additional_info=additional_info,
+            admin_notes=admin_notes,
+            estimated_hours=estimated_hours,
+            actual_hours=actual_hours
+        )
+        
+        flash('Feature request updated successfully!', 'success')
+        return redirect(url_for('admin.feature_request_detail', request_id=request_id))
+    
+    return render_template('admin/feature_request_form.html', feature_request=feature_request)
+
+
+@admin_bp.route('/feature-requests/<int:request_id>/delete', methods=['POST'])
+@admin_required
+def delete_feature_request(request_id):
+    """Delete a feature request"""
+    feature_request = get_feature_request_by_id(request_id)
+    if not feature_request:
+        flash('Feature request not found.', 'error')
+        return redirect(url_for('admin.feature_requests'))
+
+    # Delete from database
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM feature_requests WHERE id = ?', (request_id,))
+    conn.commit()
+    conn.close()
+
+    flash(f'Feature request "{feature_request["title"]}" deleted.', 'success')
+    return redirect(url_for('admin.feature_requests'))
+
+
+# Agreement Management
+
+@admin_bp.route('/agreements')
+@admin_required
+def agreements():
+    """View all agreements"""
+    include_inactive = request.args.get('include_inactive') == '1'
+    all_agreements = get_all_agreements(include_inactive=include_inactive)
+    return render_template('admin/agreements.html',
+                         agreements=all_agreements,
+                         include_inactive=include_inactive)
+
+
+@admin_bp.route('/agreements/create', methods=['GET', 'POST'])
+@admin_required
+def create_agreement_route():
+    """Create a new agreement for a project"""
+    if request.method == 'POST':
+        project_id = request.form.get('project_id')
+        title = request.form.get('title', '').strip()
+        agreement_type = request.form.get('agreement_type')
+        content = request.form.get('content', '').strip()
+        use_template = request.form.get('use_template') == '1'
+        auto_replace = request.form.get('auto_replace') == '1'
+
+        if not all([project_id, title, agreement_type]):
+            flash('Project, title, and agreement type are required.', 'error')
+            projects = get_all_projects()
+            return render_template('admin/agreement_form.html', projects=projects, agreement=None)
+
+        project = get_project_by_id(int(project_id))
+        if not project:
+            flash('Project not found.', 'error')
+            projects = get_all_projects()
+            return render_template('admin/agreement_form.html', projects=projects, agreement=None)
+
+        # Get template content if requested
+        if use_template or not content:
+            content = get_agreement_template(agreement_type)
+
+        # Auto-replace placeholders if requested
+        if auto_replace:
+            customer = get_customer_by_id(project['customer_id'])
+            content = replace_agreement_placeholders(
+                content,
+                customer_name=customer['name'],
+                project_name=project['project_name'],
+                amount=project['total_amount']
+            )
+
+        agreement_id = create_agreement(
+            project_id=int(project_id),
+            title=title,
+            content=content,
+            agreement_type=agreement_type,
+            created_by_admin_id=session.get('user_id')
+        )
+
+        flash(f'Agreement "{title}" created successfully!', 'success')
+        return redirect(url_for('admin.agreement_detail', agreement_id=agreement_id))
+
+    projects = get_all_projects()
+    return render_template('admin/agreement_form.html', projects=projects, agreement=None)
+
+
+@admin_bp.route('/agreements/<int:agreement_id>')
+@admin_required
+def agreement_detail(agreement_id):
+    """View agreement details"""
+    agreement = get_agreement_by_id(agreement_id)
+    if not agreement:
+        flash('Agreement not found.', 'error')
+        return redirect(url_for('admin.agreements'))
+
+    signatures = get_all_signatures_for_agreement(agreement_id)
+    version_history = get_agreements_by_project(agreement['project_id'])
+
+    return render_template('admin/agreement_detail.html',
+                         agreement=agreement,
+                         signatures=signatures,
+                         version_history=version_history)
+
+
+@admin_bp.route('/agreements/<int:agreement_id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_agreement(agreement_id):
+    """Edit agreement - creates a new version"""
+    agreement = get_agreement_by_id(agreement_id)
+    if not agreement:
+        flash('Agreement not found.', 'error')
+        return redirect(url_for('admin.agreements'))
+
+    # Check if this agreement has signatures
+    signatures = get_all_signatures_for_agreement(agreement_id)
+
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        content = request.form.get('content', '').strip()
+        agreement_type = request.form.get('agreement_type')
+
+        if not all([title, content, agreement_type]):
+            flash('All fields are required.', 'error')
+            projects = get_all_projects()
+            return render_template('admin/agreement_form.html',
+                                 projects=projects,
+                                 agreement=agreement,
+                                 has_signatures=len(signatures) > 0)
+
+        # Create a new version (supersedes the old one)
+        new_agreement_id = create_agreement(
+            project_id=agreement['project_id'],
+            title=title,
+            content=content,
+            agreement_type=agreement_type,
+            created_by_admin_id=session.get('user_id')
+        )
+
+        flash(f'New agreement version created! Customers will need to sign the updated agreement.', 'success')
+        return redirect(url_for('admin.agreement_detail', agreement_id=new_agreement_id))
+
+    projects = get_all_projects()
+    return render_template('admin/agreement_form.html',
+                         projects=projects,
+                         agreement=agreement,
+                         has_signatures=len(signatures) > 0)
+
+
+@admin_bp.route('/agreements/templates')
+@admin_required
+def agreement_templates():
+    """View available agreement templates"""
+    template_types = [
+        ('custom_website', 'Custom Website Development'),
+        ('ongoing_maintenance', 'Ongoing Website Maintenance'),
+        ('consultation', 'Consultation Services'),
+        ('generic', 'Generic Service Agreement')
+    ]
+
+    templates = []
+    for type_key, type_name in template_types:
+        templates.append({
+            'type': type_key,
+            'name': type_name,
+            'content': get_agreement_template(type_key)
+        })
+
+    return render_template('admin/agreement_templates.html', templates=templates)
+
+
+@admin_bp.route('/projects/<int:project_id>/create-agreement', methods=['GET', 'POST'])
+@admin_required
+def create_agreement_for_project(project_id):
+    """Create agreement for a specific project"""
+    project = get_project_by_id(project_id)
+    if not project:
+        flash('Project not found.', 'error')
+        return redirect(url_for('admin.projects'))
+
+    customer = get_customer_by_id(project['customer_id'])
+
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        agreement_type = request.form.get('agreement_type')
+        content = request.form.get('content', '').strip()
+        auto_replace = request.form.get('auto_replace') == '1'
+
+        if not all([title, agreement_type, content]):
+            flash('All fields are required.', 'error')
+            template_content = get_agreement_template(project['project_type'])
+            return render_template('admin/agreement_form_project.html',
+                                 project=project,
+                                 customer=customer,
+                                 template_content=template_content)
+
+        # Auto-replace placeholders if requested
+        if auto_replace:
+            content = replace_agreement_placeholders(
+                content,
+                customer_name=customer['name'],
+                project_name=project['project_name'],
+                amount=project['total_amount']
+            )
+
+        agreement_id = create_agreement(
+            project_id=project_id,
+            title=title,
+            content=content,
+            agreement_type=agreement_type,
+            created_by_admin_id=session.get('user_id')
+        )
+
+        flash(f'Agreement created successfully!', 'success')
+        return redirect(url_for('admin.project_detail', project_id=project_id))
+
+    # Get template based on project type
+    template_content = get_agreement_template(project['project_type'])
+
+    return render_template('admin/agreement_form_project.html',
+                         project=project,
+                         customer=customer,
+                         template_content=template_content)

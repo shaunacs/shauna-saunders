@@ -1,0 +1,121 @@
+{% extends 'customers/base_customers.html' %}
+
+{% block title %}{{ agreement.title }} - Customer Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .agreement-header {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .agreement-header h1 {
+        margin: 0 0 0.5rem 0;
+    }
+    .agreement-meta {
+        color: #6b7280;
+    }
+    .agreement-content {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 2rem;
+        white-space: pre-wrap;
+        font-family: Georgia, serif;
+        line-height: 1.8;
+        margin-bottom: 2rem;
+    }
+    .signature-block {
+        background: #f0fff4;
+        border: 2px solid #38a169;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+    .signature-block h3 {
+        color: #276749;
+        margin-top: 0;
+    }
+    .signature-name {
+        font-family: 'Brush Script MT', cursive;
+        font-size: 2rem;
+        color: #1a365d;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #1a365d;
+        display: inline-block;
+        margin-bottom: 0.5rem;
+    }
+    .signature-details {
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+    .unsigned-notice {
+        background: #fef3c7;
+        border: 2px solid #f59e0b;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-top: 2rem;
+    }
+    .print-btn {
+        float: right;
+    }
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .agreement-content {
+            border: none;
+            padding: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb no-print">
+    <a href="{{ url_for('customers.agreements') }}">Agreements</a>
+    <span>/</span>
+    <span>{{ agreement.title }}</span>
+</div>
+
+<div class="agreement-header">
+    <button onclick="window.print()" class="btn btn-secondary print-btn no-print">Print Agreement</button>
+    <h1>{{ agreement.title }}</h1>
+    <p class="agreement-meta">
+        {{ agreement.project_name }} |
+        {{ agreement.agreement_type|replace('_', ' ')|title }} |
+        Version {{ agreement.version }}
+    </p>
+</div>
+
+<div class="agreement-content">{{ agreement.content }}</div>
+
+{% if signature %}
+<div class="signature-block">
+    <h3>Electronic Signature</h3>
+    <div class="signature-name">{{ signature.signature_name }}</div>
+    <div class="signature-details">
+        <p><strong>Signed by:</strong> {{ agreement.customer_name }}</p>
+        <p><strong>Date:</strong> {{ signature.signed_at }}</p>
+        <p><strong>IP Address:</strong> {{ signature.signature_ip or 'Not recorded' }}</p>
+    </div>
+</div>
+{% else %}
+<div class="unsigned-notice no-print">
+    <h3>This agreement requires your signature</h3>
+    <p>Please review the terms above and sign to proceed with your project.</p>
+    <a href="{{ url_for('customers.sign_agreement_route', agreement_id=agreement.id) }}" class="btn btn-primary">
+        Sign Agreement
+    </a>
+</div>
+{% endif %}
+
+<div class="actions no-print" style="margin-top: 2rem;">
+    <a href="{{ url_for('customers.agreements') }}" class="btn btn-secondary">Back to Agreements</a>
+    <a href="{{ url_for('customers.project_detail', project_id=agreement.project_id) }}" class="btn btn-secondary">
+        View Project
+    </a>
+</div>
+{% endblock %}

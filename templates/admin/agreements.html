@@ -1,0 +1,155 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Agreements - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-bar {
+        background: var(--bg-dark, #1a1a2e);
+        border: 1px solid var(--border-color, #2d2d44);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        color: var(--text-color, #e0e0e0);
+    }
+    .filter-bar label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        color: var(--text-color, #e0e0e0);
+    }
+    .row-inactive {
+        opacity: 0.6;
+    }
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .badge-success {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        border: 1px solid #10b981;
+    }
+    .badge-warning {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fbbf24;
+        border: 1px solid #f59e0b;
+    }
+    .badge-secondary {
+        background: rgba(107, 114, 128, 0.2);
+        color: #9ca3af;
+        border: 1px solid #6b7280;
+    }
+    .empty-state {
+        background: var(--bg-dark, #1a1a2e);
+        border: 1px solid var(--border-color, #2d2d44);
+        border-radius: 8px;
+        padding: 3rem;
+        text-align: center;
+        color: var(--text-muted, #9ca3af);
+    }
+    .empty-state p {
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Service Agreements</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('admin.agreement_templates') }}" class="btn btn-secondary">View Templates</a>
+        <a href="{{ url_for('admin.create_agreement_route') }}" class="btn btn-primary">Create Agreement</a>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <label>
+        <input type="checkbox" id="include-inactive" {% if include_inactive %}checked{% endif %}>
+        Show superseded versions
+    </label>
+</div>
+
+{% if agreements %}
+<div class="table-responsive">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Project</th>
+                <th>Customer</th>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Version</th>
+                <th>Status</th>
+                <th>Signatures</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for agreement in agreements %}
+            <tr class="{% if not agreement.is_active %}row-inactive{% endif %}">
+                <td>
+                    <a href="{{ url_for('admin.project_detail', project_id=agreement.project_id) }}">
+                        {{ agreement.project_name }}
+                    </a>
+                </td>
+                <td>
+                    <a href="{{ url_for('admin.customer_detail', customer_id=agreement.customer_id) }}">
+                        {{ agreement.customer_name }}
+                    </a>
+                </td>
+                <td>{{ agreement.title }}</td>
+                <td>{{ agreement.agreement_type|replace('_', ' ')|title }}</td>
+                <td>v{{ agreement.version }}</td>
+                <td>
+                    {% if agreement.is_active %}
+                        <span class="badge badge-success">Active</span>
+                    {% else %}
+                        <span class="badge badge-secondary">Superseded</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if agreement.signature_count > 0 %}
+                        <span class="badge badge-success">{{ agreement.signature_count }} signed</span>
+                    {% else %}
+                        <span class="badge badge-warning">Unsigned</span>
+                    {% endif %}
+                </td>
+                <td>{{ agreement.created_at[:10] if agreement.created_at else 'N/A' }}</td>
+                <td>
+                    <a href="{{ url_for('admin.agreement_detail', agreement_id=agreement.id) }}" class="btn btn-sm">View</a>
+                    {% if agreement.is_active %}
+                    <a href="{{ url_for('admin.edit_agreement', agreement_id=agreement.id) }}" class="btn btn-sm btn-secondary">Edit</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <p>No agreements found.</p>
+    <a href="{{ url_for('admin.create_agreement_route') }}" class="btn btn-primary">Create First Agreement</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('include-inactive').addEventListener('change', function() {
+    const url = new URL(window.location);
+    if (this.checked) {
+        url.searchParams.set('include_inactive', '1');
+    } else {
+        url.searchParams.delete('include_inactive');
+    }
+    window.location = url;
+});
+</script>
+{% endblock %}

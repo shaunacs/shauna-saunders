@@ -1,0 +1,370 @@
+{% extends 'customers/base_customers.html' %}
+
+{% block title %}Feature Requests - Customer Portal{% endblock %}
+
+{% block content %}
+<div class="feature-requests-page">
+    <div class="page-header">
+        <h1>Your Feature Requests</h1>
+        <p class="page-subtitle">Track the status of all your feature requests and updates</p>
+    </div>
+
+    {% if feature_requests %}
+    <div class="feature-requests-list">
+        {% for request in feature_requests %}
+        <div class="feature-request-card">
+            <div class="request-header">
+                <div class="request-title-section">
+                    <h3>{{ request.title }}</h3>
+                    <div class="request-meta">
+                        <span class="request-project">{{ request.project_name }}</span>
+                        <span class="request-date">{{ request.created_at[:10] if request.created_at else 'N/A' }}</span>
+                    </div>
+                </div>
+                <div class="status-badge">
+                    <span class="status status-{{ request.status }}">{{ request.status|replace('_', ' ')|title }}</span>
+                </div>
+            </div>
+
+            <div class="request-body">
+                <div class="priority-indicator">
+                    <span class="priority priority-{{ request.priority }}">
+                        {{ request.priority|title }} Priority
+                    </span>
+                </div>
+
+                <div class="request-description">
+                    <p>{{ request.description[:200] }}{% if request.description|length > 200 %}...{% endif %}</p>
+                </div>
+
+                {% if request.requested_completion %}
+                <div class="completion-request">
+                    <strong>Requested completion:</strong> {{ request.requested_completion }}
+                </div>
+                {% endif %}
+
+                {% if request.admin_notes %}
+                <div class="admin-response">
+                    <h4>Developer Notes:</h4>
+                    <p>{{ request.admin_notes }}</p>
+                </div>
+                {% endif %}
+
+                {% if request.estimated_completion_date %}
+                <div class="estimated-completion">
+                    <strong>Estimated completion:</strong> {{ request.estimated_completion_date|format_date }}
+                </div>
+                {% endif %}
+
+                {% if request.completed_at %}
+                <div class="completed-info">
+                    <strong>Completed:</strong> {{ request.completed_at|format_date }}
+                </div>
+                {% endif %}
+            </div>
+
+            {% if request.status not in ['completed', 'cancelled'] %}
+            <div class="request-footer">
+                <small class="last-updated">
+                    Last updated: {{ request.updated_at[:10] if request.updated_at else request.created_at[:10] if request.created_at else 'N/A' }}
+                </small>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="pagination-info">
+        <p>Showing {{ feature_requests|length }} feature request{{ 's' if feature_requests|length != 1 else '' }}</p>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📝</div>
+        <h2>No Feature Requests Yet</h2>
+        <p>You haven't submitted any feature requests. When you have ongoing maintenance projects, you can request new features and updates from your dashboard.</p>
+        <a href="{{ url_for('customers.dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.feature-requests-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-header h1 {
+    color: var(--text-light);
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+.feature-requests-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.feature-request-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.feature-request-card:hover {
+    border-color: rgba(103, 232, 249, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.request-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.request-title-section h3 {
+    color: var(--text-light);
+    margin: 0 0 0.5rem 0;
+    font-size: 1.2rem;
+}
+
+.request-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.request-project {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.status-badge {
+    flex-shrink: 0;
+}
+
+.status {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-pending {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.status-in_progress {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.status-completed {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-cancelled {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.request-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.priority-indicator {
+    align-self: flex-start;
+}
+
+.priority {
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.priority-low {
+    background: rgba(107, 114, 128, 0.2);
+    color: #6b7280;
+}
+
+.priority-medium {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.priority-high {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.priority-urgent {
+    background: rgba(185, 28, 28, 0.2);
+    color: #dc2626;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.request-description p {
+    color: var(--text-light);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.completion-request,
+.estimated-completion,
+.completed-info {
+    padding: 0.75rem;
+    background: rgba(103, 232, 249, 0.1);
+    border: 1px solid rgba(103, 232, 249, 0.2);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.admin-response {
+    padding: 1rem;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.admin-response h4 {
+    color: var(--primary-color);
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+}
+
+.admin-response p {
+    color: var(--text-light);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.request-footer {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.last-updated {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.pagination-info {
+    text-align: center;
+    margin-top: 2rem;
+    color: var(--text-muted);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state h2 {
+    color: var(--text-light);
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+}
+
+.btn {
+    padding: 0.875rem 1.75rem;
+    border: none;
+    border-radius: 50px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    box-shadow: 0 4px 15px rgba(103, 232, 249, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(103, 232, 249, 0.5);
+    text-decoration: none;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .request-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .status-badge {
+        align-self: flex-start;
+    }
+    
+    .request-meta {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .feature-requests-page {
+        padding: 1rem;
+    }
+    
+    .page-header h1 {
+        font-size: 2rem;
+    }
+}
+</style>
+{% endblock %}

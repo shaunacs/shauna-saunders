@@ -1,0 +1,330 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}{% if agreement %}Edit Agreement{% else %}Create Agreement{% endif %} - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .content-textarea {
+        font-family: monospace;
+        min-height: 400px;
+        white-space: pre-wrap;
+        background: var(--bg-color, #0f0f1a);
+        color: var(--text-color, #e0e0e0);
+        border: 1px solid var(--border-color, #2d2d44);
+    }
+    .placeholder-help {
+        background: var(--bg-dark, #1a1a2e);
+        border: 1px solid var(--border-color, #2d2d44);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        color: var(--text-color, #e0e0e0);
+    }
+    .placeholder-help strong {
+        color: var(--primary-color, #6366f1);
+    }
+    .placeholder-help code {
+        background: var(--bg-darker, #12121f);
+        color: var(--primary-color, #6366f1);
+        padding: 0.125rem 0.5rem;
+        border-radius: 4px;
+        border: 1px solid var(--border-color, #2d2d44);
+    }
+    .placeholder-help ul {
+        margin: 0.5rem 0 0 0;
+        padding-left: 1.5rem;
+    }
+    .warning-box {
+        background: rgba(245, 158, 11, 0.15);
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        color: #fbbf24;
+    }
+    .warning-box strong {
+        color: #f59e0b;
+    }
+    .form-static {
+        color: var(--text-color, #e0e0e0);
+        padding: 0.5rem 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('admin.agreements') }}">Agreements</a>
+    <span>/</span>
+    <span>{% if agreement %}Edit{% else %}Create{% endif %}</span>
+</div>
+
+<h1>{% if agreement %}Create New Version of Agreement{% else %}Create Agreement{% endif %}</h1>
+
+{% if agreement and has_signatures %}
+<div class="warning-box">
+    <strong>Note:</strong> This agreement has been signed. Editing will create a new version, and customers will need to sign the updated agreement. The previous version and signatures will be preserved.
+</div>
+{% endif %}
+
+<div class="placeholder-help">
+    <strong>Available Placeholders:</strong>
+    <p>Use these placeholders in your agreement content - they can be auto-replaced with actual values:</p>
+    <ul>
+        <li><code>[CUSTOMER_NAME]</code> - Customer's full name</li>
+        <li><code>[PROJECT_NAME]</code> - Project name</li>
+        <li><code>[AMOUNT]</code> - Project total amount (formatted as currency)</li>
+        <li><code>[DATE]</code> - Current date</li>
+    </ul>
+</div>
+
+<form method="POST" class="form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    {% if not agreement %}
+    <div class="form-group">
+        <label for="project_id">Project *</label>
+        <select name="project_id" id="project_id" required>
+            <option value="">Select a project...</option>
+            {% for project in projects %}
+            <option value="{{ project.id }}">
+                {{ project.project_name }} - {{ project.customer_name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    {% else %}
+    <input type="hidden" name="project_id" value="{{ agreement.project_id }}">
+    <div class="form-group">
+        <label>Project</label>
+        <p class="form-static">{{ agreement.project_name }} - {{ agreement.customer_name }}</p>
+    </div>
+    {% endif %}
+
+    <div class="form-group">
+        <label for="title">Agreement Title *</label>
+        <input type="text" name="title" id="title" required
+               value="{{ agreement.title if agreement else '' }}"
+               placeholder="e.g., Service Agreement for Website Development">
+    </div>
+
+    <div class="form-group">
+        <label for="agreement_type">Agreement Type *</label>
+        <select name="agreement_type" id="agreement_type" required>
+            <option value="">Select type...</option>
+            <option value="custom_website" {% if agreement and agreement.agreement_type == 'custom_website' %}selected{% endif %}>
+                Custom Website Development
+            </option>
+            <option value="ongoing_maintenance" {% if agreement and agreement.agreement_type == 'ongoing_maintenance' %}selected{% endif %}>
+                Ongoing Website Maintenance
+            </option>
+            <option value="consultation" {% if agreement and agreement.agreement_type == 'consultation' %}selected{% endif %}>
+                Consultation Services
+            </option>
+            <option value="generic" {% if agreement and agreement.agreement_type == 'generic' %}selected{% endif %}>
+                Generic Service Agreement
+            </option>
+        </select>
+    </div>
+
+    {% if not agreement %}
+    <div class="form-group">
+        <label>
+            <input type="checkbox" name="use_template" id="use_template" value="1" checked>
+            Load template content based on agreement type
+        </label>
+    </div>
+
+    <div class="form-group">
+        <label>
+            <input type="checkbox" name="auto_replace" id="auto_replace" value="1" checked>
+            Auto-replace placeholders with project/customer values
+        </label>
+    </div>
+    {% endif %}
+
+    <div class="form-group">
+        <label for="content">Agreement Content *</label>
+        <textarea name="content" id="content" class="content-textarea" required
+                  placeholder="Enter the full agreement text here...">{{ agreement.content if agreement else '' }}</textarea>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+            {% if agreement %}Create New Version{% else %}Create Agreement{% endif %}
+        </button>
+        <a href="{{ url_for('admin.agreements') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Load template content when type changes (only for new agreements)
+const typeSelect = document.getElementById('agreement_type');
+const useTemplateCheckbox = document.getElementById('use_template');
+const contentTextarea = document.getElementById('content');
+
+{% if not agreement %}
+// Pre-loaded templates
+const templates = {
+    'custom_website': `SERVICE AGREEMENT FOR CUSTOM WEBSITE DEVELOPMENT
+
+This Service Agreement ("Agreement") is entered into as of [DATE] between Shauna Saunders ("Developer") and [CUSTOMER_NAME] ("Client").
+
+1. PROJECT DESCRIPTION
+Developer agrees to design and develop a custom website for Client as described in the project scope for "[PROJECT_NAME]".
+
+2. COMPENSATION
+Client agrees to pay Developer the total sum of [AMOUNT] for the services described herein.
+
+3. PAYMENT TERMS
+Payment shall be made according to the agreed payment plan. A 50% deposit is required before work begins, with the remaining balance due upon project completion.
+
+4. TIMELINE
+Developer will provide estimated timelines for project milestones. While Developer will make reasonable efforts to meet these timelines, delays may occur due to factors outside Developer's control.
+
+5. CLIENT RESPONSIBILITIES
+Client agrees to:
+- Provide all necessary content, images, and information in a timely manner
+- Review and provide feedback on deliverables within 5 business days
+- Provide access to any required third-party accounts or services
+
+6. INTELLECTUAL PROPERTY
+Upon receipt of full payment, Client shall own all rights to the final website design and code. Developer retains the right to display the work in portfolio and marketing materials.
+
+7. REVISIONS
+This Agreement includes up to 3 rounds of revisions per milestone. Additional revisions will be billed at Developer's hourly rate.
+
+8. TERMINATION
+Either party may terminate this Agreement with 14 days written notice. Client shall pay for all work completed up to the termination date.
+
+9. LIMITATION OF LIABILITY
+Developer's liability shall be limited to the total amount paid under this Agreement.
+
+10. GOVERNING LAW
+This Agreement shall be governed by the laws of the State of North Carolina.
+
+By signing below, both parties agree to the terms and conditions set forth in this Agreement.`,
+
+    'ongoing_maintenance': `ONGOING WEBSITE MAINTENANCE AGREEMENT
+
+This Ongoing Maintenance Agreement ("Agreement") is entered into as of [DATE] between Shauna Saunders ("Developer") and [CUSTOMER_NAME] ("Client").
+
+1. SERVICES PROVIDED
+Developer agrees to provide ongoing website maintenance services for "[PROJECT_NAME]" including:
+- Regular security updates and patches
+- Performance monitoring and optimization
+- Bug fixes and error resolution
+- Content updates as requested (within monthly hour allocation)
+- Monthly backup verification
+- Uptime monitoring and issue response
+
+2. MONTHLY SUBSCRIPTION
+Client agrees to pay [AMOUNT] per month for the services described herein. Payment is due on the first of each month and will be automatically charged to the payment method on file.
+
+3. SERVICE LEVEL
+Developer will respond to critical issues within 24 hours on business days. Non-critical requests will be addressed within 3-5 business days.
+
+4. HOUR ALLOCATION
+The monthly subscription includes up to 4 hours of development/update work per month. Additional hours will be billed at Developer's standard hourly rate. Unused hours do not roll over to subsequent months.
+
+5. FEATURE REQUESTS
+Client may submit feature requests through the customer portal. Developer will review requests and provide estimates. Feature requests exceeding the monthly hour allocation will require additional payment.
+
+6. TERM AND RENEWAL
+This Agreement begins on the date signed and continues on a month-to-month basis. Either party may cancel with 30 days written notice.
+
+7. CANCELLATION
+Upon cancellation:
+- Client will receive access to final backups
+- Developer will provide documentation for site handover
+- No refunds for partial months
+
+8. CLIENT RESPONSIBILITIES
+Client agrees to:
+- Maintain valid payment information
+- Report issues promptly through proper channels
+- Not make unauthorized changes that may compromise site security
+
+9. LIMITATION OF LIABILITY
+Developer is not responsible for data loss, downtime, or damages caused by:
+- Third-party services or hosting providers
+- Client modifications made outside this Agreement
+- Force majeure events
+
+10. GOVERNING LAW
+This Agreement shall be governed by the laws of the State of North Carolina.
+
+By signing below, Client agrees to the terms and conditions set forth in this Agreement.`,
+
+    'consultation': `CONSULTATION SERVICES AGREEMENT
+
+This Consultation Agreement ("Agreement") is entered into as of [DATE] between Shauna Saunders ("Consultant") and [CUSTOMER_NAME] ("Client").
+
+1. SERVICES
+Consultant agrees to provide consultation services for "[PROJECT_NAME]" as described in the project scope.
+
+2. COMPENSATION
+Client agrees to pay Consultant [AMOUNT] for the services described herein.
+
+3. CONFIDENTIALITY
+Consultant agrees to keep all Client information confidential and will not disclose it to third parties without written consent.
+
+4. TERM
+This Agreement is effective from the date of signing and continues until services are completed or terminated by either party with 7 days written notice.
+
+5. INTELLECTUAL PROPERTY
+All recommendations, strategies, and advice provided remain the intellectual property of Client upon full payment.
+
+6. LIMITATION OF LIABILITY
+Consultant's recommendations are provided as professional guidance. Client is responsible for implementation decisions. Consultant's liability is limited to the amount paid under this Agreement.
+
+7. GOVERNING LAW
+This Agreement shall be governed by the laws of the State of North Carolina.
+
+By signing below, both parties agree to the terms and conditions set forth in this Agreement.`,
+
+    'generic': `SERVICE AGREEMENT
+
+This Service Agreement ("Agreement") is entered into as of [DATE] between Shauna Saunders ("Service Provider") and [CUSTOMER_NAME] ("Client").
+
+1. SERVICES
+Service Provider agrees to provide services for "[PROJECT_NAME]" as described in the project scope.
+
+2. COMPENSATION
+Client agrees to pay Service Provider [AMOUNT] for the services described herein.
+
+3. PAYMENT TERMS
+Payment shall be made according to the agreed payment plan.
+
+4. TERM
+This Agreement is effective from the date of signing and continues until services are completed or terminated by either party with written notice.
+
+5. CONFIDENTIALITY
+Both parties agree to keep confidential any proprietary information shared during the course of this engagement.
+
+6. LIMITATION OF LIABILITY
+Service Provider's liability shall be limited to the total amount paid under this Agreement.
+
+7. GOVERNING LAW
+This Agreement shall be governed by the laws of the State of North Carolina.
+
+By signing below, both parties agree to the terms and conditions set forth in this Agreement.`
+};
+
+typeSelect.addEventListener('change', function() {
+    if (useTemplateCheckbox && useTemplateCheckbox.checked && this.value) {
+        const currentContent = contentTextarea.value.trim();
+        if (currentContent && !confirm('Load template content for this agreement type? This will replace current content.')) {
+            return;
+        }
+
+        if (templates[this.value]) {
+            contentTextarea.value = templates[this.value];
+        }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

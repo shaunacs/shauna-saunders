@@ -1,0 +1,130 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Agreement Templates - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .template-card {
+        background: var(--bg-dark, #1a1a2e);
+        border: 1px solid var(--border-color, #2d2d44);
+        border-radius: 8px;
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+    .template-header {
+        background: var(--bg-darker, #12121f);
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color, #2d2d44);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .template-header h3 {
+        margin: 0;
+        color: var(--text-color, #e0e0e0);
+    }
+    .template-content {
+        padding: 1.5rem;
+        white-space: pre-wrap;
+        font-family: Georgia, serif;
+        line-height: 1.6;
+        max-height: 300px;
+        overflow-y: auto;
+        background: var(--bg-color, #0f0f1a);
+        color: var(--text-color, #e0e0e0);
+        border: 1px solid var(--border-color, #2d2d44);
+        margin: 1rem;
+        border-radius: 4px;
+    }
+    .template-actions {
+        padding: 1rem 1.5rem;
+        background: var(--bg-darker, #12121f);
+        border-top: 1px solid var(--border-color, #2d2d44);
+    }
+    .placeholder-legend {
+        background: var(--bg-dark, #1a1a2e);
+        border: 1px solid var(--border-color, #2d2d44);
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+        color: var(--text-color, #e0e0e0);
+    }
+    .placeholder-legend strong {
+        color: var(--primary-color, #6366f1);
+    }
+    .placeholder-legend code {
+        background: var(--bg-darker, #12121f);
+        color: var(--primary-color, #6366f1);
+        padding: 0.125rem 0.5rem;
+        border-radius: 4px;
+        border: 1px solid var(--border-color, #2d2d44);
+    }
+    .placeholder-legend ul {
+        margin: 0.5rem 0 0 0;
+        padding-left: 1.5rem;
+    }
+    .placeholder-legend li {
+        margin-bottom: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('admin.agreements') }}">Agreements</a>
+    <span>/</span>
+    <span>Templates</span>
+</div>
+
+<div class="page-header">
+    <h1>Agreement Templates</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('admin.create_agreement_route') }}" class="btn btn-primary">Create Agreement</a>
+    </div>
+</div>
+
+<div class="placeholder-legend">
+    <strong>Placeholder Reference:</strong>
+    <p>These templates contain placeholders that are automatically replaced when creating an agreement:</p>
+    <ul>
+        <li><code>[CUSTOMER_NAME]</code> - Replaced with the customer's full name</li>
+        <li><code>[PROJECT_NAME]</code> - Replaced with the project name</li>
+        <li><code>[AMOUNT]</code> - Replaced with the project total amount (formatted as currency)</li>
+        <li><code>[DATE]</code> - Replaced with the current date</li>
+    </ul>
+</div>
+
+{% for template in templates %}
+<div class="template-card">
+    <div class="template-header">
+        <h3>{{ template.name }}</h3>
+        <span class="badge">{{ template.type }}</span>
+    </div>
+    <div class="template-content">{{ template.content }}</div>
+    <div class="template-actions">
+        <button class="btn btn-secondary btn-sm copy-btn" data-template="{{ template.type }}">
+            Copy to Clipboard
+        </button>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const card = this.closest('.template-card');
+        const content = card.querySelector('.template-content').textContent;
+
+        navigator.clipboard.writeText(content).then(() => {
+            const originalText = this.textContent;
+            this.textContent = 'Copied!';
+            setTimeout(() => {
+                this.textContent = originalText;
+            }, 2000);
+        });
+    });
+});
+</script>
+{% endblock %}

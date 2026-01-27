@@ -19,6 +19,8 @@
             <div class="nav-links">
                 {% if session.get('customer_id') %}
                     <a href="{{ url_for('customers.dashboard') }}" class="nav-link">Dashboard</a>
+                    <a href="{{ url_for('customers.agreements') }}" class="nav-link">Agreements</a>
+                    <a href="{{ url_for('customers.all_feature_requests') }}" class="nav-link">Feature Requests</a>
                     <a href="{{ url_for('customers.change_password') }}" class="nav-link">Change Password</a>
                     <a href="{{ url_for('customers.logout') }}" class="nav-link">Logout</a>
                 {% else %}

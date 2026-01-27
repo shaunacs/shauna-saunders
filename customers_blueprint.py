@@ -9,7 +9,17 @@ import stripe
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
-from customers_db import *
+from customers_db import (
+    get_db, verify_customer, get_customer_by_id, get_projects_by_customer,
+    get_project_by_id, get_milestones_by_project, get_milestone_by_id,
+    get_payments_by_project, get_payment_links_by_customer, get_customer_total_paid,
+    get_outstanding_balance, get_project_completion_percentage, get_payment_history,
+    get_active_subscription_projects, update_project, create_feature_request,
+    get_feature_requests_by_customer, get_feature_request_by_id, get_feature_request_history,
+    get_unsigned_agreements_for_customer, get_signed_agreements_for_customer,
+    get_agreement_by_id, get_active_agreement_for_project, sign_agreement,
+    get_agreement_signature, replace_agreement_placeholders
+)
 
 customers_bp = Blueprint('customers', __name__, url_prefix='/customers')
 
@@ -179,7 +189,7 @@ def dashboard():
     customer_id = session['customer_id']
     customer = get_customer_by_id(customer_id)
     projects = get_projects_by_customer(customer_id)
-    
+
     # Auto-backfill next payment dates for existing subscriptions (runs once per session)
     if 'payment_dates_backfilled' not in session:
         try:
@@ -191,6 +201,9 @@ def dashboard():
 
     # Get active (unused) payment links
     payment_links = get_payment_links_by_customer(customer_id, include_used=False)
+
+    # Get unsigned agreements for warning banner
+    unsigned_agreements = get_unsigned_agreements_for_customer(customer_id)
 
     # Calculate totals
     total_paid = get_customer_total_paid(customer_id)
@@ -207,6 +220,7 @@ def dashboard():
                          customer=customer,
                          projects=projects,
                          payment_links=payment_links,
+                         unsigned_agreements=unsigned_agreements,
                          total_paid=total_paid,
                          outstanding_balance=outstanding_balance,
                          recent_payments=recent_payments)
@@ -412,6 +426,42 @@ def manage_subscription(project_id):
                          subscription=subscription_details)
 
 
+@customers_bp.route('/subscription/<int:project_id>/update-payment', methods=['POST'])
+@customer_login_required
+def update_payment_method(project_id):
+    """Create a Stripe Customer Portal session for payment method updates"""
+    customer_id = session['customer_id']
+    project = get_project_by_id(project_id)
+
+    # Security: Ensure project belongs to customer
+    if not project or project['customer_id'] != customer_id:
+        flash('Invalid project.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    if not project.get('stripe_subscription_id'):
+        flash('No payment information found for this project.', 'error')
+        return redirect(url_for('customers.manage_subscription', project_id=project_id))
+
+    try:
+        # Get the Stripe customer ID from the subscription
+        subscription = stripe.Subscription.retrieve(project['stripe_subscription_id'])
+        stripe_customer_id = subscription.customer
+
+        # Create a Stripe Customer Portal session
+        session_data = stripe.billing_portal.Session.create(
+            customer=stripe_customer_id,
+            return_url=url_for('customers.manage_subscription', project_id=project_id, _external=True),
+        )
+        
+        # Redirect customer to the Customer Portal
+        return redirect(session_data.url)
+    
+    except Exception as e:
+        print(f"Error creating Customer Portal session: {str(e)}")
+        flash('Unable to access payment management. Please try again or contact support.', 'error')
+        return redirect(url_for('customers.manage_subscription', project_id=project_id))
+
+
 @customers_bp.route('/subscription/<int:project_id>/cancel', methods=['POST'])
 @customer_login_required
 def cancel_subscription(project_id):
@@ -429,16 +479,19 @@ def cancel_subscription(project_id):
         return redirect(url_for('customers.dashboard'))
 
     try:
-        # Cancel the subscription in Stripe
-        stripe.Subscription.delete(project['stripe_subscription_id'])
+        # Cancel the subscription at period end (customer retains access until then)
+        stripe.Subscription.modify(
+            project['stripe_subscription_id'],
+            cancel_at_period_end=True
+        )
 
         # Update project status (webhook will handle this too, but update immediately for UI)
-        update_project(project_id, subscription_status='cancelled', status='cancelled', next_payment_date=None)
+        update_project(project_id, subscription_status='cancel_pending')
 
         # Send email notification
         send_cancellation_notification(customer_id, project)
 
-        flash('Your subscription has been cancelled successfully.', 'success')
+        flash('Your subscription has been cancelled. You will continue to have access until the end of your current billing period.', 'success')
     except Exception as e:
         print(f"Error cancelling subscription: {str(e)}")
         flash('Error cancelling subscription. Please try again or contact support.', 'error')
@@ -606,6 +659,26 @@ def view_feature_requests(project_id):
                          feature_requests=feature_requests)
 
 
+@customers_bp.route('/feature-requests')
+@customer_login_required
+def all_feature_requests():
+    """View all feature requests for the logged-in customer"""
+    customer_id = session['customer_id']
+    customer = get_customer_by_id(customer_id)
+    
+    # Get all feature requests for this customer
+    feature_requests = get_feature_requests_by_customer(customer_id)
+    
+    # Get projects for context
+    projects = get_projects_by_customer(customer_id)
+    projects_dict = {p['id']: p for p in projects}
+
+    return render_template('customers/all_feature_requests.html',
+                         customer=customer,
+                         feature_requests=feature_requests,
+                         projects_dict=projects_dict)
+
+
 @customers_bp.route('/feature-request/<int:request_id>')
 @customer_login_required
 def view_feature_request(request_id):
@@ -686,7 +759,7 @@ def send_status_update_notification(feature_request_id, old_status, new_status, 
             return
 
         sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
-        
+
         if not sendgrid_api_key:
             print("SendGrid not configured for status update notification")
             return
@@ -705,7 +778,7 @@ def send_status_update_notification(feature_request_id, old_status, new_status, 
 
         old_status_name = status_names.get(old_status, old_status.replace('_', ' ').title())
         new_status_name = status_names.get(new_status, new_status.replace('_', ' ').title())
-        
+
         email_body = f"""
 Feature Request Status Update
 
@@ -741,6 +814,141 @@ Shauna Saunders
 
     except Exception as e:
         print(f"Error sending status update notification: {str(e)}")
+
+
+# Agreement Routes
+
+@customers_bp.route('/agreements')
+@customer_login_required
+def agreements():
+    """View all agreements (signed and unsigned)"""
+    customer_id = session['customer_id']
+
+    unsigned_agreements = get_unsigned_agreements_for_customer(customer_id)
+    signed_agreements = get_signed_agreements_for_customer(customer_id)
+
+    return render_template('customers/agreements.html',
+                         unsigned_agreements=unsigned_agreements,
+                         signed_agreements=signed_agreements)
+
+
+@customers_bp.route('/agreement/<int:agreement_id>')
+@customer_login_required
+def view_agreement(agreement_id):
+    """View a specific agreement"""
+    customer_id = session['customer_id']
+    agreement = get_agreement_by_id(agreement_id)
+
+    if not agreement:
+        flash('Agreement not found.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    # Security: Ensure agreement belongs to a project owned by this customer
+    if agreement['customer_id'] != customer_id:
+        flash('You do not have permission to view this agreement.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    # Check if already signed
+    signature = get_agreement_signature(agreement_id, customer_id)
+
+    return render_template('customers/view_agreement.html',
+                         agreement=agreement,
+                         signature=signature)
+
+
+@customers_bp.route('/agreement/<int:agreement_id>/sign', methods=['GET', 'POST'])
+@customer_login_required
+def sign_agreement_route(agreement_id):
+    """Sign an agreement"""
+    customer_id = session['customer_id']
+    customer = get_customer_by_id(customer_id)
+    agreement = get_agreement_by_id(agreement_id)
+
+    if not agreement:
+        flash('Agreement not found.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    # Security: Ensure agreement belongs to a project owned by this customer
+    if agreement['customer_id'] != customer_id:
+        flash('You do not have permission to sign this agreement.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    # Check if already signed
+    existing_signature = get_agreement_signature(agreement_id, customer_id)
+    if existing_signature:
+        flash('You have already signed this agreement.', 'info')
+        return redirect(url_for('customers.view_agreement', agreement_id=agreement_id))
+
+    # Check if agreement is still active
+    if not agreement['is_active']:
+        flash('This agreement is no longer active. Please contact support.', 'error')
+        return redirect(url_for('customers.agreements'))
+
+    if request.method == 'POST':
+        signature_name = request.form.get('signature_name', '').strip()
+        agree_checkbox = request.form.get('agree_terms') == 'on'
+
+        if not signature_name:
+            flash('Please type your full legal name to sign.', 'error')
+            return render_template('customers/sign_agreement.html',
+                                 agreement=agreement,
+                                 customer=customer)
+
+        if not agree_checkbox:
+            flash('You must agree to the terms to sign this agreement.', 'error')
+            return render_template('customers/sign_agreement.html',
+                                 agreement=agreement,
+                                 customer=customer)
+
+        # Get client IP address
+        client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        if client_ip and ',' in client_ip:
+            client_ip = client_ip.split(',')[0].strip()
+
+        signature_id = sign_agreement(
+            agreement_id=agreement_id,
+            customer_id=customer_id,
+            signature_name=signature_name,
+            signature_ip=client_ip
+        )
+
+        if signature_id:
+            flash('Agreement signed successfully! Thank you.', 'success')
+            return redirect(url_for('customers.view_agreement', agreement_id=agreement_id))
+        else:
+            flash('Unable to sign agreement. Please try again or contact support.', 'error')
+
+    return render_template('customers/sign_agreement.html',
+                         agreement=agreement,
+                         customer=customer)
+
+
+@customers_bp.route('/project/<int:project_id>/agreement')
+@customer_login_required
+def project_agreement(project_id):
+    """View or sign the agreement for a specific project"""
+    customer_id = session['customer_id']
+    project = get_project_by_id(project_id)
+
+    # Security: Ensure project belongs to logged-in customer
+    if not project or project['customer_id'] != customer_id:
+        flash('Project not found.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    # Get active agreement for this project
+    agreement = get_active_agreement_for_project(project_id)
+
+    if not agreement:
+        flash('No agreement has been created for this project yet.', 'info')
+        return redirect(url_for('customers.project_detail', project_id=project_id))
+
+    # Check if already signed
+    signature = get_agreement_signature(agreement['id'], customer_id)
+
+    if signature:
+        return redirect(url_for('customers.view_agreement', agreement_id=agreement['id']))
+    else:
+        return redirect(url_for('customers.sign_agreement_route', agreement_id=agreement['id']))
 
 
 # Stripe webhook handler moved to server.py to avoid CSRF issues

@@ -1,0 +1,207 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}{{ agreement.title }} - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .agreement-content {
+        background: var(--bg-color, #0f0f1a);
+        border: 1px solid var(--border-color, #2d2d44);
+        border-radius: 8px;
+        padding: 2rem;
+        white-space: pre-wrap;
+        font-family: Georgia, serif;
+        line-height: 1.8;
+        max-height: 500px;
+        overflow-y: auto;
+        color: var(--text-color, #e0e0e0);
+    }
+    .signature-card {
+        background: var(--bg-dark, #1a1a2e);
+        border: 1px solid var(--border-color, #2d2d44);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .signature-name {
+        font-family: 'Brush Script MT', cursive;
+        font-size: 1.5rem;
+        color: var(--primary-color, #6366f1);
+    }
+    .signature-details {
+        color: var(--text-color, #e0e0e0);
+    }
+    .signature-details strong {
+        color: var(--text-muted, #9ca3af);
+    }
+    .version-history {
+        margin-top: 2rem;
+    }
+    .version-item {
+        padding: 0.75rem;
+        border-left: 3px solid var(--border-color, #2d2d44);
+        margin-bottom: 0.5rem;
+        background: var(--bg-dark, #1a1a2e);
+        color: var(--text-color, #e0e0e0);
+    }
+    .version-item.current {
+        border-left-color: #10b981;
+        background: rgba(16, 185, 129, 0.1);
+    }
+    .version-item small {
+        color: var(--text-muted, #9ca3af);
+    }
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+    }
+    @media (max-width: 768px) {
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    .info-list {
+        margin: 0;
+    }
+    .info-list dt {
+        color: var(--text-muted, #9ca3af);
+        font-size: 0.875rem;
+        margin-top: 0.75rem;
+    }
+    .info-list dt:first-child {
+        margin-top: 0;
+    }
+    .info-list dd {
+        margin: 0.25rem 0 0 0;
+        color: var(--text-color, #e0e0e0);
+    }
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .badge-success {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        border: 1px solid #10b981;
+    }
+    .badge-secondary {
+        background: rgba(107, 114, 128, 0.2);
+        color: #9ca3af;
+        border: 1px solid #6b7280;
+    }
+    .empty-state {
+        color: var(--text-muted, #9ca3af);
+        padding: 1rem;
+        text-align: center;
+    }
+    .text-muted {
+        color: var(--text-muted, #9ca3af);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('admin.agreements') }}">Agreements</a>
+    <span>/</span>
+    <span>{{ agreement.title }}</span>
+</div>
+
+<div class="page-header">
+    <div>
+        <h1>{{ agreement.title }}</h1>
+        <p class="text-muted">
+            Version {{ agreement.version }} |
+            {{ agreement.agreement_type|replace('_', ' ')|title }} |
+            {% if agreement.is_active %}
+                <span class="badge badge-success">Active</span>
+            {% else %}
+                <span class="badge badge-secondary">Superseded</span>
+            {% endif %}
+        </p>
+    </div>
+    <div class="header-actions">
+        {% if agreement.is_active %}
+        <a href="{{ url_for('admin.edit_agreement', agreement_id=agreement.id) }}" class="btn btn-secondary">Create New Version</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="detail-grid">
+    <div class="detail-main">
+        <section class="section">
+            <h2>Agreement Content</h2>
+            <div class="agreement-content">{{ agreement.content }}</div>
+        </section>
+
+        <section class="section">
+            <h2>Signatures ({{ signatures|length }})</h2>
+            {% if signatures %}
+                {% for sig in signatures %}
+                <div class="signature-card">
+                    <div class="signature-name">{{ sig.signature_name }}</div>
+                    <div class="signature-details">
+                        <p><strong>Customer:</strong> {{ sig.customer_name }} ({{ sig.customer_email }})</p>
+                        <p><strong>Signed:</strong> {{ sig.signed_at }}</p>
+                        <p><strong>IP Address:</strong> {{ sig.signature_ip or 'Not recorded' }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="empty-state">No signatures yet.</p>
+            {% endif %}
+        </section>
+    </div>
+
+    <div class="detail-sidebar">
+        <section class="section">
+            <h3>Agreement Info</h3>
+            <dl class="info-list">
+                <dt>Project</dt>
+                <dd>
+                    <a href="{{ url_for('admin.project_detail', project_id=agreement.project_id) }}">
+                        {{ agreement.project_name }}
+                    </a>
+                </dd>
+                <dt>Customer</dt>
+                <dd>
+                    <a href="{{ url_for('admin.customer_detail', customer_id=agreement.customer_id) }}">
+                        {{ agreement.customer_name }}
+                    </a>
+                </dd>
+                <dt>Created</dt>
+                <dd>{{ agreement.created_at }}</dd>
+                {% if agreement.superseded_at %}
+                <dt>Superseded</dt>
+                <dd>{{ agreement.superseded_at }}</dd>
+                {% endif %}
+            </dl>
+        </section>
+
+        <section class="section version-history">
+            <h3>Version History</h3>
+            {% for version in version_history %}
+            <div class="version-item {% if version.id == agreement.id %}current{% endif %}">
+                <strong>Version {{ version.version }}</strong>
+                {% if version.is_active %}
+                    <span class="badge badge-success">Current</span>
+                {% endif %}
+                <br>
+                <small>{{ version.created_at[:10] if version.created_at else 'N/A' }}</small>
+                {% if version.signature_count > 0 %}
+                    <br><small>{{ version.signature_count }} signature(s)</small>
+                {% endif %}
+                {% if version.id != agreement.id %}
+                <br>
+                <a href="{{ url_for('admin.agreement_detail', agreement_id=version.id) }}" class="btn btn-sm">View</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </section>
+    </div>
+</div>
+{% endblock %}

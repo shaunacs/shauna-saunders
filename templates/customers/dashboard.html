@@ -9,6 +9,16 @@
         <p class="dashboard-subtitle">Manage your projects and payments</p>
     </div>
 
+    {% if unsigned_agreements %}
+    <div class="agreement-warning-banner">
+        <span class="warning-icon">&#9888;</span>
+        <div class="warning-content">
+            <strong>Action Required:</strong> You have {{ unsigned_agreements|length }} agreement(s) waiting for your signature.
+            <a href="{{ url_for('customers.agreements') }}">Review and sign now</a>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-label">Active Projects</div>
@@ -72,6 +82,8 @@
                                 <span class="value">
                                     {% if project.subscription_status == 'active' %}
                                         <span style="color:#10b981;">Active</span>
+                                    {% elif project.subscription_status == 'cancel_pending' %}
+                                        <span style="color:#f59e0b;">Cancelling</span>
                                     {% elif project.subscription_status == 'cancelled' %}
                                         <span style="color:#ef4444;">Cancelled</span>
                                     {% else %}
@@ -79,7 +91,7 @@
                                     {% endif %}
                                 </span>
                             </div>
-                            {% if project.next_payment_date and project.subscription_status == 'active' %}
+                            {% if project.next_payment_date and project.subscription_status in ['active', 'cancel_pending'] %}
                             <div class="financial-item">
                                 <span class="label">Next Payment:</span>
                                 <span class="value">{{ project.next_payment_date|format_date }}</span>
@@ -111,27 +123,37 @@
 
                 <div class="project-footer">
                     {% if project.is_subscription %}
-                        {% if project.subscription_status == 'active' %}
-                            <a href="{{ url_for('customers.manage_subscription', project_id=project.id) }}" class="btn btn-secondary btn-sm">Manage Subscription</a>
-                        {% elif project.subscription_status == 'cancelled' %}
-                            <div class="cancelled-subscription-info">
-                                <p style="margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">
-                                    Would you like to resubscribe? 
-                                    <a href="mailto:shauna.saunders@alumni.unc.edu?subject=Resubscribe Request - {{ project.project_name }}&body=Hi Shauna,%0A%0AI would like to resubscribe to {{ project.project_name }}.%0A%0APlease let me know the next steps.%0A%0AThanks!" 
-                                       style="color: var(--primary-color); text-decoration: none;">
-                                        Reach out here
-                                    </a>
-                                </p>
-                            </div>
-                        {% else %}
-                            <form method="POST" action="{{ url_for('customers.create_checkout_session') }}" style="display:inline;">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <input type="hidden" name="project_id" value="{{ project.id }}">
-                                <button type="submit" class="btn btn-primary btn-sm">Subscribe Now</button>
-                            </form>
-                        {% endif %}
+                        <div class="subscription-actions">
+                            {% if project.subscription_status in ['active', 'cancel_pending'] %}
+                                <a href="{{ url_for('customers.manage_subscription', project_id=project.id) }}" class="btn btn-secondary btn-sm">Manage Subscription</a>
+                                {% if project.project_type == 'ongoing_maintenance' and project.status == 'in_progress' %}
+                                    <a href="{{ url_for('customers.request_feature', project_id=project.id) }}" class="btn btn-primary btn-sm feature-request-btn">✨ Request Feature</a>
+                                {% endif %}
+                            {% elif project.subscription_status == 'cancelled' %}
+                                <div class="cancelled-subscription-info">
+                                    <p style="margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">
+                                        Would you like to resubscribe? 
+                                        <a href="mailto:shauna.saunders@alumni.unc.edu?subject=Resubscribe Request - {{ project.project_name }}&body=Hi Shauna,%0A%0AI would like to resubscribe to {{ project.project_name }}.%0A%0APlease let me know the next steps.%0A%0AThanks!" 
+                                           style="color: var(--primary-color); text-decoration: none;">
+                                            Reach out here
+                                        </a>
+                                    </p>
+                                </div>
+                            {% else %}
+                                <form method="POST" action="{{ url_for('customers.create_checkout_session') }}" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="project_id" value="{{ project.id }}">
+                                    <button type="submit" class="btn btn-primary btn-sm">Subscribe Now</button>
+                                </form>
+                            {% endif %}
+                        </div>
                     {% else %}
-                        <a href="{{ url_for('customers.project_detail', project_id=project.id) }}" class="btn btn-secondary btn-sm">View Details</a>
+                        <div class="project-actions">
+                            <a href="{{ url_for('customers.project_detail', project_id=project.id) }}" class="btn btn-secondary btn-sm">View Details</a>
+                            {% if project.project_type == 'ongoing_maintenance' and project.status == 'in_progress' %}
+                                <a href="{{ url_for('customers.request_feature', project_id=project.id) }}" class="btn btn-primary btn-sm feature-request-btn">✨ Request Feature</a>
+                            {% endif %}
+                        </div>
                     {% endif %}
                 </div>
             </div>
@@ -173,4 +195,86 @@
     </section>
     {% endif %}
 </div>
+
+<style>
+.agreement-warning-banner {
+    background: var(--bg-dark, #1a1a2e);
+    border: 2px solid #f59e0b;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.agreement-warning-banner .warning-icon {
+    font-size: 2rem;
+    color: #fbbf24;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+}
+
+.agreement-warning-banner .warning-content {
+    flex: 1;
+    color: var(--text-color, #e0e0e0);
+}
+
+.agreement-warning-banner .warning-content strong {
+    color: #fbbf24;
+}
+
+.agreement-warning-banner a {
+    color: #fbbf24;
+    font-weight: 600;
+    text-decoration: underline;
+    margin-left: 0.5rem;
+}
+
+.agreement-warning-banner a:hover {
+    color: #fcd34d;
+}
+
+.project-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.subscription-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.feature-request-btn {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    border: none !important;
+    min-width: 160px !important;
+    white-space: nowrap !important;
+    padding: 0.5rem 1.25rem !important;
+    transition: all 0.3s ease !important;
+}
+
+.feature-request-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4) !important;
+    color: white !important;
+    text-decoration: none !important;
+    background: linear-gradient(135deg, #059669, #047857) !important;
+}
+
+@media (max-width: 768px) {
+    .project-actions, .subscription-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .project-actions .btn, .subscription-actions .btn {
+        width: 100%;
+        margin: 0;
+    }
+}
+</style>
 {% endblock %}

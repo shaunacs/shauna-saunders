@@ -4,9 +4,8 @@ import os
 from datetime import datetime, timedelta
 from flask import Flask, redirect, render_template, request, jsonify, g
 from flask_wtf.csrf import CSRFProtect
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
 from dotenv import load_dotenv
+import ses_helper
 import customers_db
 
 # Load environment variables from .env file
@@ -313,14 +312,13 @@ def send_cancellation_notification_webhook(project_id):
         if not project:
             print(f"Project not found for cancellation notification: {project_id}")
             return
-            
+
         customer = customers_db.get_customer_by_id(project['customer_id'])
-        sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
-        
-        if not sendgrid_api_key or not customer:
-            print("SendGrid not configured or customer not found for cancellation notification")
+
+        if not customer:
+            print("Customer not found for cancellation notification")
             return
-        
+
         email_body = f"""
 Subscription Cancellation Notification (Stripe Dashboard)
 
@@ -340,16 +338,16 @@ This subscription was cancelled directly from the Stripe dashboard.
 This is an automated notification from your customer management system.
 """
 
-        message = Mail(
-            from_email='noreply@shaunasaunders.com',
-            to_emails='shauna.saunders@alumni.unc.edu',
+        result = ses_helper.send_email(
+            to_email='shauna.saunders@alumni.unc.edu',
             subject=f'Subscription Cancelled (Stripe): {customer["name"]} - {project["project_name"]}',
-            plain_text_content=email_body
+            body=email_body
         )
 
-        sg = SendGridAPIClient(sendgrid_api_key)
-        response = sg.send(message)
-        print(f"Webhook cancellation notification sent for customer {customer['name']}")
+        if result['success']:
+            print(f"Webhook cancellation notification sent for customer {customer['name']}")
+        else:
+            print(f"Failed to send cancellation notification: {result.get('error')}")
 
     except Exception as e:
         print(f"Error sending webhook cancellation notification: {str(e)}")
@@ -544,7 +542,7 @@ def render_services_page():
 
 @app.route('/submit-contact', methods=['POST'])
 def submit_contact_form():
-    """Handles contact form submission and sends email via SendGrid"""
+    """Handles contact form submission and sends email via AWS SES"""
 
     try:
         # Get client IP for rate limiting
@@ -612,29 +610,20 @@ Project Description:
 This inquiry was submitted on {current_time.strftime('%B %d, %Y at %I:%M %p')}
 """
 
-        # Send email via SendGrid
-        sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
+        # Send email via AWS SES
+        result = ses_helper.send_email(
+            to_email='shauna.saunders@alumni.unc.edu',
+            subject=f'New Website Inquiry from {name}',
+            body=email_body,
+            reply_to=email
+        )
 
-        if not sendgrid_api_key:
-            # If SendGrid is not configured, log the error but don't expose it to the user
-            print("ERROR: SENDGRID_API_KEY not configured")
+        if not result['success']:
+            print(f"ERROR: Failed to send email via SES: {result.get('error')}")
             return jsonify({
                 'success': False,
                 'message': 'Unable to send message at this time. Please email me directly at shauna.saunders@alumni.unc.edu'
             }), 500
-
-        message = Mail(
-            from_email='noreply@shaunasaunders.com',  # Replace with your verified sender
-            to_emails='shauna.saunders@alumni.unc.edu',
-            subject=f'New Website Inquiry from {name}',
-            plain_text_content=email_body
-        )
-
-        # Set reply-to to client's email
-        message.reply_to = email
-
-        sg = SendGridAPIClient(sendgrid_api_key)
-        response = sg.send(message)
 
         # Save contact submission to database
         try:

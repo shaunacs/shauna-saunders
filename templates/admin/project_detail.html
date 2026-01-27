@@ -127,4 +127,38 @@
     </tbody>
 </table>
 {% endif %}
+
+<h2>Service Agreement</h2>
+{% if agreement %}
+<div class="agreement-status-card" style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:8px; padding:1.5rem; margin-bottom:1rem;">
+    <div style="display:flex; justify-content:space-between; align-items:start; flex-wrap:wrap; gap:1rem;">
+        <div>
+            <h3 style="margin:0 0 0.5rem 0;">{{ agreement.title }}</h3>
+            <p style="color:#6b7280; margin:0;">
+                Version {{ agreement.version }} |
+                {{ agreement.agreement_type|replace('_', ' ')|title }} |
+                Created {{ agreement.created_at[:10] if agreement.created_at else 'N/A' }}
+            </p>
+            {% if agreement_signature %}
+            <p style="color:#10b981; margin:0.5rem 0 0 0;">
+                <strong>Signed:</strong> {{ agreement_signature.signed_at[:10] if agreement_signature.signed_at else 'N/A' }} by {{ agreement_signature.signature_name }}
+            </p>
+            {% else %}
+            <p style="color:#f59e0b; margin:0.5rem 0 0 0;">
+                <strong>Status:</strong> Awaiting customer signature
+            </p>
+            {% endif %}
+        </div>
+        <div>
+            <a href="{{ url_for('admin.agreement_detail', agreement_id=agreement.id) }}" class="btn btn-secondary">View Agreement</a>
+            <a href="{{ url_for('admin.edit_agreement', agreement_id=agreement.id) }}" class="btn btn-secondary">Edit / New Version</a>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="empty-state" style="text-align:center; padding:2rem; background:#f8f9fa; border-radius:8px;">
+    <p>No agreement has been created for this project yet.</p>
+    <a href="{{ url_for('admin.create_agreement_for_project', project_id=project.id) }}" class="btn btn-primary">Create Agreement</a>
+</div>
+{% endif %}
 {% endblock %}

@@ -1,0 +1,215 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Feature Requests - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <h1>Feature Requests</h1>
+    <div class="admin-actions">
+        <form method="GET" class="filter-form">
+            <select name="status" onchange="this.form.submit()">
+                {% for value, label in status_options %}
+                <option value="{{ value }}" {% if value == current_status %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+</div>
+
+{% if requests %}
+<div class="stats-summary">
+    <div class="stat-item">
+        <span class="stat-value">{{ requests|length }}</span>
+        <span class="stat-label">{{ 'Request' if requests|length == 1 else 'Requests' }}</span>
+    </div>
+</div>
+
+<div class="table-container">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Customer</th>
+                <th>Project</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in requests %}
+            <tr class="table-row">
+                <td>#{{ request.id }}</td>
+                <td class="request-title">
+                    <a href="{{ url_for('admin.feature_request_detail', request_id=request.id) }}">
+                        {{ request.title }}
+                    </a>
+                </td>
+                <td>{{ request.customer_name }}</td>
+                <td>{{ request.project_name }}</td>
+                <td>
+                    <span class="priority-badge priority-{{ request.priority }}">
+                        {{ request.priority|title }}
+                    </span>
+                </td>
+                <td>
+                    <span class="status-badge status-{{ request.status }}">
+                        {% if request.status == 'request_received' %}
+                            Request Received
+                        {% elif request.status == 'in_review' %}
+                            In Review
+                        {% elif request.status == 'approved' %}
+                            Approved
+                        {% elif request.status == 'in_progress' %}
+                            In Progress
+                        {% elif request.status == 'testing' %}
+                            Testing
+                        {% elif request.status == 'completed' %}
+                            Completed
+                        {% elif request.status == 'on_hold' %}
+                            On Hold
+                        {% elif request.status == 'rejected' %}
+                            Rejected
+                        {% else %}
+                            {{ request.status|title }}
+                        {% endif %}
+                    </span>
+                </td>
+                <td>{{ request.created_at[:10] }}</td>
+                <td class="actions">
+                    <a href="{{ url_for('admin.feature_request_detail', request_id=request.id) }}" class="btn btn-sm btn-primary">View</a>
+                    <a href="{{ url_for('admin.edit_feature_request', request_id=request.id) }}" class="btn btn-sm btn-secondary">Edit</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">📝</div>
+    <h3>No feature requests found</h3>
+    <p>{% if current_status %}No requests found with the selected status.{% else %}No feature requests have been submitted yet.{% endif %}</p>
+    {% if current_status %}
+    <a href="{{ url_for('admin.feature_requests') }}" class="btn btn-primary">View All Requests</a>
+    {% endif %}
+</div>
+{% endif %}
+
+<style>
+.filter-form {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.filter-form select {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-card);
+    color: var(--text-light);
+}
+
+.stats-summary {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.request-title a {
+    color: var(--text-light);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.request-title a:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+.priority-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.priority-low { background: rgba(156, 163, 175, 0.2); color: #9CA3AF; }
+.priority-medium { background: rgba(251, 191, 36, 0.2); color: #F59E0B; }
+.priority-high { background: rgba(239, 68, 68, 0.2); color: #EF4444; }
+.priority-urgent { background: rgba(239, 68, 68, 0.3); color: #EF4444; font-weight: 700; }
+
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-request_received { background: rgba(156, 163, 175, 0.2); color: #9CA3AF; }
+.status-in_review { background: rgba(251, 191, 36, 0.2); color: #F59E0B; }
+.status-approved { background: rgba(16, 185, 129, 0.2); color: #10B981; }
+.status-in_progress { background: rgba(103, 232, 249, 0.2); color: #67E8F9; }
+.status-testing { background: rgba(139, 92, 246, 0.2); color: #8B5CF6; }
+.status-completed { background: rgba(16, 185, 129, 0.3); color: #10B981; }
+.status-on_hold { background: rgba(251, 191, 36, 0.3); color: #F59E0B; }
+.status-rejected { background: rgba(239, 68, 68, 0.2); color: #EF4444; }
+
+.actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--bg-card);
+    border: 2px dashed var(--border-color);
+    border-radius: 16px;
+    margin-top: 2rem;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    color: var(--text-light);
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+</style>
+{% endblock %}

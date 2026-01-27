@@ -1,0 +1,112 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Create Agreement for {{ project.project_name }} - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .content-textarea {
+        font-family: monospace;
+        min-height: 500px;
+        white-space: pre-wrap;
+    }
+    .placeholder-help {
+        background: #e2e8f0;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+    .placeholder-help code {
+        background: #cbd5e0;
+        padding: 0.125rem 0.375rem;
+        border-radius: 4px;
+    }
+    .project-info {
+        background: #f0fff4;
+        border: 1px solid #38a169;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .project-info h3 {
+        margin-top: 0;
+        color: #276749;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('admin.projects') }}">Projects</a>
+    <span>/</span>
+    <a href="{{ url_for('admin.project_detail', project_id=project.id) }}">{{ project.project_name }}</a>
+    <span>/</span>
+    <span>Create Agreement</span>
+</div>
+
+<h1>Create Agreement</h1>
+
+<div class="project-info">
+    <h3>Project Details</h3>
+    <p><strong>Project:</strong> {{ project.project_name }}</p>
+    <p><strong>Customer:</strong> {{ customer.name }} ({{ customer.email }})</p>
+    <p><strong>Type:</strong> {{ project.project_type|replace('_', ' ')|title }}</p>
+    <p><strong>Amount:</strong> ${{ "%.2f"|format(project.total_amount) }}</p>
+</div>
+
+<div class="placeholder-help">
+    <strong>Available Placeholders:</strong>
+    <p>The template below contains placeholders that can be auto-replaced:</p>
+    <ul>
+        <li><code>[CUSTOMER_NAME]</code> &rarr; {{ customer.name }}</li>
+        <li><code>[PROJECT_NAME]</code> &rarr; {{ project.project_name }}</li>
+        <li><code>[AMOUNT]</code> &rarr; ${{ "%.2f"|format(project.total_amount) }}</li>
+        <li><code>[DATE]</code> &rarr; Today's date</li>
+    </ul>
+</div>
+
+<form method="POST" class="form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="form-group">
+        <label for="title">Agreement Title *</label>
+        <input type="text" name="title" id="title" required
+               value="Service Agreement - {{ project.project_name }}"
+               placeholder="e.g., Service Agreement for Website Development">
+    </div>
+
+    <div class="form-group">
+        <label for="agreement_type">Agreement Type *</label>
+        <select name="agreement_type" id="agreement_type" required>
+            <option value="custom_website" {% if project.project_type == 'custom_website' %}selected{% endif %}>
+                Custom Website Development
+            </option>
+            <option value="ongoing_maintenance" {% if project.project_type == 'ongoing_maintenance' %}selected{% endif %}>
+                Ongoing Website Maintenance
+            </option>
+            <option value="consultation" {% if project.project_type == 'consultation' %}selected{% endif %}>
+                Consultation Services
+            </option>
+            <option value="generic" {% if project.project_type not in ['custom_website', 'ongoing_maintenance', 'consultation'] %}selected{% endif %}>
+                Generic Service Agreement
+            </option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>
+            <input type="checkbox" name="auto_replace" id="auto_replace" value="1" checked>
+            Auto-replace placeholders with actual project/customer values
+        </label>
+    </div>
+
+    <div class="form-group">
+        <label for="content">Agreement Content *</label>
+        <textarea name="content" id="content" class="content-textarea" required>{{ template_content }}</textarea>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Create Agreement</button>
+        <a href="{{ url_for('admin.project_detail', project_id=project.id) }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

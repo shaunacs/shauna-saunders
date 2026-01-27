@@ -1,0 +1,161 @@
+{% extends 'customers/base_customers.html' %}
+
+{% block title %}My Agreements - Customer Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .agreements-section {
+        margin-bottom: 2rem;
+    }
+    .agreements-section h2 {
+        color: var(--text-color, #e0e0e0);
+    }
+    .agreement-card {
+        background: var(--bg-dark, #1a1a2e);
+        border: 1px solid var(--border-color, #2d2d44);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .agreement-card.unsigned {
+        border-color: #f59e0b;
+        background: var(--bg-dark, #1a1a2e);
+        box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.3);
+    }
+    .agreement-info h3 {
+        margin: 0 0 0.5rem 0;
+        color: var(--text-color, #e0e0e0);
+    }
+    .agreement-meta {
+        color: var(--text-muted, #9ca3af);
+        font-size: 0.875rem;
+    }
+    .agreement-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .signed-badge {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        border: 1px solid #10b981;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .unsigned-badge {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fbbf24;
+        border: 1px solid #f59e0b;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .warning-banner {
+        background: var(--bg-dark, #1a1a2e);
+        border: 2px solid #f59e0b;
+        border-radius: 8px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        color: var(--text-color, #e0e0e0);
+    }
+    .warning-banner .icon {
+        font-size: 2rem;
+        color: #fbbf24;
+        text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+    }
+    .warning-banner strong {
+        color: #fbbf24;
+    }
+    .empty-state {
+        background: var(--bg-dark, #1a1a2e);
+        border: 1px solid var(--border-color, #2d2d44);
+        border-radius: 8px;
+        padding: 3rem;
+        text-align: center;
+        color: var(--text-muted, #9ca3af);
+    }
+    .empty-state p {
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>My Agreements</h1>
+</div>
+
+{% if unsigned_agreements %}
+<div class="warning-banner">
+    <span class="icon">&#9888;</span>
+    <div>
+        <strong>Action Required:</strong> You have {{ unsigned_agreements|length }} agreement(s) waiting for your signature.
+        Please review and sign to continue with your project(s).
+    </div>
+</div>
+
+<section class="agreements-section">
+    <h2>Pending Signature</h2>
+    {% for agreement in unsigned_agreements %}
+    <div class="agreement-card unsigned">
+        <div class="agreement-info">
+            <h3>{{ agreement.title }}</h3>
+            <p class="agreement-meta">
+                {{ agreement.project_name }} |
+                {{ agreement.agreement_type|replace('_', ' ')|title }} |
+                Created {{ agreement.created_at[:10] if agreement.created_at else 'N/A' }}
+            </p>
+        </div>
+        <div class="agreement-actions">
+            <span class="unsigned-badge">Signature Required</span>
+            <a href="{{ url_for('customers.sign_agreement_route', agreement_id=agreement.id) }}" class="btn btn-primary">
+                Review & Sign
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</section>
+{% endif %}
+
+{% if signed_agreements %}
+<section class="agreements-section">
+    <h2>Signed Agreements</h2>
+    {% for agreement in signed_agreements %}
+    <div class="agreement-card">
+        <div class="agreement-info">
+            <h3>{{ agreement.title }}</h3>
+            <p class="agreement-meta">
+                {{ agreement.project_name }} |
+                Signed {{ agreement.signed_at[:10] if agreement.signed_at else 'N/A' }} as "{{ agreement.signature_name }}"
+            </p>
+        </div>
+        <div class="agreement-actions">
+            <span class="signed-badge">Signed</span>
+            <a href="{{ url_for('customers.view_agreement', agreement_id=agreement.id) }}" class="btn btn-secondary">
+                View Agreement
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</section>
+{% endif %}
+
+{% if not unsigned_agreements and not signed_agreements %}
+<div class="empty-state">
+    <p>No agreements found. Agreements will appear here when your projects are set up.</p>
+    <a href="{{ url_for('customers.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+{% endif %}
+{% endblock %}

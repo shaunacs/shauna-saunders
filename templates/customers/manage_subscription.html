@@ -15,7 +15,11 @@
         <div class="subscription-header">
             <h3>Subscription Details</h3>
             <span class="subscription-status status-{{ project.subscription_status }}">
-                {{ project.subscription_status|title }}
+                {% if project.subscription_status == 'cancel_pending' %}
+                    Cancelling
+                {% else %}
+                    {{ project.subscription_status|title }}
+                {% endif %}
             </span>
         </div>
 
@@ -80,13 +84,26 @@
         {% if subscription and subscription.status == 'active' and not subscription.cancel_at_period_end %}
         <div class="subscription-actions">
             <h3>Manage Subscription</h3>
-            <p>Need to cancel your subscription? You can do so below. Your access will continue until the end of your current billing period.</p>
+            
+            <div class="action-section">
+                <h4>Update Payment Information</h4>
+                <p>Update your credit card or payment method through our secure portal.</p>
+                <form method="POST" action="{{ url_for('customers.update_payment_method', project_id=project.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-primary">Update Payment Method</button>
+                </form>
+            </div>
 
-            {% set end_date = subscription.current_period_end|timestamp_to_date if subscription.current_period_end else 'the end of your billing period' %}
-            <form method="POST" action="{{ url_for('customers.cancel_subscription', project_id=project.id) }}" style="margin-top:1rem;" onsubmit="return confirm('Are you sure you want to cancel your subscription? You will continue to have access until {{ end_date }}.');">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn-danger">Cancel Subscription</button>
-            </form>
+            <div class="action-section">
+                <h4>Cancel Subscription</h4>
+                <p>Need to cancel your subscription? You can do so below. Your access will continue until the end of your current billing period.</p>
+
+                {% set end_date = subscription.current_period_end|timestamp_to_date if subscription.current_period_end else 'the end of your billing period' %}
+                <form method="POST" action="{{ url_for('customers.cancel_subscription', project_id=project.id) }}" style="margin-top:1rem;" onsubmit="return confirm('Are you sure you want to cancel your subscription? You will continue to have access until {{ end_date }}.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">Cancel Subscription</button>
+                </form>
+            </div>
         </div>
         {% elif project.subscription_status == 'cancelled' or (subscription and subscription.status == 'canceled') %}
         <div class="alert alert-info">
@@ -161,6 +178,11 @@
     color: #FCA5A5;
 }
 
+.subscription-status.status-cancel_pending {
+    background: rgba(251, 191, 36, 0.2);
+    color: var(--warning-color);
+}
+
 .subscription-status.status-inactive {
     background: rgba(251, 191, 36, 0.2);
     color: var(--warning-color);
@@ -205,6 +227,24 @@
 .subscription-actions p {
     color: var(--text-muted);
     margin-bottom: 1rem;
+}
+
+.action-section {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.action-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.action-section h4 {
+    color: var(--text-light);
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
 }
 
 .btn-danger {
