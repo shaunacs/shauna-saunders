@@ -27,6 +27,9 @@ customers_bp = Blueprint('customers', __name__, url_prefix='/customers')
 # Initialize Stripe
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
+# Base URL for production (used for Stripe redirect URLs)
+BASE_URL = os.environ.get('BASE_URL', 'http://localhost:5001')
+
 
 # Template filters
 @customers_bp.app_template_filter('timestamp_to_date')
@@ -293,8 +296,8 @@ def create_checkout_session():
                     'quantity': 1,
                 }],
                 mode='subscription',
-                success_url=url_for('customers.payment_success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
-                cancel_url=url_for('customers.payment_cancel', _external=True),
+                success_url=f'{BASE_URL}/customers/payment-success?session_id={{CHECKOUT_SESSION_ID}}',
+                cancel_url=f'{BASE_URL}/customers/payment-cancel',
                 metadata={
                     'customer_id': customer_id,
                     'project_id': project_id,
@@ -347,8 +350,8 @@ def create_checkout_session():
                     'quantity': 1,
                 }],
                 mode='payment',
-                success_url=url_for('customers.payment_success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
-                cancel_url=url_for('customers.payment_cancel', _external=True),
+                success_url=f'{BASE_URL}/customers/payment-success?session_id={{CHECKOUT_SESSION_ID}}',
+                cancel_url=f'{BASE_URL}/customers/payment-cancel',
                 metadata={
                     'customer_id': customer_id,
                     'project_id': project_id,
@@ -450,7 +453,7 @@ def update_payment_method(project_id):
         # Create a Stripe Customer Portal session
         session_data = stripe.billing_portal.Session.create(
             customer=stripe_customer_id,
-            return_url=url_for('customers.manage_subscription', project_id=project_id, _external=True),
+            return_url=f'{BASE_URL}/customers/subscription/{project_id}',
         )
         
         # Redirect customer to the Customer Portal

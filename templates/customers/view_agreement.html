@@ -4,62 +4,95 @@
 
 {% block extra_css %}
 <style>
+    .breadcrumb {
+        color: var(--text-muted, #9ca3af);
+    }
+    .breadcrumb a {
+        color: var(--primary-color, #6366f1);
+    }
     .agreement-header {
-        background: #f8f9fa;
+        background: var(--bg-dark, #1a1a2e);
+        border: 1px solid var(--border-color, #2d2d44);
         border-radius: 8px;
         padding: 1.5rem;
         margin-bottom: 2rem;
     }
     .agreement-header h1 {
         margin: 0 0 0.5rem 0;
+        color: var(--text-color, #e0e0e0);
     }
     .agreement-meta {
-        color: #6b7280;
+        color: var(--text-muted, #9ca3af);
     }
     .agreement-content {
-        background: #fff;
-        border: 1px solid #dee2e6;
+        background: var(--bg-color, #0f0f1a);
+        border: 1px solid var(--border-color, #2d2d44);
         border-radius: 8px;
         padding: 2rem;
         white-space: pre-wrap;
         font-family: Georgia, serif;
         line-height: 1.8;
         margin-bottom: 2rem;
+        color: var(--text-color, #e0e0e0);
     }
     .signature-block {
-        background: #f0fff4;
-        border: 2px solid #38a169;
+        background: var(--bg-dark, #1a1a2e);
+        border: 2px solid #10b981;
         border-radius: 8px;
         padding: 1.5rem;
         margin-top: 2rem;
     }
     .signature-block h3 {
-        color: #276749;
+        color: #10b981;
         margin-top: 0;
     }
     .signature-name {
         font-family: 'Brush Script MT', cursive;
         font-size: 2rem;
-        color: #1a365d;
+        color: var(--primary-color, #6366f1);
         padding: 0.5rem 0;
-        border-bottom: 1px solid #1a365d;
+        border-bottom: 1px solid var(--primary-color, #6366f1);
         display: inline-block;
         margin-bottom: 0.5rem;
     }
     .signature-details {
-        color: #6b7280;
+        color: var(--text-muted, #9ca3af);
         font-size: 0.875rem;
     }
+    .signature-details strong {
+        color: var(--text-color, #e0e0e0);
+    }
     .unsigned-notice {
-        background: #fef3c7;
+        background: var(--bg-dark, #1a1a2e);
         border: 2px solid #f59e0b;
         border-radius: 8px;
         padding: 1.5rem;
         text-align: center;
         margin-top: 2rem;
     }
+    .unsigned-notice h3 {
+        color: #fbbf24;
+        margin-top: 0;
+    }
+    .unsigned-notice p {
+        color: var(--text-color, #e0e0e0);
+    }
     .print-btn {
         float: right;
+    }
+    .actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .actions .btn-secondary {
+        background: var(--bg-color, #0f0f1a);
+        border: 1px solid var(--border-color, #2d2d44);
+        color: var(--text-color, #e0e0e0);
+    }
+    .actions .btn-secondary:hover {
+        background: var(--bg-darker, #12121f);
+        border-color: var(--text-muted, #9ca3af);
     }
     @media print {
         .no-print {
@@ -68,6 +101,8 @@
         .agreement-content {
             border: none;
             padding: 0;
+            background: #fff;
+            color: #000;
         }
     }
 </style>
