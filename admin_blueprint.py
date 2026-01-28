@@ -16,9 +16,10 @@ from customers_db import (
     get_outstanding_balance, get_project_completion_percentage, get_all_contact_submissions,
     convert_contact_to_customer, update_contact_submission_status, get_all_feature_requests,
     get_feature_request_by_id, update_feature_request_status, update_feature_request,
-    get_feature_request_history, get_all_agreements, get_agreement_by_id, create_agreement,
-    get_agreements_by_project, get_all_signatures_for_agreement, get_agreement_template,
-    replace_agreement_placeholders, get_active_agreement_for_project, get_agreement_signature
+    get_feature_request_history, create_feature_request, get_all_agreements, get_agreement_by_id,
+    create_agreement, get_agreements_by_project, get_all_signatures_for_agreement,
+    get_agreement_template, replace_agreement_placeholders, get_active_agreement_for_project,
+    get_agreement_signature
 )
 from customers_blueprint import send_status_update_notification
 
@@ -817,13 +818,62 @@ def feature_request_detail(request_id):
     if not feature_request:
         flash('Feature request not found.', 'error')
         return redirect(url_for('admin.feature_requests'))
-    
+
     # Get status history
     status_history = get_feature_request_history(request_id)
-    
+
     return render_template('admin/feature_request_detail.html',
                          feature_request=feature_request,
                          status_history=status_history)
+
+
+@admin_bp.route('/feature-requests/create', methods=['GET', 'POST'])
+@admin_bp.route('/feature-requests/create/<int:project_id>', methods=['GET', 'POST'])
+@admin_required
+def create_feature_request_route(project_id=None):
+    """Create a feature request on behalf of a customer"""
+    # Get all projects for the dropdown (only ongoing_maintenance projects can have feature requests)
+    all_projects = get_all_projects()
+    maintenance_projects = [p for p in all_projects if p['project_type'] == 'ongoing_maintenance']
+
+    if request.method == 'POST':
+        selected_project_id = request.form.get('project_id')
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        priority = request.form.get('priority', 'medium')
+        requested_completion = request.form.get('requested_completion', '').strip() or None
+        additional_info = request.form.get('additional_info', '').strip() or None
+
+        if not selected_project_id or not title or not description:
+            flash('Project, title, and description are required.', 'error')
+            return render_template('admin/create_feature_request.html',
+                                 projects=maintenance_projects,
+                                 selected_project_id=project_id)
+
+        # Get the project to find the customer
+        project = get_project_by_id(selected_project_id)
+        if not project:
+            flash('Project not found.', 'error')
+            return redirect(url_for('admin.feature_requests'))
+
+        # Create the feature request (no email notification to customer)
+        feature_request_id = create_feature_request(
+            customer_id=project['customer_id'],
+            project_id=selected_project_id,
+            title=title,
+            description=description,
+            priority=priority,
+            requested_completion=requested_completion,
+            additional_info=additional_info,
+            created_by_admin=True
+        )
+
+        flash(f'Feature request created successfully! Customer will be notified when you update the status.', 'success')
+        return redirect(url_for('admin.feature_request_detail', request_id=feature_request_id))
+
+    return render_template('admin/create_feature_request.html',
+                         projects=maintenance_projects,
+                         selected_project_id=project_id)
 
 
 @admin_bp.route('/feature-requests/<int:request_id>/update-status', methods=['POST'])
