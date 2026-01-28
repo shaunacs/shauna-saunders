@@ -901,27 +901,32 @@ def get_active_subscription_projects():
 
 # Feature Request Management Functions
 
-def create_feature_request(customer_id, project_id, title, description, priority='medium', 
-                          requested_completion=None, additional_info=None):
-    """Create a new feature request"""
+def create_feature_request(customer_id, project_id, title, description, priority='medium',
+                          requested_completion=None, additional_info=None, created_by_admin=False):
+    """Create a new feature request
+
+    Args:
+        created_by_admin: If True, sets a different initial status message
+    """
     conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute('''
-        INSERT INTO feature_requests (customer_id, project_id, title, description, 
+        INSERT INTO feature_requests (customer_id, project_id, title, description,
                                      priority, requested_completion, additional_info)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     ''', (customer_id, project_id, title, description, priority, requested_completion, additional_info))
 
     conn.commit()
     feature_request_id = cursor.lastrowid
-    
+
     # Create initial status history entry
+    initial_message = 'Feature request created by admin on behalf of customer' if created_by_admin else 'Feature request submitted by customer'
     cursor.execute('''
         INSERT INTO task_status_history (feature_request_id, new_status, status_message)
         VALUES (?, ?, ?)
-    ''', (feature_request_id, 'request_received', 'Feature request submitted by customer'))
-    
+    ''', (feature_request_id, 'request_received', initial_message))
+
     conn.commit()
     conn.close()
     return feature_request_id

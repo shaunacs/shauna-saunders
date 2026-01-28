@@ -1,0 +1,166 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Create Feature Request - Admin{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="{{ url_for('admin.feature_requests') }}">Feature Requests</a> / Create New
+</div>
+
+<div class="page-header">
+    <h1>Create Feature Request</h1>
+    <p class="subtitle">Create a feature request on behalf of a customer. The customer will not be notified until you update the status.</p>
+</div>
+
+<div class="form-card">
+    <form method="POST" class="form-standard">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+            <label for="project_id">Project <span class="required">*</span></label>
+            <select id="project_id" name="project_id" required>
+                <option value="">Select a project...</option>
+                {% for project in projects %}
+                <option value="{{ project.id }}" {% if selected_project_id and project.id == selected_project_id %}selected{% endif %}>
+                    {{ project.project_name }} ({{ project.customer_name }})
+                </option>
+                {% endfor %}
+            </select>
+            {% if not projects %}
+            <p class="help-text" style="color: #f59e0b;">No ongoing maintenance projects found. Feature requests can only be created for ongoing maintenance projects.</p>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="title">Title <span class="required">*</span></label>
+            <input type="text" id="title" name="title" required maxlength="200"
+                   placeholder="Brief summary of the feature request">
+        </div>
+
+        <div class="form-group">
+            <label for="priority">Priority Level</label>
+            <select id="priority" name="priority">
+                <option value="low">Low - Nice to have</option>
+                <option value="medium" selected>Medium - Would be helpful</option>
+                <option value="high">High - Important</option>
+                <option value="urgent">Urgent - Blocking work</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Detailed Description <span class="required">*</span></label>
+            <textarea id="description" name="description" required rows="6"
+                      placeholder="Describe what needs to be done, including any specific requirements"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="requested_completion">Requested Completion</label>
+            <input type="text" id="requested_completion" name="requested_completion"
+                   placeholder="e.g., 'Next week', 'End of month', 'No specific deadline'">
+        </div>
+
+        <div class="form-group">
+            <label for="additional_info">Additional Information</label>
+            <textarea id="additional_info" name="additional_info" rows="4"
+                      placeholder="Any other details, links, or context"></textarea>
+        </div>
+
+        <div class="info-box">
+            <strong>Note:</strong> The customer will NOT receive an email notification when this request is created.
+            They will be notified via email when you update the status of this feature request.
+            The request will appear in their customer portal immediately.
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary" {% if not projects %}disabled{% endif %}>Create Feature Request</button>
+            <a href="{{ url_for('admin.feature_requests') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+.subtitle {
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
+.form-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 800px;
+    margin-top: 2rem;
+}
+
+.form-standard {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-light);
+}
+
+.required {
+    color: #ef4444;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-dark);
+    color: var(--text-light);
+    font-size: 1rem;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.help-text {
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.info-box {
+    background: rgba(103, 232, 249, 0.1);
+    border: 1px solid rgba(103, 232, 249, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+</style>
+{% endblock %}
