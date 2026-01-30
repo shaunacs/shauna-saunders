@@ -59,7 +59,7 @@
             <input type="checkbox" id="is_subscription" name="is_subscription" value="1" {% if project and project.is_subscription %}checked{% endif %}>
             <span><strong>This is a recurring subscription</strong></span>
         </label>
-        <small style="display:block; margin-top:0.25rem; color:#666;">Check this for recurring services like ongoing maintenance. Customers will subscribe via Stripe.</small>
+        <small style="display:block; margin-top:0.25rem; color:var(--text-muted);">Check this for recurring services like ongoing maintenance. Customers will subscribe via Stripe.</small>
     </div>
 
     <div class="form-group" id="subscription-fields" style="display:none; background:var(--background-color); padding:1rem; border-radius:8px;">
@@ -86,7 +86,7 @@
     <div class="form-group">
         <label for="email">Project Email</label>
         <input type="email" id="email" name="email" value="{{ project.email if project else '' }}" placeholder="Optional: notifications@example.com">
-        <small style="display:block; margin-top:0.25rem; color:#666;">If set, feature request updates will be sent to this email instead of the customer's email.</small>
+        <small style="display:block; margin-top:0.25rem; color:var(--text-muted);">If set, feature request updates will be sent to this email instead of the customer's email.</small>
     </div>
 
     <div class="form-group">

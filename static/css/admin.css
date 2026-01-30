@@ -11,6 +11,7 @@
     background-color: var(--bg-card);
     border-bottom: 2px solid transparent;
     border-image: linear-gradient(90deg, var(--admin-primary), var(--admin-secondary)) 1;
+    position: relative;
 }
 
 .admin-nav .nav-brand {

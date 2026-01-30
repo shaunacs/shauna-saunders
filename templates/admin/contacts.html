@@ -33,10 +33,10 @@
                 {% if submission.status == 'new' %}
                 <details style="position:relative;">
                     <summary class="btn btn-sm">Convert to Customer</summary>
-                    <form method="POST" action="{{ url_for('admin.convert_contact', submission_id=submission.id) }}" style="position:absolute; background:white; padding:1rem; border:1px solid var(--border-color); border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,0.1); z-index:10; min-width:200px;">
+                    <form method="POST" action="{{ url_for('admin.convert_contact', submission_id=submission.id) }}" style="position:absolute; background:var(--bg-card); padding:1rem; border:1px solid var(--border-color); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:10; min-width:200px;">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <label style="display:block; margin-bottom:0.5rem; font-weight:500;">Set Password:</label>
-                        <input type="password" name="password" required minlength="8" placeholder="Min 8 characters" style="width:100%; padding:0.5rem; margin-bottom:0.5rem; border:1px solid var(--border-color); border-radius:4px;">
+                        <input type="password" name="password" required minlength="8" placeholder="Min 8 characters" style="width:100%; padding:0.5rem; margin-bottom:0.5rem; border:1px solid var(--border-color); border-radius:4px; background:var(--bg-dark); color:var(--text-light);">
                         <button class="btn btn-primary btn-sm" style="width:100%;">Create Customer</button>
                     </form>
                 </details>

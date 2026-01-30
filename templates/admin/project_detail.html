@@ -33,10 +33,10 @@
 </div>
 
 {% if project.is_subscription %}
-<div style="margin:2rem 0; padding:1.5rem; background:#e8f4fd; border:1px solid #b8daff; border-radius:8px;">
+<div style="margin:2rem 0; padding:1.5rem; background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px;">
     <div style="display:flex; justify-content:space-between; align-items:start; flex-wrap:wrap; gap:1rem;">
         <div>
-            <h3 style="margin:0 0 0.5rem 0;">Subscription Details</h3>
+            <h3 style="margin:0 0 0.5rem 0; color:var(--admin-secondary);">Subscription Details</h3>
             <div class="info-grid" style="margin:0;">
                 <div><strong>Subscription Status:</strong>
                     <span class="badge badge-{{ project.subscription_status or 'inactive' }}">
@@ -163,11 +163,11 @@
 
 <h2>Service Agreement</h2>
 {% if agreement %}
-<div class="agreement-status-card" style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:8px; padding:1.5rem; margin-bottom:1rem;">
+<div class="agreement-status-card" style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:1.5rem; margin-bottom:1rem;">
     <div style="display:flex; justify-content:space-between; align-items:start; flex-wrap:wrap; gap:1rem;">
         <div>
-            <h3 style="margin:0 0 0.5rem 0;">{{ agreement.title }}</h3>
-            <p style="color:#6b7280; margin:0;">
+            <h3 style="margin:0 0 0.5rem 0; color:var(--admin-secondary);">{{ agreement.title }}</h3>
+            <p style="color:var(--text-muted); margin:0;">
                 Version {{ agreement.version }} |
                 {{ agreement.agreement_type|replace('_', ' ')|title }} |
                 Created {{ agreement.created_at[:10] if agreement.created_at else 'N/A' }}
@@ -189,7 +189,7 @@
     </div>
 </div>
 {% else %}
-<div class="empty-state" style="text-align:center; padding:2rem; background:#f8f9fa; border-radius:8px;">
+<div class="empty-state" style="text-align:center; padding:2rem; background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px;">
     <p>No agreement has been created for this project yet.</p>
     <a href="{{ url_for('admin.create_agreement_for_project', project_id=project.id) }}" class="btn btn-primary">Create Agreement</a>
 </div>
