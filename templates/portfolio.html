@@ -27,7 +27,33 @@
 
             <div class="portfolio-grid">
                 <div class="portfolio-item">
+                    <h2 class="portfolio-title">Three of Cups LLC</h2>
+                    <a href="https://threeofcupsllc.com" target="_blank" class="portfolio-preview-link">
+                        <div class="portfolio-preview image-preview">
+                            <img src="{{ url_for('static', filename='img/three-of-cups-preview.png') }}" alt="Three of Cups LLC website preview" loading="lazy">
+                            <div class="preview-overlay">
+                                <span class="preview-link-text">Visit Site</span>
+                            </div>
+                        </div>
+                    </a>
+                    <p class="portfolio-description">
+                        A friendship matchmaking platform that helps people form meaningful connections and build community. Features include personality assessments, compatibility matching, and community events to bring people together based on shared interests and values.
+                    </p>
+                    <a href="https://threeofcupsllc.com" target="_blank" class="portfolio-link">
+                        Visit Site
+                        <svg class="external-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                    </a>
+                </div>
+
+                <div class="portfolio-item">
                     <h2 class="portfolio-title">Hackbright Academy Final Project</h2>
+                    <div class="portfolio-preview video-preview">
+                        <iframe src="https://www.youtube.com/embed/Q_sMu8OQ93Y" title="Hackbright Academy Final Project demo video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                    </div>
                     <p class="portfolio-description">
                         Check out my final project from Hackbright Academy.
                     </p>
@@ -41,27 +67,18 @@
                     </a>
                 </div>
 
-                <div class="portfolio-item">
-                    <h2 class="portfolio-title">Three of Cups LLC</h2>
-                    <p class="portfolio-description">
-                        A custom application built for a business client.
-                    </p>
-                    <a href="https://threeofcupsllc.com" target="_blank" class="portfolio-link">
-                        Visit Site
-                        <svg class="external-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                            <polyline points="15 3 21 3 21 9"></polyline>
-                            <line x1="10" y1="14" x2="21" y2="3"></line>
-                        </svg>
-                    </a>
-                </div>
-
                 <div class="portfolio-item featured">
                     <h2 class="portfolio-title">shaunasaunders.com</h2>
+                    <div class="portfolio-preview">
+                        <iframe src="/" title="shaunasaunders.com homepage preview" loading="lazy"></iframe>
+                        <div class="preview-overlay">
+                            <span class="preview-badge">You Are Here</span>
+                        </div>
+                    </div>
                     <p class="portfolio-description">
                         You're already here! This very website you're browsing.
                     </p>
-                    <a href="https://shaunasaunders.com" class="portfolio-link">
+                    <a href="/" class="portfolio-link">
                         You Are Here
                         <svg class="checkmark-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="20 6 9 17 4 12"></polyline>
