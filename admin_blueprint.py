@@ -890,6 +890,7 @@ def update_feature_request_status_route(request_id):
     admin_notes = request.form.get('admin_notes', '').strip() or None
     estimated_hours = request.form.get('estimated_hours', '').strip()
     actual_hours = request.form.get('actual_hours', '').strip()
+    skip_notification = request.form.get('skip_notification') == 'on'
     
     # Parse hours
     try:
@@ -924,11 +925,13 @@ def update_feature_request_status_route(request_id):
             
         if update_data:
             update_feature_request(request_id, **update_data)
-        
-        # Send status update notification to customer
-        send_status_update_notification(request_id, old_status, new_status, status_message)
-        
-        flash('Feature request updated and customer notified!', 'success')
+
+        # Send status update notification to customer (unless skipped)
+        if skip_notification:
+            flash('Feature request updated (notification skipped).', 'success')
+        else:
+            send_status_update_notification(request_id, old_status, new_status, status_message)
+            flash('Feature request updated and customer notified!', 'success')
     else:
         flash('Error updating feature request.', 'error')
     
