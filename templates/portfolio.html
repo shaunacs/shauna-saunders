@@ -29,8 +29,11 @@
                 <div class="portfolio-item">
                     <h2 class="portfolio-title">Three of Cups LLC</h2>
                     <a href="https://threeofcupsllc.com" target="_blank" class="portfolio-preview-link">
-                        <div class="portfolio-preview image-preview">
-                            <img src="{{ url_for('static', filename='img/three-of-cups-preview.png') }}" alt="Three of Cups LLC website preview" loading="lazy">
+                        <div class="portfolio-preview video-recording-preview">
+                            <video autoplay loop muted playsinline>
+                                <source src="{{ url_for('static', filename='video/three-of-cups-preview.mp4') }}" type="video/mp4">
+                                <img src="{{ url_for('static', filename='img/three-of-cups-preview.png') }}" alt="Three of Cups LLC website preview">
+                            </video>
                             <div class="preview-overlay">
                                 <span class="preview-link-text">Visit Site</span>
                             </div>
