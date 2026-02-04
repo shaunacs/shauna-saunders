@@ -28,17 +28,15 @@
             <div class="portfolio-grid">
                 <div class="portfolio-item">
                     <h2 class="portfolio-title">Three of Cups LLC</h2>
-                    <a href="https://threeofcupsllc.com" target="_blank" class="portfolio-preview-link">
-                        <div class="portfolio-preview video-recording-preview">
-                            <video autoplay loop muted playsinline>
-                                <source src="{{ url_for('static', filename='video/three-of-cups-preview.mp4') }}" type="video/mp4">
-                                <img src="{{ url_for('static', filename='img/three-of-cups-preview.png') }}" alt="Three of Cups LLC website preview">
-                            </video>
-                            <div class="preview-overlay">
-                                <span class="preview-link-text">Visit Site</span>
-                            </div>
+                    <div class="portfolio-preview video-recording-preview" data-href="https://threeofcupsllc.com">
+                        <video autoplay loop muted playsinline>
+                            <source src="{{ url_for('static', filename='video/three-of-cups-preview.mp4') }}" type="video/mp4">
+                            <img src="{{ url_for('static', filename='img/three-of-cups-preview.png') }}" alt="Three of Cups LLC website preview">
+                        </video>
+                        <div class="preview-overlay">
+                            <span class="preview-link-text">Visit Site</span>
                         </div>
-                    </a>
+                    </div>
                     <p class="portfolio-description">
                         A friendship matchmaking platform that helps people form meaningful connections and build community. Features include personality assessments, compatibility matching, and community events to bring people together based on shared interests and values.
                     </p>
@@ -94,6 +92,62 @@
 </div>
 
 <script>
+// Video preview handling
+const portfolioVideos = document.querySelectorAll('.video-recording-preview video');
+
+// Try to play all videos immediately
+function playAllVideos() {
+    portfolioVideos.forEach(video => {
+        if (video.paused) {
+            video.play().catch(() => {});
+        }
+    });
+}
+
+// Attempt autoplay on load
+playAllVideos();
+
+// On mobile, play videos on first user interaction with page
+let hasInteracted = false;
+const triggerAutoplay = () => {
+    if (!hasInteracted) {
+        hasInteracted = true;
+        playAllVideos();
+        // Remove listeners after first interaction
+        document.removeEventListener('touchstart', triggerAutoplay);
+        document.removeEventListener('scroll', triggerAutoplay);
+        document.removeEventListener('click', triggerAutoplay);
+    }
+};
+
+document.addEventListener('touchstart', triggerAutoplay, { passive: true });
+document.addEventListener('scroll', triggerAutoplay, { passive: true });
+document.addEventListener('click', triggerAutoplay);
+
+// Handle video preview clicks
+document.querySelectorAll('.video-recording-preview').forEach(preview => {
+    const video = preview.querySelector('video');
+    const overlay = preview.querySelector('.preview-overlay');
+    const href = preview.dataset.href;
+
+    // Handle click on overlay to navigate
+    if (overlay && href) {
+        overlay.addEventListener('click', () => {
+            window.open(href, '_blank');
+        });
+    }
+
+    // Clicking video just ensures it's playing (won't navigate)
+    if (video) {
+        video.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (video.paused) {
+                video.play();
+            }
+        });
+    }
+});
+
 // Mobile navigation toggle
 const hamburger = document.querySelector('.hamburger');
 const navLinks = document.querySelector('.nav-links');

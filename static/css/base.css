@@ -832,6 +832,11 @@ body::before {
     display: block;
 }
 
+.portfolio-preview.video-recording-preview .preview-overlay {
+    cursor: pointer;
+    pointer-events: auto;
+}
+
 .portfolio-preview.video-recording-preview:hover .preview-link-text {
     transform: scale(1.05);
     box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
