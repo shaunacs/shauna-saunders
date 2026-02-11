@@ -1289,3 +1289,42 @@ def create_agreement_for_project(project_id):
                          project=project,
                          customer=customer,
                          template_content=template_content)
+
+
+# Impersonate Customer Routes
+
+@admin_bp.route('/impersonate/<int:customer_id>', methods=['POST'])
+@admin_required
+def impersonate_customer(customer_id):
+    """Log in as a customer to see their dashboard"""
+    customer = get_customer_by_id(customer_id)
+    if not customer:
+        flash('Customer not found.', 'error')
+        return redirect(url_for('admin.customers'))
+
+    if not customer['is_active']:
+        flash('Cannot impersonate an inactive customer.', 'error')
+        return redirect(url_for('admin.customer_detail', customer_id=customer_id))
+
+    # Set customer session keys (admin keys remain intact)
+    session['customer_id'] = customer['id']
+    session['customer_email'] = customer['email']
+    session['customer_name'] = customer['name']
+    session['impersonating_customer_id'] = customer['id']
+    session['last_activity'] = datetime.now().isoformat()
+
+    flash(f'Now viewing portal as {customer["name"]}.', 'info')
+    return redirect(url_for('customers.dashboard'))
+
+
+@admin_bp.route('/stop-impersonate')
+def stop_impersonate():
+    """Stop impersonating a customer and return to admin"""
+    customer_id = session.pop('impersonating_customer_id', None)
+    session.pop('customer_id', None)
+    session.pop('customer_email', None)
+    session.pop('customer_name', None)
+
+    if customer_id:
+        return redirect(url_for('admin.customer_detail', customer_id=customer_id))
+    return redirect(url_for('admin.dashboard'))

@@ -68,15 +68,16 @@ def customer_login_required(f):
             flash('Please log in to access this page.', 'error')
             return redirect(url_for('customers.login'))
 
-        # Check idle timeout (30 minutes)
-        IDLE_TIMEOUT_MINUTES = 30
-        last_activity = session.get('last_activity')
-        if last_activity:
-            last_activity_time = datetime.fromisoformat(last_activity)
-            if datetime.now() - last_activity_time > timedelta(minutes=IDLE_TIMEOUT_MINUTES):
-                session.clear()
-                flash('Your session has expired due to inactivity. Please log in again.', 'warning')
-                return redirect(url_for('customers.login'))
+        # Check idle timeout (30 minutes) — skip when admin is impersonating
+        if not session.get('impersonating_customer_id'):
+            IDLE_TIMEOUT_MINUTES = 30
+            last_activity = session.get('last_activity')
+            if last_activity:
+                last_activity_time = datetime.fromisoformat(last_activity)
+                if datetime.now() - last_activity_time > timedelta(minutes=IDLE_TIMEOUT_MINUTES):
+                    session.clear()
+                    flash('Your session has expired due to inactivity. Please log in again.', 'warning')
+                    return redirect(url_for('customers.login'))
 
         # Update last activity time
         session['last_activity'] = datetime.now().isoformat()
@@ -135,6 +136,10 @@ def login():
 @customers_bp.route('/logout')
 def logout():
     """Customer logout"""
+    # If admin is impersonating, stop impersonation instead of logging out
+    if session.get('impersonating_customer_id'):
+        return redirect(url_for('admin.stop_impersonate'))
+
     # Only clear customer session keys
     session.pop('customer_id', None)
     session.pop('customer_email', None)
