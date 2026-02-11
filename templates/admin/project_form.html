@@ -63,12 +63,40 @@
     </div>
 
     <div class="form-group" id="subscription-fields" style="display:none; background:var(--background-color); padding:1rem; border-radius:8px;">
-        <label for="stripe_price_id">Stripe Price ID *</label>
-        <input type="text" id="stripe_price_id" name="stripe_price_id" value="{{ project.stripe_price_id if project else '' }}" placeholder="price_1A2b3C4d5E6f7G8h">
-        <small style="display:block; margin-top:0.5rem;">
-            Create a recurring price in your <a href="https://dashboard.stripe.com/products" target="_blank" rel="noopener">Stripe Dashboard</a>,
-            then paste the Price ID here (starts with "price_"). The Total Amount above should match the monthly price.
-        </small>
+        <label style="display:block; margin-bottom:0.75rem;"><strong>Payment Method</strong></label>
+        <div style="display:flex; gap:1.5rem; margin-bottom:1rem; flex-wrap:wrap;">
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                <input type="radio" name="payment_method_type" value="both" id="pmt_both"
+                       {% if not project or (project and project.payment_method_type not in ['stripe', 'manual']) %}checked{% endif %}>
+                <span>Both (Customer Chooses)</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                <input type="radio" name="payment_method_type" value="stripe" id="pmt_stripe"
+                       {% if project and project.payment_method_type == 'stripe' %}checked{% endif %}>
+                <span>Stripe Only (Autopay)</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                <input type="radio" name="payment_method_type" value="manual" id="pmt_manual"
+                       {% if project and project.payment_method_type == 'manual' %}checked{% endif %}>
+                <span>Manual Only (Venmo/CashApp/Zelle)</span>
+            </label>
+        </div>
+
+        <div id="stripe-price-field">
+            <label for="stripe_price_id">Stripe Price ID <span id="stripe-price-required">*</span></label>
+            <input type="text" id="stripe_price_id" name="stripe_price_id" value="{{ project.stripe_price_id if project else '' }}" placeholder="price_1A2b3C4d5E6f7G8h">
+            <small style="display:block; margin-top:0.5rem;">
+                Create a recurring price in your <a href="https://dashboard.stripe.com/products" target="_blank" rel="noopener">Stripe Dashboard</a>,
+                then paste the Price ID here (starts with "price_"). The Total Amount above should match the monthly price.
+            </small>
+        </div>
+
+        <div id="manual-payment-info" style="display:none;">
+            <div style="background:rgba(16, 185, 129, 0.1); border:1px solid rgba(16, 185, 129, 0.3); border-radius:4px; padding:1rem; color:var(--text-light);">
+                <strong>Manual Payment Only</strong><br>
+                Customer will only be able to pay via Venmo, CashApp, or Zelle. You will need to manually update their payment status and next payment date from the subscription management page.
+            </div>
+        </div>
     </div>
 
     {% if project %}
@@ -112,21 +140,42 @@
 const subscriptionCheckbox = document.getElementById('is_subscription');
 const subscriptionFields = document.getElementById('subscription-fields');
 const stripePriceInput = document.getElementById('stripe_price_id');
+const stripePriceField = document.getElementById('stripe-price-field');
+const manualPaymentInfo = document.getElementById('manual-payment-info');
+const pmtBoth = document.getElementById('pmt_both');
+const pmtStripe = document.getElementById('pmt_stripe');
+const pmtManual = document.getElementById('pmt_manual');
 
 function toggleSubscriptionFields() {
     if (subscriptionCheckbox.checked) {
         subscriptionFields.style.display = 'block';
-        stripePriceInput.required = true;
+        togglePaymentMethodFields();
     } else {
         subscriptionFields.style.display = 'none';
         stripePriceInput.required = false;
     }
 }
 
+function togglePaymentMethodFields() {
+    if (pmtManual.checked) {
+        stripePriceField.style.display = 'none';
+        manualPaymentInfo.style.display = 'block';
+        stripePriceInput.required = false;
+    } else {
+        // Both 'stripe' and 'both' need the Stripe Price ID
+        stripePriceField.style.display = 'block';
+        manualPaymentInfo.style.display = 'none';
+        stripePriceInput.required = subscriptionCheckbox.checked;
+    }
+}
+
 // Initialize on page load
 toggleSubscriptionFields();
 
-// Toggle when checkbox changes
+// Toggle when radio changes
 subscriptionCheckbox.addEventListener('change', toggleSubscriptionFields);
+pmtBoth.addEventListener('change', togglePaymentMethodFields);
+pmtStripe.addEventListener('change', togglePaymentMethodFields);
+pmtManual.addEventListener('change', togglePaymentMethodFields);
 </script>
 {% endblock %}

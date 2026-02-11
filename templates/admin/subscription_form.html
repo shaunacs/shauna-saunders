@@ -17,6 +17,15 @@
     <div><strong>Project:</strong> {{ project.project_name }}</div>
     <div><strong>Customer:</strong> <a href="{{ url_for('admin.customer_detail', customer_id=customer.id) }}">{{ customer.name }}</a> ({{ customer.email }})</div>
     <div><strong>Monthly Amount:</strong> ${{ "%.2f"|format(project.total_amount) }}</div>
+    <div><strong>Payment Method:</strong>
+        {% if project.payment_method_type == 'manual' %}
+            <span class="badge" style="background:rgba(251, 191, 36, 0.2); color:#fbbf24;">Manual Only (Venmo/CashApp/Zelle)</span>
+        {% elif project.payment_method_type == 'both' %}
+            <span class="badge" style="background:rgba(103, 232, 249, 0.2); color:#67E8F9;">Both (Customer Chooses)</span>
+        {% else %}
+            <span class="badge" style="background:rgba(16, 185, 129, 0.2); color:#10b981;">Stripe Only (Autopay)</span>
+        {% endif %}
+    </div>
     <div><strong>Stripe Price ID:</strong> {{ project.stripe_price_id or 'Not set' }}</div>
 </div>
 
@@ -148,4 +157,91 @@
     </p>
 </div>
 {% endif %}
+
+<!-- Record Manual Payment -->
+<div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:1.5rem; margin-bottom:2rem;">
+    <h2 style="margin-top:0; color:var(--admin-secondary);">Record Manual Payment</h2>
+    <p style="color:var(--text-muted); margin-bottom:1.5rem;">
+        Record a payment received via Venmo, CashApp, or Zelle.
+        {% if project.payment_method_type == 'manual' %}
+        <br><strong>Payment info:</strong> Venmo: @shaunacs | CashApp: $shaunacs14 | Zelle: shauna.saunders@yahoo.com
+        {% endif %}
+    </p>
+
+    <form method="POST" class="form-standard" style="max-width:100%;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="record_manual_payment">
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+            <div class="form-group" style="margin:0;">
+                <label for="payment_amount">Payment Amount *</label>
+                <input type="number" id="payment_amount" name="payment_amount" step="0.01" min="0" required
+                       value="{{ "%.2f"|format(project.total_amount) }}">
+            </div>
+
+            <div class="form-group" style="margin:0;">
+                <label for="payment_method">Payment Method *</label>
+                <select id="payment_method" name="payment_method" required>
+                    <option value="">Select method...</option>
+                    <option value="venmo">Venmo (@shaunacs)</option>
+                    <option value="cashapp">CashApp ($shaunacs14)</option>
+                    <option value="zelle">Zelle (shauna.saunders@yahoo.com)</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin:0;">
+                <label for="payment_date">Payment Date</label>
+                <input type="date" id="payment_date" name="payment_date" value="{{ now.strftime('%Y-%m-%d') }}">
+            </div>
+
+            <div class="form-group" style="margin:0;">
+                <label for="next_payment_date_manual">Next Payment Date</label>
+                <input type="date" id="next_payment_date_manual" name="next_payment_date_manual">
+                <small style="display:block; margin-top:0.25rem; color:var(--text-muted);">Update when the next payment is due</small>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top:1rem;">
+            <label for="payment_notes">Notes</label>
+            <input type="text" id="payment_notes" name="payment_notes" placeholder="Optional notes about this payment">
+        </div>
+
+        <div style="margin-top:1rem;">
+            <button type="submit" class="btn btn-primary">Record Payment</button>
+        </div>
+    </form>
+</div>
+
+<!-- Switch Payment Method -->
+<div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:1.5rem; margin-bottom:2rem;">
+    <h2 style="margin-top:0; color:var(--admin-secondary);">Switch Payment Method</h2>
+    <p style="color:var(--text-muted); margin-bottom:1.5rem;">
+        Current method: <strong>
+        {% if project.payment_method_type == 'manual' %}Manual Only (Venmo/CashApp/Zelle)
+        {% elif project.payment_method_type == 'both' %}Both (Customer Chooses)
+        {% else %}Stripe Only (Autopay){% endif %}</strong>
+    </p>
+
+    <form method="POST" class="form-standard" style="max-width:100%;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="switch_payment_method">
+
+        <div class="form-group" style="margin-bottom:1rem;">
+            <label for="new_payment_method_type"><strong>Switch to:</strong></label>
+            <select name="new_payment_method_type" id="new_payment_method_type" style="margin-top:0.5rem;">
+                <option value="both" {% if project.payment_method_type == 'both' %}disabled{% endif %}>Both (Customer Chooses)</option>
+                <option value="stripe" {% if project.payment_method_type == 'stripe' %}disabled{% endif %}>Stripe Only (Autopay)</option>
+                <option value="manual" {% if project.payment_method_type == 'manual' %}disabled{% endif %}>Manual Only (Venmo/CashApp/Zelle)</option>
+            </select>
+        </div>
+
+        <div style="background:rgba(103, 232, 249, 0.15); border:1px solid rgba(103, 232, 249, 0.3); border-radius:4px; padding:1rem; margin-bottom:1rem; color:#67E8F9;">
+            <strong>Stripe/Both:</strong> Requires a Stripe Price ID on the project.<br>
+            <strong>Manual:</strong> Customer pays via Venmo, CashApp, or Zelle. You record payments manually.<br>
+            <strong>Both:</strong> Customer can choose either option from their dashboard.
+        </div>
+
+        <button type="submit" class="btn btn-secondary">Switch Payment Method</button>
+    </form>
+</div>
 {% endblock %}

@@ -19,7 +19,7 @@ from customers_db import (
     get_feature_request_history, create_feature_request, get_all_agreements, get_agreement_by_id,
     create_agreement, get_agreements_by_project, get_all_signatures_for_agreement,
     get_agreement_template, replace_agreement_placeholders, get_active_agreement_for_project,
-    get_agreement_signature
+    get_agreement_signature, create_payment, update_project_paid_amount
 )
 from customers_blueprint import send_status_update_notification
 
@@ -288,6 +288,7 @@ def create_project_route():
         notes = request.form.get('notes', '').strip() or None
         email = request.form.get('email', '').strip() or None
         is_subscription = request.form.get('is_subscription') == '1'
+        payment_method_type = request.form.get('payment_method_type', 'stripe')
         stripe_price_id = request.form.get('stripe_price_id', '').strip() or None
 
         # Validation
@@ -296,8 +297,8 @@ def create_project_route():
             customers = get_all_customers(active_only=True)
             return render_template('admin/project_form.html', project=None, customers=customers)
 
-        if is_subscription and not stripe_price_id:
-            flash('Stripe Price ID is required for subscription projects.', 'error')
+        if is_subscription and payment_method_type in ('stripe', 'both') and not stripe_price_id:
+            flash('Stripe Price ID is required for Stripe subscription projects.', 'error')
             customers = get_all_customers(active_only=True)
             return render_template('admin/project_form.html', project=None, customers=customers)
 
@@ -319,7 +320,8 @@ def create_project_route():
             notes=notes,
             is_subscription=is_subscription,
             stripe_price_id=stripe_price_id,
-            email=email
+            email=email,
+            payment_method_type=payment_method_type if is_subscription else 'stripe'
         )
 
         flash(f'Project "{project_name}" created successfully!', 'success')
@@ -379,6 +381,7 @@ def edit_project(project_id):
         notes = request.form.get('notes', '').strip() or None
         email = request.form.get('email', '').strip() or None
         is_subscription = request.form.get('is_subscription') == '1'
+        payment_method_type = request.form.get('payment_method_type', 'stripe')
         stripe_price_id = request.form.get('stripe_price_id', '').strip() or None
 
         if not all([project_name, project_type, total_amount]):
@@ -386,8 +389,8 @@ def edit_project(project_id):
             customers = get_all_customers(active_only=True)
             return render_template('admin/project_form.html', project=project, customers=customers)
 
-        if is_subscription and not stripe_price_id:
-            flash('Stripe Price ID is required for subscription projects.', 'error')
+        if is_subscription and payment_method_type in ('stripe', 'both') and not stripe_price_id:
+            flash('Stripe Price ID is required for Stripe subscription projects.', 'error')
             customers = get_all_customers(active_only=True)
             return render_template('admin/project_form.html', project=project, customers=customers)
 
@@ -409,7 +412,8 @@ def edit_project(project_id):
             notes=notes,
             email=email,
             is_subscription=is_subscription,
-            stripe_price_id=stripe_price_id
+            stripe_price_id=stripe_price_id,
+            payment_method_type=payment_method_type if is_subscription else 'stripe'
         )
 
         flash(f'Project "{project_name}" updated successfully!', 'success')
@@ -573,6 +577,79 @@ def manage_subscription(project_id):
             except stripe.error.StripeError as e:
                 flash(f'Stripe error: {str(e)}', 'error')
 
+            return redirect(url_for('admin.manage_subscription', project_id=project_id))
+
+        elif action == 'record_manual_payment':
+            # Record a manual payment (Venmo/CashApp/Zelle)
+            payment_amount_str = request.form.get('payment_amount', '').strip()
+            payment_method = request.form.get('payment_method', '').strip()
+            payment_date_str = request.form.get('payment_date', '').strip()
+            next_payment_date_str = request.form.get('next_payment_date_manual', '').strip()
+            payment_notes = request.form.get('payment_notes', '').strip() or None
+
+            if not payment_amount_str or not payment_method:
+                flash('Payment amount and method are required.', 'error')
+                return redirect(url_for('admin.manage_subscription', project_id=project_id))
+
+            if payment_method not in ('venmo', 'cashapp', 'zelle'):
+                flash('Invalid payment method.', 'error')
+                return redirect(url_for('admin.manage_subscription', project_id=project_id))
+
+            try:
+                payment_amount = float(payment_amount_str)
+            except ValueError:
+                flash('Invalid payment amount.', 'error')
+                return redirect(url_for('admin.manage_subscription', project_id=project_id))
+
+            paid_at = None
+            if payment_date_str:
+                try:
+                    paid_at = datetime.strptime(payment_date_str, '%Y-%m-%d')
+                except ValueError:
+                    flash('Invalid payment date format.', 'error')
+                    return redirect(url_for('admin.manage_subscription', project_id=project_id))
+
+            next_payment_date = None
+            if next_payment_date_str:
+                try:
+                    next_payment_date = datetime.strptime(next_payment_date_str, '%Y-%m-%d')
+                except ValueError:
+                    flash('Invalid next payment date format.', 'error')
+                    return redirect(url_for('admin.manage_subscription', project_id=project_id))
+
+            method_labels = {'venmo': 'Venmo', 'cashapp': 'CashApp', 'zelle': 'Zelle'}
+
+            # Create payment record
+            create_payment(
+                customer_id=project['customer_id'],
+                amount=payment_amount,
+                payment_type='subscription',
+                project_id=project_id,
+                status='succeeded',
+                payment_method=payment_method,
+                description=f'Manual payment via {method_labels.get(payment_method, payment_method)}' + (f' - {payment_notes}' if payment_notes else ''),
+                stripe_payment_intent_id=f'manual_{project_id}_{int(datetime.now().timestamp())}'
+            )
+
+            # Update amount paid on project
+            update_project_paid_amount(project_id, payment_amount)
+
+            # Update next payment date if provided
+            if next_payment_date:
+                update_project(project_id, next_payment_date=next_payment_date)
+
+            flash(f'Manual payment of ${payment_amount:.2f} via {method_labels.get(payment_method)} recorded successfully!', 'success')
+            return redirect(url_for('admin.manage_subscription', project_id=project_id))
+
+        elif action == 'switch_payment_method':
+            new_method_type = request.form.get('new_payment_method_type', '').strip()
+            if new_method_type not in ('stripe', 'manual', 'both'):
+                flash('Invalid payment method type.', 'error')
+                return redirect(url_for('admin.manage_subscription', project_id=project_id))
+
+            update_project(project_id, payment_method_type=new_method_type)
+            labels = {'stripe': 'Stripe Only (Autopay)', 'manual': 'Manual Only (Venmo/CashApp/Zelle)', 'both': 'Both (Customer Chooses)'}
+            flash(f'Payment method switched to {labels[new_method_type]}.', 'success')
             return redirect(url_for('admin.manage_subscription', project_id=project_id))
 
     return render_template('admin/subscription_form.html',

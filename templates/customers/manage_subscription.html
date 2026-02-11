@@ -14,7 +14,11 @@
     <div class="subscription-details-card">
         <div class="subscription-header">
             <h3>Subscription Details</h3>
-            {% if subscription and subscription.status == 'trialing' %}
+            {% if project.payment_method_type == 'manual' %}
+            <span class="subscription-status" style="background:rgba(251, 191, 36, 0.2); color:#fbbf24;">
+                Manual Payment
+            </span>
+            {% elif subscription and subscription.status == 'trialing' %}
             <span class="subscription-status status-trialing">
                 Scheduled
             </span>
@@ -38,8 +42,40 @@
                 <span class="label">Monthly Rate:</span>
                 <span class="value">${{ "%.2f"|format(project.total_amount) }}</span>
             </div>
+            <div class="info-item">
+                <span class="label">Payment Method:</span>
+                <span class="value">
+                    {% if project.payment_method_type == 'manual' %}
+                        Venmo / CashApp / Zelle
+                    {% else %}
+                        Stripe Autopay
+                    {% endif %}
+                </span>
+            </div>
 
-            {% if subscription %}
+            {% if project.payment_method_type == 'manual' %}
+            <!-- Manual payment info -->
+            <div class="info-item">
+                <span class="label">Status:</span>
+                <span class="value">
+                    {% if project.subscription_status == 'active' %}
+                        <span style="color:#10b981;">Active</span>
+                    {% elif project.subscription_status == 'cancelled' %}
+                        <span style="color:#ef4444;">Cancelled</span>
+                    {% else %}
+                        {{ (project.subscription_status or 'inactive')|title }}
+                    {% endif %}
+                </span>
+            </div>
+
+            {% if project.next_payment_date and project.subscription_status == 'active' %}
+            <div class="info-item">
+                <span class="label">Next Payment Due:</span>
+                <span class="value">{{ project.next_payment_date|format_date }}</span>
+            </div>
+            {% endif %}
+
+            {% elif subscription %}
             <div class="info-item">
                 <span class="label">Status:</span>
                 <span class="value">
@@ -94,9 +130,59 @@
             {% endif %}
         </div>
 
+        {% if project.payment_method_type in ['manual', 'both'] and project.subscription_status == 'active' %}
+        <!-- Manual payment actions -->
+        <div class="subscription-actions">
+            <h3>Make a Payment</h3>
+
+            <div class="action-section">
+                <h4>Payment Options</h4>
+                <div style="display:flex; flex-direction:column; gap:0.5rem; margin:1rem 0;">
+                    <div style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem; background:var(--bg-dark, #1a1a2e); border-radius:8px;">
+                        <strong style="min-width:70px;">Venmo:</strong> <span style="color:var(--primary-color);">@shaunacs</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem; background:var(--bg-dark, #1a1a2e); border-radius:8px;">
+                        <strong style="min-width:70px;">CashApp:</strong> <span style="color:var(--primary-color);">$shaunacs14</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem; background:var(--bg-dark, #1a1a2e); border-radius:8px;">
+                        <strong style="min-width:70px;">Zelle:</strong> <span style="color:var(--primary-color);">shauna.saunders@yahoo.com</span>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning" style="margin:1rem 0;">
+                    Your payment status will not update automatically. After sending payment, please confirm below so I can verify and update your account.
+                </div>
+
+                <form method="POST" action="{{ url_for('customers.confirm_manual_payment', project_id=project.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div style="margin-bottom:1rem;">
+                        <label style="display:block; margin-bottom:0.5rem; font-weight:600; color:var(--text-light);">Which method did you use? *</label>
+                        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                            <label style="cursor:pointer;">
+                                <input type="radio" name="payment_method" value="venmo" required style="display:none;" class="manual-method-radio">
+                                <span class="method-chip">Venmo</span>
+                            </label>
+                            <label style="cursor:pointer;">
+                                <input type="radio" name="payment_method" value="cashapp" class="manual-method-radio" style="display:none;">
+                                <span class="method-chip">CashApp</span>
+                            </label>
+                            <label style="cursor:pointer;">
+                                <input type="radio" name="payment_method" value="zelle" class="manual-method-radio" style="display:none;">
+                                <span class="method-chip">Zelle</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">I've Sent My Payment</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
         {% if subscription and subscription.status in ['active', 'trialing'] and not subscription.cancel_at_period_end %}
         <div class="subscription-actions">
-            <h3>Manage Subscription</h3>
+            <h3>Manage Stripe Subscription</h3>
 
             <div class="action-section">
                 <h4>Update Payment Information</h4>
@@ -106,6 +192,18 @@
                     <button type="submit" class="btn btn-primary">Update Payment Method</button>
                 </form>
             </div>
+
+            {% if project.payment_method_type == 'stripe' %}
+            <!-- Option to switch to manual payment (only if currently Stripe-only) -->
+            <div class="action-section">
+                <h4>Switch to Manual Payment</h4>
+                <p>Prefer to pay via Venmo, CashApp, or Zelle instead? You can switch to manual payments below. Note that your payment status will no longer update automatically.</p>
+                <form method="POST" action="{{ url_for('customers.switch_to_manual', project_id=project.id) }}" style="margin-top:0.5rem;" onsubmit="return confirm('Switch to manual payment? Your Stripe subscription details will be preserved but you will pay manually going forward.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-secondary">Switch to Venmo/CashApp/Zelle</button>
+                </form>
+            </div>
+            {% endif %}
 
             {% if subscription.status == 'active' %}
             <div class="action-section">
@@ -303,6 +401,28 @@
 }
 
 .alert-info a {
+    color: var(--primary-color);
+}
+
+.method-chip {
+    display: inline-block;
+    padding: 0.5rem 1.25rem;
+    border: 2px solid var(--border-color);
+    border-radius: 20px;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.method-chip:hover {
+    border-color: var(--primary-color);
+    color: var(--text-light);
+}
+
+.manual-method-radio:checked + .method-chip {
+    border-color: var(--primary-color);
+    background: rgba(139, 92, 246, 0.15);
     color: var(--primary-color);
 }
 </style>

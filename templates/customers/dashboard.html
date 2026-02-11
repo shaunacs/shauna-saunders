@@ -84,6 +84,8 @@
                                         <span style="color:#10b981;">Active</span>
                                     {% elif project.subscription_status == 'cancel_pending' %}
                                         <span style="color:#f59e0b;">Cancelling</span>
+                                    {% elif project.subscription_status == 'pending' %}
+                                        <span style="color:#f59e0b;">Pending</span>
                                     {% elif project.subscription_status == 'cancelled' %}
                                         <span style="color:#ef4444;">Cancelled</span>
                                     {% else %}
@@ -125,26 +127,40 @@
                     {% if project.is_subscription %}
                         <div class="subscription-actions">
                             {% if project.subscription_status in ['active', 'cancel_pending'] %}
+                                {% if project.payment_method_type in ['manual', 'both'] %}
+                                    <a href="{{ url_for('customers.manual_payment', project_id=project.id) }}" class="btn btn-primary btn-sm">Make Payment</a>
+                                {% endif %}
                                 <a href="{{ url_for('customers.manage_subscription', project_id=project.id) }}" class="btn btn-secondary btn-sm">Manage Subscription</a>
                                 {% if project.project_type == 'ongoing_maintenance' and project.status == 'in_progress' %}
                                     <a href="{{ url_for('customers.request_feature', project_id=project.id) }}" class="btn btn-primary btn-sm feature-request-btn">✨ Request Feature</a>
                                 {% endif %}
+                            {% elif project.subscription_status == 'pending' %}
+                                <div style="text-align:center; color:var(--text-muted); font-size:0.9rem;">
+                                    <p>Payment pending admin confirmation.</p>
+                                </div>
                             {% elif project.subscription_status == 'cancelled' %}
                                 <div class="cancelled-subscription-info">
                                     <p style="margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">
-                                        Would you like to resubscribe? 
-                                        <a href="mailto:shauna.saunders@alumni.unc.edu?subject=Resubscribe Request - {{ project.project_name }}&body=Hi Shauna,%0A%0AI would like to resubscribe to {{ project.project_name }}.%0A%0APlease let me know the next steps.%0A%0AThanks!" 
+                                        Would you like to resubscribe?
+                                        <a href="mailto:shauna.saunders@alumni.unc.edu?subject=Resubscribe Request - {{ project.project_name }}&body=Hi Shauna,%0A%0AI would like to resubscribe to {{ project.project_name }}.%0A%0APlease let me know the next steps.%0A%0AThanks!"
                                            style="color: var(--primary-color); text-decoration: none;">
                                             Reach out here
                                         </a>
                                     </p>
                                 </div>
                             {% else %}
-                                <form method="POST" action="{{ url_for('customers.create_checkout_session') }}" style="display:inline;">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <input type="hidden" name="project_id" value="{{ project.id }}">
-                                    <button type="submit" class="btn btn-primary btn-sm">Subscribe Now</button>
-                                </form>
+                                <div class="payment-choice">
+                                    {% if project.payment_method_type in ['stripe', 'both'] and project.stripe_price_id %}
+                                    <form method="POST" action="{{ url_for('customers.create_checkout_session') }}" style="display:inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="project_id" value="{{ project.id }}">
+                                        <button type="submit" class="btn btn-primary btn-sm">Subscribe with Autopay</button>
+                                    </form>
+                                    {% endif %}
+                                    {% if project.payment_method_type in ['manual', 'both'] %}
+                                    <a href="{{ url_for('customers.manual_payment', project_id=project.id) }}" class="btn {% if project.payment_method_type == 'both' and project.stripe_price_id %}btn-secondary{% else %}btn-primary{% endif %} btn-sm">Pay via Venmo/CashApp/Zelle</a>
+                                    {% endif %}
+                                </div>
                             {% endif %}
                         </div>
                     {% else %}
@@ -265,13 +281,20 @@
     background: linear-gradient(135deg, #059669, #047857) !important;
 }
 
+.payment-choice {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
 @media (max-width: 768px) {
-    .project-actions, .subscription-actions {
+    .project-actions, .subscription-actions, .payment-choice {
         flex-direction: column;
         gap: 0.5rem;
     }
-    
-    .project-actions .btn, .subscription-actions .btn {
+
+    .project-actions .btn, .subscription-actions .btn, .payment-choice .btn {
         width: 100%;
         margin: 0;
     }

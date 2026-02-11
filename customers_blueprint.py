@@ -565,6 +565,145 @@ This is an automated notification from your customer management system.
         print(f"Error sending cancellation notification: {str(e)}")
 
 
+# Manual Payment Routes
+
+@customers_bp.route('/subscription/<int:project_id>/manual-payment')
+@customer_login_required
+def manual_payment(project_id):
+    """Show manual payment options page"""
+    customer_id = session['customer_id']
+    project = get_project_by_id(project_id)
+
+    if not project or project['customer_id'] != customer_id:
+        flash('Invalid project.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    if not project.get('is_subscription'):
+        flash('This project is not a subscription.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    return render_template('customers/manual_payment.html', project=project)
+
+
+@customers_bp.route('/subscription/<int:project_id>/choose-manual', methods=['POST'])
+@customer_login_required
+def choose_manual_payment(project_id):
+    """Customer chooses to pay via manual method"""
+    customer_id = session['customer_id']
+    project = get_project_by_id(project_id)
+
+    if not project or project['customer_id'] != customer_id:
+        flash('Invalid project.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    if not project.get('is_subscription'):
+        flash('This project is not a subscription.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    flash('You have selected manual payment. Please send your payment using one of the methods below, then confirm.', 'success')
+    return redirect(url_for('customers.manual_payment', project_id=project_id, step='confirm'))
+
+
+@customers_bp.route('/subscription/<int:project_id>/confirm-manual-payment', methods=['POST'])
+@customer_login_required
+def confirm_manual_payment(project_id):
+    """Customer confirms they have sent a manual payment"""
+    customer_id = session['customer_id']
+    project = get_project_by_id(project_id)
+
+    if not project or project['customer_id'] != customer_id:
+        flash('Invalid project.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    payment_method = request.form.get('payment_method', '').strip()
+    if payment_method not in ('venmo', 'cashapp', 'zelle'):
+        flash('Please select which payment method you used.', 'error')
+        return redirect(url_for('customers.manual_payment', project_id=project_id))
+
+    # Update project to manual payment with pending status (admin must confirm receipt)
+    update_project(
+        project_id,
+        payment_method_type='manual',
+        subscription_status='pending'
+    )
+
+    # Send email notification to admin
+    send_manual_payment_notification(customer_id, project, payment_method)
+
+    method_labels = {'venmo': 'Venmo', 'cashapp': 'CashApp', 'zelle': 'Zelle'}
+    flash(f'Thank you! We have been notified that you sent payment via {method_labels[payment_method]}. Your payment status will be updated once confirmed.', 'success')
+    return redirect(url_for('customers.dashboard'))
+
+
+@customers_bp.route('/subscription/<int:project_id>/switch-to-manual', methods=['POST'])
+@customer_login_required
+def switch_to_manual(project_id):
+    """Customer switches from Stripe to manual payment"""
+    customer_id = session['customer_id']
+    project = get_project_by_id(project_id)
+
+    if not project or project['customer_id'] != customer_id:
+        flash('Invalid project.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    if not project.get('is_subscription'):
+        flash('This project is not a subscription.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    update_project(project_id, payment_method_type='manual')
+
+    flash('Your payment method has been switched to manual. Please use Venmo, CashApp, or Zelle to make payments.', 'success')
+    return redirect(url_for('customers.manual_payment', project_id=project_id))
+
+
+def send_manual_payment_notification(customer_id, project, payment_method_used):
+    """Send email notification when a customer confirms a manual payment"""
+    try:
+        customer = get_customer_by_id(customer_id)
+        if not customer:
+            print("Customer not found for manual payment notification")
+            return
+
+        method_labels = {
+            'venmo': 'Venmo (@shaunacs)',
+            'cashapp': 'CashApp ($shaunacs14)',
+            'zelle': 'Zelle (shauna.saunders@yahoo.com)'
+        }
+
+        email_body = f"""Manual Payment Notification
+
+Customer: {customer['name']} ({customer['email']})
+Project: {project['project_name']}
+Project Type: {project['project_type']}
+Monthly Rate: ${project['total_amount']:.2f}
+Payment Method: {method_labels.get(payment_method_used, payment_method_used)}
+Reported at: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}
+
+Customer Contact Information:
+- Email: {customer['email']}
+- Company: {customer.get('company', 'N/A')}
+- Phone: {customer.get('phone', 'N/A')}
+
+ACTION REQUIRED: Please verify the payment was received and update the customer's payment status in the admin portal.
+
+This is an automated notification from your customer management system.
+"""
+
+        result = ses_send_email(
+            to_email='shauna.saunders@alumni.unc.edu',
+            subject=f'Manual Payment Received: {customer["name"]} - {project["project_name"]}',
+            body=email_body
+        )
+
+        if result['success']:
+            print(f"Manual payment notification sent for customer {customer['name']}")
+        else:
+            print(f"Failed to send manual payment notification: {result.get('error')}")
+
+    except Exception as e:
+        print(f"Error sending manual payment notification: {str(e)}")
+
+
 def backfill_subscription_payment_dates():
     """Backfill next payment dates for existing active subscriptions"""
     try:

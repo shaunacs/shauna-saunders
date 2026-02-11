@@ -1,0 +1,373 @@
+{% extends 'customers/base_customers.html' %}
+
+{% block title %}Manual Payment - Customer Portal{% endblock %}
+
+{% block content %}
+<div class="manual-payment-page">
+    <div class="breadcrumb">
+        <a href="{{ url_for('customers.dashboard') }}">Dashboard</a> / Manual Payment
+    </div>
+
+    <h1>Pay via Venmo, CashApp, or Zelle</h1>
+    <h2>{{ project.project_name }}</h2>
+
+    <div class="payment-details-card">
+        <div class="payment-header">
+            <h3>Subscription Details</h3>
+            <span class="amount-badge">${{ "%.2f"|format(project.total_amount) }}/month</span>
+        </div>
+
+        {% if project.payment_method_type != 'manual' and request.args.get('step') != 'confirm' %}
+        <!-- Step 1: Choose manual payment -->
+        <div class="step-section">
+            <div class="step-badge">Step 1</div>
+            <h3>Choose Manual Payment</h3>
+
+            <div class="payment-options">
+                <a href="https://venmo.com/shaunacs" target="_blank" rel="noopener" class="payment-option-link">
+                    <div class="payment-option">
+                        <div class="option-icon">V</div>
+                        <div class="option-details">
+                            <strong>Venmo</strong>
+                            <span class="option-handle">@shaunacs</span>
+                        </div>
+                        <span class="option-arrow">&#8599;</span>
+                    </div>
+                </a>
+                <a href="https://cash.app/$shaunacs14" target="_blank" rel="noopener" class="payment-option-link">
+                    <div class="payment-option">
+                        <div class="option-icon">$</div>
+                        <div class="option-details">
+                            <strong>CashApp</strong>
+                            <span class="option-handle">$shaunacs14</span>
+                        </div>
+                        <span class="option-arrow">&#8599;</span>
+                    </div>
+                </a>
+                <a href="https://www.zellepay.com/" target="_blank" rel="noopener" class="payment-option-link">
+                    <div class="payment-option">
+                        <div class="option-icon">Z</div>
+                        <div class="option-details">
+                            <strong>Zelle</strong>
+                            <span class="option-handle">shauna.saunders@yahoo.com</span>
+                        </div>
+                        <span class="option-arrow">&#8599;</span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="important-notice">
+                <strong>Important:</strong> With manual payment, your payment status will not update automatically.
+                Once you send payment, you will need to confirm it below, and the admin will verify and update your status.
+                For automatic payment tracking and instant status updates, use Stripe Autopay from your dashboard instead.
+            </div>
+
+            <form method="POST" action="{{ url_for('customers.choose_manual_payment', project_id=project.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-primary btn-full">I'll Pay This Way</button>
+            </form>
+        </div>
+
+        {% else %}
+        <!-- Step 2: Confirm payment sent -->
+        <div class="step-section">
+            <div class="step-badge step-active">Send Payment</div>
+            <h3>Payment Methods</h3>
+
+            <div class="payment-options">
+                <a href="https://venmo.com/shaunacs" target="_blank" rel="noopener" class="payment-option-link">
+                    <div class="payment-option">
+                        <div class="option-icon">V</div>
+                        <div class="option-details">
+                            <strong>Venmo</strong>
+                            <span class="option-handle">@shaunacs</span>
+                        </div>
+                        <span class="option-arrow">&#8599;</span>
+                    </div>
+                </a>
+                <a href="https://cash.app/$shaunacs14" target="_blank" rel="noopener" class="payment-option-link">
+                    <div class="payment-option">
+                        <div class="option-icon">$</div>
+                        <div class="option-details">
+                            <strong>CashApp</strong>
+                            <span class="option-handle">$shaunacs14</span>
+                        </div>
+                        <span class="option-arrow">&#8599;</span>
+                    </div>
+                </a>
+                <a href="https://www.zellepay.com/" target="_blank" rel="noopener" class="payment-option-link">
+                    <div class="payment-option">
+                        <div class="option-icon">Z</div>
+                        <div class="option-details">
+                            <strong>Zelle</strong>
+                            <span class="option-handle">shauna.saunders@yahoo.com</span>
+                        </div>
+                        <span class="option-arrow">&#8599;</span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="important-notice">
+                <strong>Reminder:</strong> Your payment date will not automatically update.
+                After you send your payment, please confirm below so I can verify and update your status.
+            </div>
+        </div>
+
+        <div class="step-section">
+            <div class="step-badge step-active">Confirm Payment</div>
+            <h3>I've Sent My Payment</h3>
+            <p class="step-description">Select which method you used to send your payment, then confirm.</p>
+
+            <form method="POST" action="{{ url_for('customers.confirm_manual_payment', project_id=project.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="method-selector">
+                    <label class="method-radio">
+                        <input type="radio" name="payment_method" value="venmo" required>
+                        <span class="method-label">Venmo</span>
+                    </label>
+                    <label class="method-radio">
+                        <input type="radio" name="payment_method" value="cashapp">
+                        <span class="method-label">CashApp</span>
+                    </label>
+                    <label class="method-radio">
+                        <input type="radio" name="payment_method" value="zelle">
+                        <span class="method-label">Zelle</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">Confirm Payment Sent</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    <div style="margin-top:2rem;">
+        <a href="{{ url_for('customers.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</div>
+
+<style>
+.manual-payment-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.manual-payment-page h1 {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.manual-payment-page h2 {
+    color: var(--text-muted);
+    font-weight: 400;
+    font-size: 1.25rem;
+}
+
+.payment-details-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.payment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.payment-header h3 {
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.amount-badge {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 0.5rem 1.25rem;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.step-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.step-section:first-of-type {
+    border-top: none;
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.step-badge {
+    display: inline-block;
+    background: rgba(103, 232, 249, 0.15);
+    color: #67E8F9;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.step-badge.step-active {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--secondary-color);
+}
+
+.step-description {
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.payment-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1.25rem 0;
+}
+
+.payment-option-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.payment-option {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--bg-dark, #1a1a2e);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    transition: border-color 0.3s ease, transform 0.2s ease;
+}
+
+.payment-option-link:hover .payment-option {
+    border-color: var(--primary-color);
+    transform: translateX(4px);
+}
+
+.option-arrow {
+    margin-left: auto;
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    transition: color 0.3s ease;
+}
+
+.payment-option-link:hover .option-arrow {
+    color: var(--primary-color);
+}
+
+.option-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.option-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.option-details strong {
+    color: var(--text-light);
+    font-size: 1rem;
+}
+
+.option-handle {
+    color: var(--primary-color);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.important-notice {
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin: 1.25rem 0;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.important-notice strong {
+    color: #fbbf24;
+}
+
+.method-selector {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.method-radio {
+    flex: 1;
+    cursor: pointer;
+}
+
+.method-radio input[type="radio"] {
+    display: none;
+}
+
+.method-label {
+    display: block;
+    text-align: center;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.method-radio input[type="radio"]:checked + .method-label {
+    border-color: var(--primary-color);
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--primary-color);
+}
+
+.method-label:hover {
+    border-color: var(--primary-color);
+    color: var(--text-light);
+}
+
+.btn-full {
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+@media (max-width: 480px) {
+    .method-selector {
+        flex-direction: column;
+    }
+
+    .payment-header {
+        flex-direction: column;
+        gap: 0.75rem;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}

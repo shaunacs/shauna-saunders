@@ -56,6 +56,7 @@ def init_db():
             stripe_subscription_id TEXT,
             subscription_status TEXT DEFAULT 'inactive',
             next_payment_date TIMESTAMP,
+            payment_method_type TEXT DEFAULT 'stripe',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
@@ -234,6 +235,10 @@ def migrate_db():
         cursor.execute('ALTER TABLE projects ADD COLUMN email TEXT')
         conn.commit()
 
+    if 'payment_method_type' not in columns:
+        cursor.execute("ALTER TABLE projects ADD COLUMN payment_method_type TEXT DEFAULT 'stripe'")
+        conn.commit()
+
     conn.close()
 
 
@@ -362,17 +367,19 @@ def delete_customer(customer_id):
 # Project Management Functions
 
 def create_project(customer_id, project_name, project_type, total_amount, payment_plan=None,
-                   description=None, notes=None, is_subscription=False, stripe_price_id=None, email=None):
+                   description=None, notes=None, is_subscription=False, stripe_price_id=None,
+                   email=None, payment_method_type='stripe'):
     """Create a new project for a customer"""
     conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute('''
         INSERT INTO projects (customer_id, project_name, project_type, total_amount,
-                              payment_plan, description, notes, is_subscription, stripe_price_id, email)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                              payment_plan, description, notes, is_subscription, stripe_price_id,
+                              email, payment_method_type)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (customer_id, project_name, project_type, total_amount, payment_plan, description, notes,
-          is_subscription, stripe_price_id, email))
+          is_subscription, stripe_price_id, email, payment_method_type))
 
     conn.commit()
     project_id = cursor.lastrowid
@@ -424,7 +431,8 @@ def update_project(project_id, **kwargs):
 
     allowed_fields = ['project_name', 'project_type', 'status', 'total_amount',
                      'payment_plan', 'start_date', 'end_date', 'description', 'notes', 'email',
-                     'is_subscription', 'stripe_price_id', 'stripe_subscription_id', 'subscription_status', 'next_payment_date']
+                     'is_subscription', 'stripe_price_id', 'stripe_subscription_id',
+                     'subscription_status', 'next_payment_date', 'payment_method_type']
     updates = []
     values = []
 
