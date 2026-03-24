@@ -177,6 +177,15 @@
                     <button type="submit" class="btn btn-primary">I've Sent My Payment</button>
                 </form>
             </div>
+
+            <div class="action-section">
+                <h4>Switch to Autopay</h4>
+                <p>Set up automatic monthly payments via credit or debit card. Your card will be charged each month automatically — no need to manually send payments.</p>
+                <form method="POST" action="{{ url_for('customers.setup_autopay', project_id=project.id) }}" style="margin-top:0.5rem;" onsubmit="return confirm('Set up automatic monthly payments via Stripe? Your card will be charged each month automatically.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-primary">Set Up Autopay</button>
+                </form>
+            </div>
         </div>
         {% endif %}
 

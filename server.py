@@ -128,13 +128,16 @@ def handle_successful_payment(checkout_session):
         if checkout_session.get('mode') == 'subscription':
             subscription_id = checkout_session.get('subscription')
             if subscription_id and project_id:
-                # Update project with subscription ID and activate it immediately
+                update_kwargs = {
+                    'stripe_subscription_id': subscription_id,
+                    'subscription_status': 'active',
+                }
+                # If this was an autopay setup from a manual subscription, switch payment method
+                if metadata.get('setup_autopay') == 'true':
+                    update_kwargs['payment_method_type'] = 'stripe'
+                    update_kwargs['stripe_price_id'] = 'price_1SuJL6FuDsLE1q83Wzx3TGoI'
                 try:
-                    customers_db.update_project(
-                        int(project_id),
-                        stripe_subscription_id=subscription_id,
-                        subscription_status='active'
-                    )
+                    customers_db.update_project(int(project_id), **update_kwargs)
                     print(f"Activated subscription for project #{project_id}: {subscription_id}")
                 except Exception as e:
                     print(f"Error updating project with subscription: {str(e)}")

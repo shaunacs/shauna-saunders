@@ -212,10 +212,6 @@ def dashboard():
     # Get unsigned agreements for warning banner
     unsigned_agreements = get_unsigned_agreements_for_customer(customer_id)
 
-    # Calculate totals
-    total_paid = get_customer_total_paid(customer_id)
-    outstanding_balance = get_outstanding_balance(customer_id)
-
     # Get recent payments
     recent_payments = get_payment_history(customer_id=customer_id, limit=5)
 
@@ -228,8 +224,6 @@ def dashboard():
                          projects=projects,
                          payment_links=payment_links,
                          unsigned_agreements=unsigned_agreements,
-                         total_paid=total_paid,
-                         outstanding_balance=outstanding_balance,
                          recent_payments=recent_payments)
 
 
@@ -659,6 +653,60 @@ def switch_to_manual(project_id):
 
     flash('Your payment method has been switched to manual. Please use Venmo, CashApp, or Zelle to make payments.', 'success')
     return redirect(url_for('customers.manual_payment', project_id=project_id))
+
+
+@customers_bp.route('/subscription/<int:project_id>/setup-autopay', methods=['POST'])
+@customer_login_required
+def setup_autopay(project_id):
+    """Set up Stripe autopay for a manual payment subscription"""
+    customer_id = session['customer_id']
+    customer = get_customer_by_id(customer_id)
+    project = get_project_by_id(project_id)
+
+    if not project or project['customer_id'] != customer_id:
+        flash('Invalid project.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    if not project.get('is_subscription'):
+        flash('This project is not a subscription.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    if project.get('payment_method_type') not in ['manual', 'both']:
+        flash('Autopay is already configured for this subscription.', 'error')
+        return redirect(url_for('customers.manage_subscription', project_id=project_id))
+
+    AUTOPAY_PRICE_ID = 'price_1SuJL6FuDsLE1q83Wzx3TGoI'
+
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            customer_email=customer['email'],
+            payment_method_types=['card'],
+            line_items=[{
+                'price': AUTOPAY_PRICE_ID,
+                'quantity': 1,
+            }],
+            mode='subscription',
+            success_url=f'{BASE_URL}/customers/payment-success?session_id={{CHECKOUT_SESSION_ID}}',
+            cancel_url=f'{BASE_URL}/customers/subscription/{project_id}',
+            metadata={
+                'customer_id': str(customer_id),
+                'project_id': str(project_id),
+                'setup_autopay': 'true',
+            },
+            subscription_data={
+                'metadata': {
+                    'customer_id': str(customer_id),
+                    'project_id': str(project_id),
+                    'setup_autopay': 'true',
+                }
+            }
+        )
+        return redirect(checkout_session.url, code=303)
+
+    except Exception as e:
+        print(f"Error creating autopay checkout session: {str(e)}")
+        flash('An error occurred setting up autopay. Please try again.', 'error')
+        return redirect(url_for('customers.manage_subscription', project_id=project_id))
 
 
 def send_manual_payment_notification(customer_id, project, payment_method_used):

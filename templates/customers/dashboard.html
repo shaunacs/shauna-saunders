@@ -19,21 +19,6 @@
     </div>
     {% endif %}
 
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-label">Active Projects</div>
-            <div class="stat-value">{{ projects|length }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Total Paid</div>
-            <div class="stat-value">${{ "%.2f"|format(total_paid) }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Outstanding Balance</div>
-            <div class="stat-value">${{ "%.2f"|format(outstanding_balance) }}</div>
-        </div>
-    </div>
-
     {% if payment_links %}
     <section class="section">
         <h2>Payment Links</h2>
