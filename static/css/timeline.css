@@ -230,6 +230,12 @@
     transform: scale(1.1);
 }
 
+/* Square image variant — for headshots and other 1:1 images */
+.timeline-image-square {
+    height: auto;
+    aspect-ratio: 1 / 1;
+}
+
 /* CTA Card Buttons */
 .timeline-card-buttons {
     display: flex;
@@ -314,6 +320,10 @@
         margin-bottom: 1.5rem;
     }
 
+    .timeline-image-square {
+        height: auto;
+    }
+
     /* Adjust dot position for left-aligned timeline */
     .timeline-dot {
         left: 30px;
@@ -377,6 +387,10 @@
         margin-bottom: 1rem;
     }
 
+    .timeline-image-square {
+        height: auto;
+    }
+
     .timeline-card-content {
         padding: 1.25rem;
     }
@@ -413,6 +427,10 @@
 
     .timeline-image {
         height: 180px;
+    }
+
+    .timeline-image-square {
+        height: auto;
     }
 
     .timeline-card-content {

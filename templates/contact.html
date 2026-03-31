@@ -24,51 +24,13 @@
 
     <main class="content">
         <section class="contact-section">
-            <h1 class="page-title">Get In Touch</h1>
+            <h1 class="page-title">Send Me a Message</h1>
             <p class="contact-intro">
-                I'd love to hear from you! Feel free to reach out through any of the following channels.
+                Fill out the form below and I'll get back to you as soon as possible.
             </p>
-
-            <div class="contact-grid">
-                <div class="contact-card">
-                    <div class="contact-icon">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                            <polyline points="22,6 12,13 2,6"></polyline>
-                        </svg>
-                    </div>
-                    <h2 class="contact-method">Email</h2>
-                    <a href="mailto:shauna.saunders@alumni.unc.edu" class="contact-link">
-                        shauna.saunders@alumni.unc.edu
-                    </a>
-                </div>
-
-                <div class="contact-card">
-                    <div class="contact-icon">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-                            <rect x="2" y="9" width="4" height="12"></rect>
-                            <circle cx="4" cy="4" r="2"></circle>
-                        </svg>
-                    </div>
-                    <h2 class="contact-method">LinkedIn</h2>
-                    <a href="https://www.linkedin.com/in/shauna-saunders/" target="_blank" class="contact-link">
-                        Connect with me
-                        <svg class="external-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                            <polyline points="15 3 21 3 21 9"></polyline>
-                            <line x1="10" y1="14" x2="21" y2="3"></line>
-                        </svg>
-                    </a>
-                </div>
-            </div>
 
             <!-- Contact Form Section -->
             <div class="contact-form-section">
-                <h2 class="form-title">Send Me a Message</h2>
-                <p class="form-intro">
-                    Fill out the form below and I'll get back to you within 24 hours.
-                </p>
 
                 <!-- Message Display Area -->
                 <div id="form-message" class="form-message" style="display: none;"></div>
@@ -174,6 +136,44 @@
                     </button>
                 </form>
             </div>
+
+            <!-- Contact Cards -->
+            <div class="contact-cards-section">
+                <h2 class="contact-cards-heading">Get In Touch Directly</h2>
+                <div class="contact-grid">
+                    <div class="contact-card">
+                        <div class="contact-icon">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                        </div>
+                        <h2 class="contact-method">Email</h2>
+                        <a href="mailto:shauna.saunders@alumni.unc.edu" class="contact-link">
+                            shauna.saunders@alumni.unc.edu
+                        </a>
+                    </div>
+
+                    <div class="contact-card">
+                        <div class="contact-icon">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                                <rect x="2" y="9" width="4" height="12"></rect>
+                                <circle cx="4" cy="4" r="2"></circle>
+                            </svg>
+                        </div>
+                        <h2 class="contact-method">LinkedIn</h2>
+                        <a href="https://www.linkedin.com/in/shauna-saunders/" target="_blank" class="contact-link">
+                            Connect with me
+                            <svg class="external-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                <polyline points="15 3 21 3 21 9"></polyline>
+                                <line x1="10" y1="14" x2="21" y2="3"></line>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
         </section>
     </main>
 </div>
@@ -181,10 +181,22 @@
 <style>
 /* Contact Form Styles */
 .contact-form-section {
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.contact-cards-section {
     margin-top: 4rem;
     padding-top: 3rem;
     border-top: 2px solid;
     border-image: linear-gradient(90deg, var(--primary-color), var(--secondary-color)) 1;
+}
+
+.contact-cards-heading {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-light);
+    margin-bottom: 2rem;
 }
 
 .form-title {
@@ -264,16 +276,11 @@
     box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
 }
 
-.form-input:invalid:not(:placeholder-shown),
-.form-select:invalid:not(:placeholder-shown),
-.form-textarea:invalid:not(:placeholder-shown) {
-    border-color: #E53E3E;
-}
 
 .form-select {
     cursor: pointer;
     appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FF6B9D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A0AEC0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 1rem center;
     background-size: 1.25rem;

@@ -295,13 +295,20 @@ body::before {
 .hero-content {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 4rem;
     position: relative;
     z-index: 1;
 }
 
 .hero-text {
-    flex: 1;
+    flex: unset;
+    max-width: 720px;
+    text-align: center;
+}
+
+.hero-buttons {
+    justify-content: center;
 }
 
 .hero-title {
@@ -322,6 +329,7 @@ body::before {
     color: #A0AEC0;
     margin-bottom: 2rem;
     line-height: 1.8;
+    text-wrap: balance;
 }
 
 .hero-buttons {
@@ -408,6 +416,59 @@ body::before {
 .hero-image img:hover {
     transform: scale(1.02) rotate(1deg);
     box-shadow: 0 25px 70px rgba(16, 185, 129, 0.3);
+}
+
+/* Homepage Offers Section */
+.homepage-offers {
+    padding: 3rem 4rem 4rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.offers-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.offer-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-top: 3px solid var(--primary-color);
+    border-radius: 12px;
+    padding: 2rem 1.75rem;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: border-color 0.2s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.offer-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+}
+
+.offer-icon {
+    display: block;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    line-height: 1;
+}
+
+.offer-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-light);
+    margin-bottom: 0.6rem;
+}
+
+.offer-desc {
+    font-size: 0.925rem;
+    color: #A0AEC0;
+    line-height: 1.65;
+    margin: 0;
 }
 
 /* Content Pages */
@@ -947,6 +1008,52 @@ body::before {
     margin-bottom: 4rem;
 }
 
+.services-overview {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+    margin-bottom: 3rem;
+}
+
+.overview-tile {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem 1rem;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+    display: block;
+}
+
+.overview-tile:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.overview-tile-number {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.4rem;
+}
+
+.overview-tile-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-light);
+    line-height: 1.3;
+    margin-bottom: 0.4rem;
+}
+
+.overview-tile-desc {
+    font-size: 0.78rem;
+    color: #A0AEC0;
+    line-height: 1.4;
+}
+
 .service-card {
     background-color: var(--bg-card);
     border: 2px solid var(--border-color);
@@ -968,6 +1075,7 @@ body::before {
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(110, 231, 183, 0.05));
     opacity: 0;
     transition: opacity 0.3s ease;
+    pointer-events: none;
 }
 
 .service-card:hover {
@@ -1021,6 +1129,43 @@ body::before {
 
 .service-content {
     color: #CBD5E0;
+}
+
+.service-details {
+    border: none;
+}
+
+.service-details-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    padding: 0.75rem 0;
+    list-style: none;
+    user-select: none;
+    transition: color 0.2s ease;
+}
+
+.service-details-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.service-details-toggle::after {
+    content: '+';
+    font-size: 1.1rem;
+    font-weight: 700;
+    transition: transform 0.2s ease;
+}
+
+.service-details[open] .service-details-toggle::after {
+    content: '−';
+}
+
+.service-details-toggle:hover {
+    color: var(--secondary-color);
 }
 
 .service-subheading {
@@ -1163,9 +1308,19 @@ body::before {
     margin-bottom: 4rem;
 }
 
+.table-scroll-hint {
+    display: none;
+    font-size: 0.8rem;
+    color: #A0AEC0;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
 .comparison-table-container {
     overflow-x: auto;
     margin-top: 2rem;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
 }
 
 .comparison-table {
@@ -1553,9 +1708,32 @@ body::before {
         grid-template-columns: 1fr;
     }
 
+    /* Homepage Offers */
+    .homepage-offers {
+        padding: 2rem 1.5rem 3rem;
+    }
+
+    .offers-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
     /* Services Page */
     .services-intro {
         font-size: 1.125rem;
+    }
+
+    .services-overview {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+    }
+
+    .overview-tile-desc {
+        display: none;
+    }
+
+    .overview-tile {
+        padding: 1rem 0.75rem;
     }
 
     .service-card {
@@ -1573,6 +1751,10 @@ body::before {
     .terms-list {
         margin-left: 1.25rem;
         font-size: 0.95rem;
+    }
+
+    .table-scroll-hint {
+        display: block;
     }
 
     /* Comparison Table - Stack on Mobile */
@@ -1702,66 +1884,85 @@ body::before {
         font-size: 1rem;
     }
 
+    .services-overview {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.625rem;
+    }
+
+    .overview-tile-number {
+        font-size: 0.7rem;
+    }
+
+    .overview-tile-title {
+        font-size: 0.82rem;
+    }
+
     .service-card {
-        padding: 1.5rem 1rem;
-        margin-bottom: 1.5rem;
+        padding: 1.25rem 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .service-header {
+        padding-bottom: 1rem;
+        margin-bottom: 1.25rem;
     }
 
     .service-title {
-        font-size: 1.5rem;
-    }
-
-    .service-price {
-        font-size: 1.75rem;
+        font-size: 1.25rem;
     }
 
     .service-tagline {
-        font-size: 1rem;
+        font-size: 0.925rem;
     }
 
     .service-subheading {
-        font-size: 1.125rem;
+        font-size: 1rem;
+        margin-top: 1.25rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .service-details-toggle {
+        padding: 0.875rem 0;
+        font-size: 0.875rem;
+        min-height: 44px;
     }
 
     .service-list,
     .service-features,
-    .payment-list,
     .consideration-list {
-        margin-left: 1rem;
-        font-size: 0.9rem;
-    }
-
-    .benefit-item {
-        padding: 1.25rem;
-    }
-
-    .benefit-item h5 {
-        font-size: 1rem;
-    }
-
-    .benefit-item p {
+        margin-left: 0.875rem;
         font-size: 0.875rem;
     }
 
-    .payment-options,
-    .warning-box,
-    .terms-box {
+    .benefit-item {
+        padding: 1rem;
+    }
+
+    .benefit-item h5 {
+        font-size: 0.95rem;
+    }
+
+    .benefit-item p {
+        font-size: 0.85rem;
+    }
+
+    .warning-box {
         padding: 1.25rem;
     }
 
     .service-note {
-        font-size: 0.875rem;
+        font-size: 0.85rem;
     }
 
     /* Comparison Table */
     .comparison-table {
-        font-size: 0.7rem;
-        min-width: 550px;
+        font-size: 0.75rem;
+        min-width: 480px;
     }
 
     .comparison-table th,
     .comparison-table td {
-        padding: 0.5rem 0.25rem;
+        padding: 0.625rem 0.5rem;
     }
 
     /* FAQ Section */
@@ -1880,12 +2081,20 @@ body::before {
     }
 
     .service-card {
-        padding: 1.25rem 0.875rem;
+        padding: 1rem 0.875rem;
+    }
+
+    .service-title {
+        font-size: 1.1rem;
+    }
+
+    .services-overview {
+        grid-template-columns: 1fr;
     }
 
     .comparison-table {
-        font-size: 0.65rem;
-        min-width: 500px;
+        font-size: 0.7rem;
+        min-width: 460px;
     }
 }
 
