@@ -456,7 +456,7 @@ def send_payment_waived_notification(project, amount, next_payment_date,
         if project_email and project_email.lower() != customer['email'].lower():
             recipients.append(project_email)
 
-        dashboard_url = url_for('customers.dashboard', _external=True)
+        dashboard_url = "https://shaunasaunders.com/customers/dashboard"
 
         next_payment_str = (
             next_payment_date.strftime('%B %d, %Y')
