@@ -29,7 +29,7 @@
         <select id="project_id" name="project_id">
             <option value="">None - General Payment</option>
         </select>
-        <small>Projects will be loaded when you select a customer</small>
+        <small>Select a customer first to see their projects</small>
     </div>
 
     <div class="form-group">
@@ -42,13 +42,31 @@
         <input type="text" id="description" name="description" placeholder="e.g., Website Development Payment, Design Deposit, Monthly Maintenance">
     </div>
 
-    <div style="padding:1rem; background:var(--background-color); border-radius:8px; margin-bottom:1.5rem;">
-        <p><strong>Note:</strong> The payment link will be valid for 7 days and will be sent to the customer's email address via Stripe.</p>
-    </div>
-
     <div class="form-actions">
         <button type="submit" class="btn btn-primary">Generate Payment Link</button>
         <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">Cancel</a>
     </div>
 </form>
+
+<script>
+const projectsByCustomer = {{ projects_by_customer | tojson }};
+
+document.getElementById('customer_id').addEventListener('change', function () {
+    const projectSelect = document.getElementById('project_id');
+    const customerId = parseInt(this.value);
+
+    // Reset
+    projectSelect.innerHTML = '<option value="">None - General Payment</option>';
+
+    if (!customerId) return;
+
+    const projects = projectsByCustomer[customerId] || [];
+    projects.forEach(function (p) {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name;
+        projectSelect.appendChild(opt);
+    });
+});
+</script>
 {% endblock %}

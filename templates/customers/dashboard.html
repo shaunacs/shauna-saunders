@@ -21,8 +21,8 @@
 
     {% if payment_links %}
     <section class="section">
-        <h2>Payment Links</h2>
-        <p class="section-subtitle">Your project manager has created payment links for you</p>
+        <h2>Payments Due</h2>
+        <p class="section-subtitle">One-time payments due for your account</p>
 
         <div class="payment-links-list">
             {% for link in payment_links %}
@@ -30,11 +30,15 @@
                 <div class="payment-link-info">
                     <h3>${{ "%.2f"|format(link.amount) }}</h3>
                     <p>{{ link.description or 'Project Payment' }}</p>
-                    {% if link.expires_at %}
-                    <p class="expires">Expires: {{ link.expires_at[:10] }}</p>
-                    {% endif %}
                 </div>
-                <a href="{{ link.stripe_checkout_url }}" class="btn btn-primary">Pay Now</a>
+                {% if link.manual_pending %}
+                <span class="pending-badge">Pending Confirmation</span>
+                {% else %}
+                <div class="payment-link-actions">
+                    <a href="{{ link.stripe_checkout_url }}" class="btn btn-primary btn-sm">Pay with Card</a>
+                    <a href="{{ url_for('customers.payment_link_manual', link_id=link.id) }}" class="btn btn-secondary btn-sm">Pay via Venmo/CashApp/Zelle</a>
+                </div>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
@@ -271,6 +275,18 @@
     gap: 0.5rem;
     flex-wrap: wrap;
     justify-content: center;
+}
+
+.pending-badge {
+    display: inline-block;
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    padding: 0.4rem 0.9rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 @media (max-width: 768px) {

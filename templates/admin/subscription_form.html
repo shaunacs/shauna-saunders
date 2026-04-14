@@ -186,6 +186,7 @@
                     <option value="venmo">Venmo (@shaunacs)</option>
                     <option value="cashapp">CashApp ($shaunacs14)</option>
                     <option value="zelle">Zelle (shauna.saunders@yahoo.com)</option>
+                    <option value="waived">Waived</option>
                 </select>
             </div>
 
@@ -206,11 +207,33 @@
             <input type="text" id="payment_notes" name="payment_notes" placeholder="Optional notes about this payment">
         </div>
 
+        <div id="operating-cost-section" style="display:none; margin-top:1.5rem; padding:1.25rem; background:rgba(251,191,36,0.07); border:1px solid rgba(251,191,36,0.25); border-radius:8px;">
+            <p style="margin:0 0 1rem; color:#fbbf24; font-weight:600;">Operating Costs (Optional)</p>
+            <p style="margin:0 0 1rem; color:var(--text-muted); font-size:0.875rem;">If there are operating costs the customer still needs to cover, enter them here. A payment link will be created and included in the waive notification email.</p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+                <div class="form-group" style="margin:0;">
+                    <label for="operating_cost_amount">Amount</label>
+                    <input type="number" id="operating_cost_amount" name="operating_cost_amount" step="0.01" min="0.01" placeholder="0.00">
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label for="operating_cost_description">Description</label>
+                    <input type="text" id="operating_cost_description" name="operating_cost_description" placeholder="e.g., Hosting fees, domain renewal">
+                </div>
+            </div>
+        </div>
+
         <div style="margin-top:1rem;">
             <button type="submit" class="btn btn-primary">Record Payment</button>
         </div>
     </form>
 </div>
+
+<script>
+document.getElementById('payment_method').addEventListener('change', function () {
+    const section = document.getElementById('operating-cost-section');
+    section.style.display = this.value === 'waived' ? 'block' : 'none';
+});
+</script>
 
 <!-- Switch Payment Method -->
 <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:1.5rem; margin-bottom:2rem;">

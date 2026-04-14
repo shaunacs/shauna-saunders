@@ -20,7 +20,7 @@ def send_email(to_email, subject, body, from_email=None, reply_to=None):
     Send an email using AWS SES
 
     Args:
-        to_email: Recipient email address
+        to_email: Recipient email address, or a list of addresses
         subject: Email subject
         body: Plain text email body
         from_email: Sender email address (defaults to noreply@shaunasaunders.com)
@@ -39,10 +39,12 @@ def send_email(to_email, subject, body, from_email=None, reply_to=None):
             'error': 'AWS credentials not configured'
         }
 
+    to_addresses = to_email if isinstance(to_email, list) else [to_email]
+
     try:
         client = get_ses_client()
 
-        destination = {'ToAddresses': [to_email]}
+        destination = {'ToAddresses': to_addresses}
 
         message = {
             'Subject': {'Data': subject, 'Charset': 'UTF-8'},

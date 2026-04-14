@@ -86,9 +86,8 @@
             <th>Amount</th>
             <th>Description</th>
             <th>Created</th>
-            <th>Expires</th>
-            <th>Used</th>
-            <th>Link</th>
+            <th>Status</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -97,9 +96,27 @@
             <td>${{ "%.2f"|format(link.amount) }}</td>
             <td>{{ link.description or '-' }}</td>
             <td>{{ link.created_at[:10] if link.created_at else '-' }}</td>
-            <td>{{ link.expires_at[:10] if link.expires_at else '-' }}</td>
-            <td><span class="badge badge-{% if link.used %}success{% else %}pending{% endif %}">{% if link.used %}Yes{% else %}No{% endif %}</span></td>
-            <td>{% if not link.used %}<a href="{{ link.stripe_checkout_url }}" target="_blank">Open</a>{% else %}-{% endif %}</td>
+            <td>
+                {% if link.used %}
+                    <span class="badge badge-success">Paid</span>
+                {% elif link.manual_pending %}
+                    <span class="badge badge-warning">Pending Manual</span>
+                {% else %}
+                    <span class="badge badge-pending">Unpaid</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if link.used %}
+                    -
+                {% elif link.manual_pending %}
+                    <form method="POST" action="{{ url_for('admin.confirm_manual_payment_link', link_id=link.id) }}" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-primary" onclick="return confirm('Confirm ${{ '%.2f'|format(link.amount) }} received?')">Confirm Payment</button>
+                    </form>
+                {% else %}
+                    <a href="{{ link.stripe_checkout_url }}" target="_blank">Open Link</a>
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </tbody>

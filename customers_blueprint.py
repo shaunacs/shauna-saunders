@@ -17,7 +17,8 @@ from customers_db import (
     get_feature_requests_by_customer, get_feature_request_by_id, get_feature_request_history,
     get_unsigned_agreements_for_customer, get_signed_agreements_for_customer,
     get_agreement_by_id, get_active_agreement_for_project, sign_agreement,
-    get_agreement_signature, replace_agreement_placeholders
+    get_agreement_signature, replace_agreement_placeholders,
+    get_payment_link_by_id, mark_payment_link_manual_pending
 )
 
 customers_bp = Blueprint('customers', __name__, url_prefix='/customers')
@@ -213,7 +214,7 @@ def dashboard():
     unsigned_agreements = get_unsigned_agreements_for_customer(customer_id)
 
     # Get recent payments
-    recent_payments = get_payment_history(customer_id=customer_id, limit=5)
+    recent_payments = get_payment_history(customer_id=customer_id, limit=10)
 
     # Add completion percentage to projects
     for project in projects:
@@ -755,6 +756,101 @@ This is an automated notification from your customer management system.
 
     except Exception as e:
         print(f"Error sending manual payment notification: {str(e)}")
+
+
+# Payment Link Manual Payment Routes
+
+@customers_bp.route('/payment-link/<int:link_id>/manual')
+@customer_login_required
+def payment_link_manual(link_id):
+    """Show manual payment options for an admin-generated payment link"""
+    customer_id = session['customer_id']
+    link = get_payment_link_by_id(link_id)
+
+    if not link or link['customer_id'] != customer_id:
+        flash('Payment link not found.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    if link['used']:
+        flash('This payment link has already been paid.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    return render_template('customers/payment_link_manual.html', link=link)
+
+
+@customers_bp.route('/payment-link/<int:link_id>/confirm-manual', methods=['POST'])
+@customer_login_required
+def confirm_payment_link_manual(link_id):
+    """Customer confirms they have sent manual payment for an admin-generated link"""
+    customer_id = session['customer_id']
+    link = get_payment_link_by_id(link_id)
+
+    if not link or link['customer_id'] != customer_id:
+        flash('Payment link not found.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    if link['used']:
+        flash('This payment link has already been paid.', 'error')
+        return redirect(url_for('customers.dashboard'))
+
+    payment_method = request.form.get('payment_method', '').strip()
+    if payment_method not in ('venmo', 'cashapp', 'zelle'):
+        flash('Please select which payment method you used.', 'error')
+        return redirect(url_for('customers.payment_link_manual', link_id=link_id))
+
+    mark_payment_link_manual_pending(link_id)
+    send_payment_link_manual_notification(customer_id, link, payment_method)
+
+    method_labels = {'venmo': 'Venmo', 'cashapp': 'CashApp', 'zelle': 'Zelle'}
+    flash(f'Thank you! We have been notified that you sent payment via {method_labels[payment_method]}. Your payment will be confirmed shortly.', 'success')
+    return redirect(url_for('customers.dashboard'))
+
+
+def send_payment_link_manual_notification(customer_id, link, payment_method_used):
+    """Send email notification when a customer confirms manual payment on an admin-generated link"""
+    try:
+        customer = get_customer_by_id(customer_id)
+        if not customer:
+            print("Customer not found for payment link manual notification")
+            return
+
+        method_labels = {
+            'venmo': 'Venmo (@shaunacs)',
+            'cashapp': 'CashApp ($shaunacs14)',
+            'zelle': 'Zelle (shauna.saunders@yahoo.com)'
+        }
+
+        email_body = f"""Manual Payment Notification - One-Time Payment Link
+
+Customer: {customer['name']} ({customer['email']})
+Amount: ${link['amount']:.2f}
+Description: {link.get('description') or 'Payment'}
+Payment Method: {method_labels.get(payment_method_used, payment_method_used)}
+Reported at: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}
+
+Customer Contact Information:
+- Email: {customer['email']}
+- Company: {customer.get('company', 'N/A')}
+- Phone: {customer.get('phone', 'N/A')}
+
+ACTION REQUIRED: Please verify the payment was received and mark the payment link as used in the admin portal.
+
+This is an automated notification from your customer management system.
+"""
+
+        result = ses_send_email(
+            to_email='shauna.saunders@alumni.unc.edu',
+            subject=f'Manual Payment Received: {customer["name"]} - ${link["amount"]:.2f}',
+            body=email_body
+        )
+
+        if result['success']:
+            print(f"Payment link manual notification sent for customer {customer['name']}")
+        else:
+            print(f"Failed to send payment link manual notification: {result.get('error')}")
+
+    except Exception as e:
+        print(f"Error sending payment link manual notification: {str(e)}")
 
 
 def backfill_subscription_payment_dates():

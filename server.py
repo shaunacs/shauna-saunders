@@ -29,6 +29,9 @@ app.register_blueprint(traitors_bp)
 app.register_blueprint(customers_bp)
 app.register_blueprint(admin_bp)
 
+# Run DB migrations on startup
+customers_db.migrate_db()
+
 # Stripe webhook handler (moved from blueprint to avoid CSRF issues)
 import stripe
 import customers_db
@@ -120,8 +123,8 @@ def handle_successful_payment(checkout_session):
         project_id = metadata.get('project_id')
         milestone_id = metadata.get('milestone_id')
 
-        if not customer_id or not project_id:
-            print(f"Missing metadata in checkout session: {checkout_session['id']}")
+        if not customer_id:
+            print(f"Missing customer_id in checkout session metadata: {checkout_session['id']}")
             return
 
         # Check if this is a subscription checkout
@@ -146,6 +149,20 @@ def handle_successful_payment(checkout_session):
         # Handle one-time payment
         amount = checkout_session['amount_total'] / 100
 
+        # Look up admin-generated payment link by the Payment Link ID (stored in payment_link field)
+        stripe_payment_link_id = checkout_session.get('payment_link')
+        admin_payment_link = None
+        if stripe_payment_link_id:
+            admin_payment_link = customers_db.get_payment_link_by_session_id(stripe_payment_link_id)
+
+        # Build description: prefer link description, fall back to project reference
+        if admin_payment_link and admin_payment_link.get('description'):
+            description = admin_payment_link['description']
+        elif project_id:
+            description = f"Payment for project #{project_id}"
+        else:
+            description = "One-time payment"
+
         # Create payment record
         payment_id = customers_db.create_payment(
             customer_id=int(customer_id),
@@ -157,7 +174,7 @@ def handle_successful_payment(checkout_session):
             payment_type='one_time',
             status='succeeded',
             payment_method='stripe_card',
-            description=f"Payment for project #{project_id}",
+            description=description,
             metadata=str(metadata)
         )
 
@@ -168,7 +185,7 @@ def handle_successful_payment(checkout_session):
         # Mark milestone as complete if provided, or find the next payment milestone
         if milestone_id:
             customers_db.mark_milestone_complete(int(milestone_id))
-        else:
+        elif project_id:
             # Find and complete the next unpaid payment milestone that matches this amount
             milestones = customers_db.get_milestones_by_project(int(project_id))
             for milestone in milestones:
@@ -181,11 +198,10 @@ def handle_successful_payment(checkout_session):
                     break
 
         # Mark payment link as used if it was admin-generated
-        payment_link = customers_db.get_payment_link_by_session_id(checkout_session['id'])
-        if payment_link:
-            customers_db.mark_payment_link_used(checkout_session['id'])
+        if admin_payment_link:
+            customers_db.mark_payment_link_used(stripe_payment_link_id)
 
-        print(f"Payment processed successfully: ${amount} for project #{project_id}")
+        print(f"Payment processed successfully: ${amount}" + (f" for project #{project_id}" if project_id else ""))
 
     except Exception as e:
         print(f"Error handling successful payment: {str(e)}")

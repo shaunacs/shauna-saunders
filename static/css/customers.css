@@ -536,9 +536,28 @@ body {
     font-size: 0.875rem;
 }
 
-.expires {
-    font-size: 0.75rem;
-    color: var(--warning-color);
+.payment-link-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 190px;
+}
+
+@media (max-width: 600px) {
+    .payment-link-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .payment-link-actions {
+        width: 100%;
+    }
+
+    .payment-link-actions .btn {
+        width: 100%;
+        text-align: center;
+    }
 }
 
 /* Payments Table */

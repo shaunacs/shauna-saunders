@@ -5,6 +5,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from datetime import datetime, timedelta
 from functools import wraps
 import stripe
+from ses_helper import send_email as ses_send_email
 
 from customers_db import (
     get_db, get_all_customers, get_customer_by_id, create_customer, update_customer,
@@ -19,7 +20,8 @@ from customers_db import (
     get_feature_request_history, create_feature_request, get_all_agreements, get_agreement_by_id,
     create_agreement, get_agreements_by_project, get_all_signatures_for_agreement,
     get_agreement_template, replace_agreement_placeholders, get_active_agreement_for_project,
-    get_agreement_signature, create_payment, update_project_paid_amount
+    get_agreement_signature, create_payment, update_project_paid_amount,
+    get_payment_link_by_id, confirm_payment_link_manual
 )
 from customers_blueprint import send_status_update_notification
 
@@ -437,6 +439,74 @@ def delete_project_route(project_id):
     return redirect(url_for('admin.projects'))
 
 
+def send_payment_waived_notification(project, amount, next_payment_date,
+                                      operating_cost_amount=None, operating_cost_description=None,
+                                      operating_cost_link=None):
+    """Email the customer (and project email if set) that a payment has been waived"""
+    try:
+        from customers_db import get_customer_by_id
+        customer = get_customer_by_id(project['customer_id'])
+        if not customer:
+            print("Customer not found for waive notification")
+            return
+
+        # Build recipient list, deduping if project email matches customer email
+        recipients = [customer['email']]
+        project_email = (project.get('email') or '').strip()
+        if project_email and project_email.lower() != customer['email'].lower():
+            recipients.append(project_email)
+
+        dashboard_url = url_for('customers.dashboard', _external=True)
+
+        next_payment_str = (
+            next_payment_date.strftime('%B %d, %Y')
+            if next_payment_date
+            else 'not yet scheduled'
+        )
+
+        if operating_cost_amount and operating_cost_link:
+            cost_description = operating_cost_description or 'operating costs'
+            operating_cost_section = f"""
+While your payment has been waived, there are still outstanding operating costs that need to be covered:
+
+${operating_cost_amount:.2f} – {cost_description}
+
+You can pay by card or via Venmo, CashApp, or Zelle — visit your dashboard to view the payment and choose your preferred method:
+{dashboard_url}
+"""
+        else:
+            operating_cost_section = ''
+
+        no_action = ' No action is needed from you.' if not operating_cost_section else ''
+
+        body = f"""Hi {customer['name']},
+
+Your payment of ${amount:.2f} for {project['project_name']} has been waived for this period.{no_action}
+{operating_cost_section}
+Your next payment date is: {next_payment_str}
+
+You can track your account and payment history in your dashboard at any time:
+{dashboard_url}
+
+Feel free to reach out if you have any questions.
+
+— Shauna
+
+---
+This is an automated message.
+"""
+
+        ses_send_email(
+            to_email=recipients,
+            subject=f'Payment Waived – {project["project_name"]}',
+            body=body,
+            reply_to='shauna.saunders@alumni.unc.edu'
+        )
+
+    except Exception as e:
+        print(f"Error sending payment waived notification: {str(e)}")
+
+
 # Subscription Management
 
 @admin_bp.route('/projects/<int:project_id>/subscription', methods=['GET', 'POST'])
@@ -580,18 +650,20 @@ def manage_subscription(project_id):
             return redirect(url_for('admin.manage_subscription', project_id=project_id))
 
         elif action == 'record_manual_payment':
-            # Record a manual payment (Venmo/CashApp/Zelle)
+            # Record a manual payment (Venmo/CashApp/Zelle/Waived)
             payment_amount_str = request.form.get('payment_amount', '').strip()
             payment_method = request.form.get('payment_method', '').strip()
             payment_date_str = request.form.get('payment_date', '').strip()
             next_payment_date_str = request.form.get('next_payment_date_manual', '').strip()
             payment_notes = request.form.get('payment_notes', '').strip() or None
+            operating_cost_amount_str = request.form.get('operating_cost_amount', '').strip()
+            operating_cost_description = request.form.get('operating_cost_description', '').strip() or None
 
             if not payment_amount_str or not payment_method:
                 flash('Payment amount and method are required.', 'error')
                 return redirect(url_for('admin.manage_subscription', project_id=project_id))
 
-            if payment_method not in ('venmo', 'cashapp', 'zelle'):
+            if payment_method not in ('venmo', 'cashapp', 'zelle', 'waived'):
                 flash('Invalid payment method.', 'error')
                 return redirect(url_for('admin.manage_subscription', project_id=project_id))
 
@@ -617,7 +689,13 @@ def manage_subscription(project_id):
                     flash('Invalid next payment date format.', 'error')
                     return redirect(url_for('admin.manage_subscription', project_id=project_id))
 
-            method_labels = {'venmo': 'Venmo', 'cashapp': 'CashApp', 'zelle': 'Zelle'}
+            method_labels = {'venmo': 'Venmo', 'cashapp': 'CashApp', 'zelle': 'Zelle', 'waived': 'Waived'}
+            is_waived = payment_method == 'waived'
+
+            if is_waived:
+                description = 'Payment waived' + (f' - {payment_notes}' if payment_notes else '')
+            else:
+                description = f'Manual payment via {method_labels[payment_method]}' + (f' - {payment_notes}' if payment_notes else '')
 
             # Create payment record
             create_payment(
@@ -627,18 +705,70 @@ def manage_subscription(project_id):
                 project_id=project_id,
                 status='succeeded',
                 payment_method=payment_method,
-                description=f'Manual payment via {method_labels.get(payment_method, payment_method)}' + (f' - {payment_notes}' if payment_notes else ''),
+                description=description,
                 stripe_payment_intent_id=f'manual_{project_id}_{int(datetime.now().timestamp())}'
             )
 
-            # Update amount paid on project
-            update_project_paid_amount(project_id, payment_amount)
+            # Only update amount paid if it was actually received (not waived)
+            if not is_waived:
+                update_project_paid_amount(project_id, payment_amount)
 
             # Update next payment date if provided
             if next_payment_date:
                 update_project(project_id, next_payment_date=next_payment_date)
 
-            flash(f'Manual payment of ${payment_amount:.2f} via {method_labels.get(payment_method)} recorded successfully!', 'success')
+            if is_waived:
+                operating_cost_amount = None
+                operating_cost_link = None
+                if operating_cost_amount_str:
+                    try:
+                        operating_cost_amount = float(operating_cost_amount_str)
+                    except ValueError:
+                        pass
+
+                if operating_cost_amount:
+                    try:
+                        customer = get_customer_by_id(project['customer_id'])
+                        price = stripe.Price.create(
+                            currency='usd',
+                            unit_amount=int(operating_cost_amount * 100),
+                            product_data={'name': operating_cost_description or 'Operating Costs'},
+                        )
+                        payment_link = stripe.PaymentLink.create(
+                            line_items=[{'price': price.id, 'quantity': 1}],
+                            after_completion={
+                                'type': 'redirect',
+                                'redirect': {'url': url_for('customers.payment_success', _external=True)},
+                            },
+                            restrictions={'completed_sessions': {'limit': 1}},
+                            metadata={
+                                'customer_id': str(project['customer_id']),
+                                'project_id': str(project_id),
+                                'admin_generated': 'true'
+                            }
+                        )
+                        operating_cost_link = payment_link.url
+                        save_payment_link(
+                            customer_id=project['customer_id'],
+                            project_id=project_id,
+                            amount=operating_cost_amount,
+                            stripe_checkout_url=payment_link.url,
+                            stripe_session_id=payment_link.id,
+                            description=operating_cost_description or 'Operating Costs',
+                            created_by_admin_id=session.get('user_id')
+                        )
+                    except Exception as e:
+                        print(f"Error creating operating cost payment link: {str(e)}")
+
+                send_payment_waived_notification(
+                    project, payment_amount, next_payment_date,
+                    operating_cost_amount=operating_cost_amount,
+                    operating_cost_description=operating_cost_description,
+                    operating_cost_link=operating_cost_link
+                )
+                flash(f'Payment of ${payment_amount:.2f} recorded as waived.', 'success')
+            else:
+                flash(f'Manual payment of ${payment_amount:.2f} via {method_labels[payment_method]} recorded successfully!', 'success')
             return redirect(url_for('admin.manage_subscription', project_id=project_id))
 
         elif action == 'switch_payment_method':
@@ -748,37 +878,31 @@ def create_payment_link():
         # Validation
         if not all([customer_id, amount]):
             flash('Customer and amount are required.', 'error')
-            customers = get_all_customers(active_only=True)
-            return render_template('admin/payment_link_form.html', customers=customers)
+            return redirect(url_for('admin.create_payment_link'))
 
         try:
             amount = float(amount)
         except ValueError:
             flash('Invalid amount.', 'error')
-            customers = get_all_customers(active_only=True)
-            return render_template('admin/payment_link_form.html', customers=customers)
+            return redirect(url_for('admin.create_payment_link'))
 
         customer = get_customer_by_id(int(customer_id))
 
-        # Create Stripe Checkout Session
+        # Create Stripe Payment Link (no expiry, single-use)
         try:
-            checkout_session = stripe.checkout.Session.create(
-                customer_email=customer['email'],
-                payment_method_types=['card'],
-                line_items=[{
-                    'price_data': {
-                        'currency': 'usd',
-                        'product_data': {
-                            'name': description or 'Payment',
-                        },
-                        'unit_amount': int(amount * 100),
-                    },
-                    'quantity': 1,
-                }],
-                mode='payment',
-                success_url=url_for('customers.payment_success', _external=True),
-                cancel_url=url_for('customers.payment_cancel', _external=True),
-                expires_at=int((datetime.now() + timedelta(days=7)).timestamp()),
+            price = stripe.Price.create(
+                currency='usd',
+                unit_amount=int(amount * 100),
+                product_data={'name': description or 'Payment'},
+            )
+
+            payment_link = stripe.PaymentLink.create(
+                line_items=[{'price': price.id, 'quantity': 1}],
+                after_completion={
+                    'type': 'redirect',
+                    'redirect': {'url': url_for('customers.payment_success', _external=True)},
+                },
+                restrictions={'completed_sessions': {'limit': 1}},
                 metadata={
                     'customer_id': customer_id,
                     'project_id': project_id or '',
@@ -791,23 +915,66 @@ def create_payment_link():
                 customer_id=int(customer_id),
                 project_id=int(project_id) if project_id else None,
                 amount=amount,
-                stripe_checkout_url=checkout_session.url,
-                stripe_session_id=checkout_session.id,
+                stripe_checkout_url=payment_link.url,
+                stripe_session_id=payment_link.id,
                 description=description,
-                expires_at=datetime.now() + timedelta(days=7),
                 created_by_admin_id=session.get('user_id')
             )
 
-            flash(f'Payment link created! URL: {checkout_session.url}', 'success')
+            flash(f'Payment link created! URL: {payment_link.url}', 'success')
             return redirect(url_for('admin.customer_detail', customer_id=customer_id))
 
         except Exception as e:
             flash(f'Error creating payment link: {str(e)}', 'error')
-            customers = get_all_customers(active_only=True)
-            return render_template('admin/payment_link_form.html', customers=customers)
+            return redirect(url_for('admin.create_payment_link'))
 
     customers = get_all_customers(active_only=True)
-    return render_template('admin/payment_link_form.html', customers=customers)
+    all_projects = get_all_projects()
+    # Group projects by customer_id for the template
+    projects_by_customer = {}
+    for project in all_projects:
+        cid = project['customer_id']
+        projects_by_customer.setdefault(cid, []).append({
+            'id': project['id'],
+            'name': project['project_name']
+        })
+    return render_template('admin/payment_link_form.html', customers=customers,
+                           projects_by_customer=projects_by_customer)
+
+
+@admin_bp.route('/payment-links/<int:link_id>/confirm-manual', methods=['POST'])
+@admin_required
+def confirm_manual_payment_link(link_id):
+    """Admin confirms receipt of a manual payment for an admin-generated payment link"""
+    link = get_payment_link_by_id(link_id)
+    if not link:
+        flash('Payment link not found.', 'error')
+        return redirect(url_for('admin.dashboard'))
+
+    if link['used']:
+        flash('This payment link is already marked as paid.', 'error')
+        return redirect(url_for('admin.customer_detail', customer_id=link['customer_id']))
+
+    # Record the payment
+    create_payment(
+        customer_id=link['customer_id'],
+        project_id=link['project_id'],
+        amount=link['amount'],
+        payment_type='one_time',
+        status='succeeded',
+        payment_method='manual',
+        description=link['description'] or 'One-time payment',
+    )
+
+    # Update project amount_paid if linked to a project
+    if link['project_id']:
+        update_project_paid_amount(link['project_id'], link['amount'])
+
+    # Mark the link as fully paid
+    confirm_payment_link_manual(link_id)
+
+    flash(f'Payment of ${link["amount"]:.2f} confirmed.', 'success')
+    return redirect(url_for('admin.customer_detail', customer_id=link['customer_id']))
 
 
 # Payment History

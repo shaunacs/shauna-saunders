@@ -239,6 +239,14 @@ def migrate_db():
         cursor.execute("ALTER TABLE projects ADD COLUMN payment_method_type TEXT DEFAULT 'stripe'")
         conn.commit()
 
+    # Check for manual_pending column in stripe_payment_links table
+    cursor.execute("PRAGMA table_info(stripe_payment_links)")
+    link_columns = [column[1] for column in cursor.fetchall()]
+
+    if 'manual_pending' not in link_columns:
+        cursor.execute("ALTER TABLE stripe_payment_links ADD COLUMN manual_pending BOOLEAN DEFAULT 0")
+        conn.commit()
+
     conn.close()
 
 
@@ -738,13 +746,23 @@ def get_payment_links_by_customer(customer_id, include_used=False):
     else:
         cursor.execute('''
             SELECT * FROM stripe_payment_links
-            WHERE customer_id = ? AND used = 0
+            WHERE customer_id = ? AND used = 0 AND manual_pending = 0
             ORDER BY created_at DESC
         ''', (customer_id,))
 
     links = cursor.fetchall()
     conn.close()
     return [dict(link) for link in links]
+
+
+def get_payment_link_by_id(link_id):
+    """Get payment link by its primary key"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM stripe_payment_links WHERE id = ?', (link_id,))
+    link = cursor.fetchone()
+    conn.close()
+    return dict(link) if link else None
 
 
 def mark_payment_link_used(session_id):
@@ -754,6 +772,28 @@ def mark_payment_link_used(session_id):
     cursor.execute('''
         UPDATE stripe_payment_links SET used = 1 WHERE stripe_session_id = ?
     ''', (session_id,))
+    conn.commit()
+    conn.close()
+
+
+def mark_payment_link_manual_pending(link_id):
+    """Mark a payment link as pending manual payment confirmation"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        UPDATE stripe_payment_links SET manual_pending = 1 WHERE id = ?
+    ''', (link_id,))
+    conn.commit()
+    conn.close()
+
+
+def confirm_payment_link_manual(link_id):
+    """Mark a payment link as fully paid (used=1, manual_pending=0)"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        UPDATE stripe_payment_links SET used = 1, manual_pending = 0 WHERE id = ?
+    ''', (link_id,))
     conn.commit()
     conn.close()
 
