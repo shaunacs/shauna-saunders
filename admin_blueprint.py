@@ -738,7 +738,7 @@ def manage_subscription(project_id):
                             line_items=[{'price': price.id, 'quantity': 1}],
                             after_completion={
                                 'type': 'redirect',
-                                'redirect': {'url': url_for('customers.payment_success', _external=True)},
+                                'redirect': {'url': 'https://shaunasaunders.com/customers/payment-success'},
                             },
                             restrictions={'completed_sessions': {'limit': 1}},
                             metadata={
@@ -900,7 +900,7 @@ def create_payment_link():
                 line_items=[{'price': price.id, 'quantity': 1}],
                 after_completion={
                     'type': 'redirect',
-                    'redirect': {'url': url_for('customers.payment_success', _external=True)},
+                    'redirect': {'url': 'https://shaunasaunders.com/customers/payment-success'},
                 },
                 restrictions={'completed_sessions': {'limit': 1}},
                 metadata={

@@ -28,7 +28,7 @@ customers_bp = Blueprint('customers', __name__, url_prefix='/customers')
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
 # Base URL for production (used for Stripe redirect URLs)
-BASE_URL = os.environ.get('BASE_URL', 'http://localhost:5001')
+BASE_URL = os.environ.get('BASE_URL', 'https://shaunasaunders.com')
 
 
 # Template filters
