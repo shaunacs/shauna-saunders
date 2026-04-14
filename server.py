@@ -201,10 +201,52 @@ def handle_successful_payment(checkout_session):
         if admin_payment_link:
             customers_db.mark_payment_link_used(stripe_payment_link_id)
 
+        # Send confirmation email to customer
+        send_payment_confirmation_email(int(customer_id), amount, description)
+
         print(f"Payment processed successfully: ${amount}" + (f" for project #{project_id}" if project_id else ""))
 
     except Exception as e:
         print(f"Error handling successful payment: {str(e)}")
+
+
+def send_payment_confirmation_email(customer_id, amount, description):
+    """Send a payment confirmation email to the customer"""
+    try:
+        customer = customers_db.get_customer_by_id(customer_id)
+        if not customer:
+            print("Customer not found for payment confirmation email")
+            return
+
+        dashboard_url = "https://shaunasaunders.com/customers/dashboard"
+
+        body = f"""Hi {customer['name']},
+
+Your payment of ${amount:.2f} has been received successfully.
+
+Payment details:
+${amount:.2f} – {description}
+
+You can view your payment history at any time in your dashboard:
+{dashboard_url}
+
+Thank you!
+
+— Shauna
+
+---
+This is an automated message.
+"""
+
+        ses_helper.send_email(
+            to_email=customer['email'],
+            subject='Payment Confirmation',
+            body=body,
+            reply_to='shauna.saunders@alumni.unc.edu'
+        )
+
+    except Exception as e:
+        print(f"Error sending payment confirmation email: {str(e)}")
 
 
 def handle_subscription_created(subscription):
@@ -685,4 +727,4 @@ This inquiry was submitted on {current_time.strftime('%B %d, %Y at %I:%M %p')}
 
 if __name__ == '__main__':
     # Use port 5001 to avoid conflict with macOS AirPlay on port 5000
-    app.run()
+    app.run(port=5001, debug=True)
