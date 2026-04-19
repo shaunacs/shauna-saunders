@@ -1,6 +1,7 @@
 """Blueprint for customer management system"""
 
 import os
+import secrets
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, g
 from werkzeug.security import generate_password_hash
 from functools import wraps
@@ -18,7 +19,9 @@ from customers_db import (
     get_unsigned_agreements_for_customer, get_signed_agreements_for_customer,
     get_agreement_by_id, get_active_agreement_for_project, sign_agreement,
     get_agreement_signature, replace_agreement_placeholders,
-    get_payment_link_by_id, mark_payment_link_manual_pending
+    get_payment_link_by_id, mark_payment_link_manual_pending,
+    get_customer_by_email, create_password_reset_token, get_valid_reset_token,
+    consume_reset_token, update_customer_password
 )
 
 customers_bp = Blueprint('customers', __name__, url_prefix='/customers')
@@ -132,6 +135,76 @@ def login():
             flash('Invalid email or password, or account is inactive.', 'error')
 
     return render_template('customers/login.html')
+
+
+@customers_bp.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """Request a password reset link"""
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        customer = get_customer_by_email(email)
+
+        # Always show the same message to avoid leaking which emails exist
+        if customer and customer.get('is_active'):
+            token = secrets.token_urlsafe(32)
+            expires_at = datetime.utcnow() + timedelta(hours=1)
+            create_password_reset_token(customer['id'], token, expires_at)
+
+            reset_url = f"https://shaunasaunders.com/customers/reset-password/{token}"
+
+            body = f"""Hi {customer['name']},
+
+We received a request to reset your password. Click the link below to set a new one:
+
+{reset_url}
+
+This link expires in 1 hour. If you did not request a password reset, you can ignore this email — your password will not change.
+
+— Shauna
+
+---
+This is an automated message.
+"""
+            ses_send_email(
+                to_email=customer['email'],
+                subject='Password Reset Request',
+                body=body,
+                reply_to='shauna.saunders@alumni.unc.edu'
+            )
+
+        flash('If an account exists for that email, a reset link has been sent.', 'success')
+        return redirect(url_for('customers.forgot_password'))
+
+    return render_template('customers/forgot_password.html')
+
+
+@customers_bp.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    """Reset password using a valid token"""
+    record = get_valid_reset_token(token)
+    if not record:
+        flash('This reset link is invalid or has expired.', 'error')
+        return redirect(url_for('customers.forgot_password'))
+
+    if request.method == 'POST':
+        new_password = request.form.get('new_password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        if len(new_password) < 8:
+            flash('Password must be at least 8 characters.', 'error')
+            return render_template('customers/reset_password.html', token=token)
+
+        if new_password != confirm_password:
+            flash('Passwords do not match.', 'error')
+            return render_template('customers/reset_password.html', token=token)
+
+        update_customer_password(record['customer_id'], new_password)
+        consume_reset_token(token)
+
+        flash('Your password has been reset. Please log in.', 'success')
+        return redirect(url_for('customers.login'))
+
+    return render_template('customers/reset_password.html', token=token)
 
 
 @customers_bp.route('/logout')

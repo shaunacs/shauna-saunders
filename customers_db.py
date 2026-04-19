@@ -247,6 +247,20 @@ def migrate_db():
         cursor.execute("ALTER TABLE stripe_payment_links ADD COLUMN manual_pending BOOLEAN DEFAULT 0")
         conn.commit()
 
+    # Create password_reset_tokens table if it doesn't exist
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_id INTEGER NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            used BOOLEAN DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+        )
+    ''')
+    conn.commit()
+
     conn.close()
 
 
@@ -297,6 +311,56 @@ def get_customer_by_id(customer_id):
     customer = cursor.fetchone()
     conn.close()
     return dict(customer) if customer else None
+
+
+def create_password_reset_token(customer_id, token, expires_at):
+    """Store a password reset token"""
+    conn = get_db()
+    cursor = conn.cursor()
+    # Invalidate any existing unused tokens for this customer
+    cursor.execute('''
+        UPDATE password_reset_tokens SET used = 1
+        WHERE customer_id = ? AND used = 0
+    ''', (customer_id,))
+    cursor.execute('''
+        INSERT INTO password_reset_tokens (customer_id, token, expires_at)
+        VALUES (?, ?, ?)
+    ''', (customer_id, token, expires_at))
+    conn.commit()
+    conn.close()
+
+
+def get_valid_reset_token(token):
+    """Return a valid, unused, unexpired reset token record or None"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT * FROM password_reset_tokens
+        WHERE token = ? AND used = 0 AND expires_at > ?
+    ''', (token, datetime.utcnow()))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def consume_reset_token(token):
+    """Mark a reset token as used"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('UPDATE password_reset_tokens SET used = 1 WHERE token = ?', (token,))
+    conn.commit()
+    conn.close()
+
+
+def update_customer_password(customer_id, new_password):
+    """Update a customer's password hash"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        UPDATE customers SET password_hash = ? WHERE id = ?
+    ''', (generate_password_hash(new_password, method='pbkdf2:sha256'), customer_id))
+    conn.commit()
+    conn.close()
 
 
 def get_customer_by_email(email):

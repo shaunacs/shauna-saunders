@@ -24,6 +24,10 @@
             <button type="submit" class="btn btn-primary btn-block">Login</button>
         </form>
 
+        <div style="text-align:center; margin-top:1rem;">
+            <a href="{{ url_for('customers.forgot_password') }}" style="font-size:0.9rem; color:var(--text-muted);">Forgot your password?</a>
+        </div>
+
         <div class="login-footer">
             <p>Don't have an account?</p>
             <p><a href="/contact">Contact Shauna to get set up.</a></p>
