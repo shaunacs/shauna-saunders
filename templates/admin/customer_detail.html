@@ -72,10 +72,24 @@
 
 <div class="actions-section">
     <h2>Quick Actions</h2>
-    <div style="display:flex; gap:1rem;">
+    <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-start;">
         <a href="{{ url_for('admin.create_project_route') }}?customer_id={{ customer.id }}" class="btn btn-primary">Create Project</a>
         <a href="{{ url_for('admin.create_payment_link') }}?customer_id={{ customer.id }}" class="btn btn-primary">Generate Payment Link</a>
     </div>
+
+    <h3 style="margin-top:1.5rem;">Change Password</h3>
+    <form method="POST" action="{{ url_for('admin.change_customer_password', customer_id=customer.id) }}" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label style="display:block; font-size:0.85rem; margin-bottom:0.25rem;">New Password</label>
+            <input type="password" name="new_password" required minlength="8" style="padding:0.4rem 0.6rem; border:1px solid #ccc; border-radius:4px;">
+        </div>
+        <div>
+            <label style="display:block; font-size:0.85rem; margin-bottom:0.25rem;">Confirm Password</label>
+            <input type="password" name="confirm_password" required minlength="8" style="padding:0.4rem 0.6rem; border:1px solid #ccc; border-radius:4px;">
+        </div>
+        <button type="submit" class="btn btn-secondary">Update Password</button>
+    </form>
 </div>
 
 {% if payment_links %}

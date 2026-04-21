@@ -9,7 +9,7 @@ from ses_helper import send_email as ses_send_email
 
 from customers_db import (
     get_db, get_all_customers, get_customer_by_id, create_customer, update_customer,
-    deactivate_customer, activate_customer, delete_customer, get_all_projects,
+    update_customer_password, deactivate_customer, activate_customer, delete_customer, get_all_projects,
     get_project_by_id, create_project, update_project, delete_project, get_projects_by_customer,
     get_milestones_by_project, get_milestone_by_id, create_milestone, mark_milestone_complete,
     delete_milestone, get_payments_by_customer, get_payments_by_project, get_payment_history,
@@ -264,6 +264,31 @@ def delete_customer_route(customer_id):
     delete_customer(customer_id)
     flash(f'Customer "{customer["name"]}" deleted.', 'success')
     return redirect(url_for('admin.customers'))
+
+
+@admin_bp.route('/customers/<int:customer_id>/change-password', methods=['POST'])
+@admin_required
+def change_customer_password(customer_id):
+    """Change a customer's password"""
+    customer = get_customer_by_id(customer_id)
+    if not customer:
+        flash('Customer not found.', 'error')
+        return redirect(url_for('admin.customers'))
+
+    new_password = request.form.get('new_password', '')
+    confirm_password = request.form.get('confirm_password', '')
+
+    if len(new_password) < 8:
+        flash('Password must be at least 8 characters.', 'error')
+        return redirect(url_for('admin.customer_detail', customer_id=customer_id))
+
+    if new_password != confirm_password:
+        flash('Passwords do not match.', 'error')
+        return redirect(url_for('admin.customer_detail', customer_id=customer_id))
+
+    update_customer_password(customer_id, new_password)
+    flash(f'Password for "{customer["name"]}" updated successfully.', 'success')
+    return redirect(url_for('admin.customer_detail', customer_id=customer_id))
 
 
 # Project Management
