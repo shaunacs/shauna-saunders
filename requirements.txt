@@ -3,4 +3,5 @@ Flask-WTF==1.2.1
 boto3==1.28.0
 python-dotenv==1.0.0
 stripe
+twilio
 pe
