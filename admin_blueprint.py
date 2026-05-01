@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 import stripe
 from ses_helper import send_email as ses_send_email
+import twilio_helper
 
 from customers_db import (
     get_db, get_all_customers, get_customer_by_id, create_customer, update_customer,
@@ -151,6 +152,7 @@ def create_customer_route():
         password = request.form.get('password', '')
         company = request.form.get('company', '').strip() or None
         phone = request.form.get('phone', '').strip() or None
+        sms_opted_in = bool(request.form.get('sms_opted_in')) and bool(phone)
 
         # Validation
         if not all([email, name, password]):
@@ -169,6 +171,7 @@ def create_customer_route():
             password=password,
             company=company,
             phone=phone,
+            sms_opted_in=sms_opted_in,
             created_by_admin_id=session.get('user_id')
         )
 
@@ -221,12 +224,13 @@ def edit_customer(customer_id):
         email = request.form.get('email', '').strip().lower()
         company = request.form.get('company', '').strip() or None
         phone = request.form.get('phone', '').strip() or None
+        sms_opted_in = bool(request.form.get('sms_opted_in')) and bool(phone)
 
         if not all([name, email]):
             flash('Name and email are required.', 'error')
             return render_template('admin/customer_form.html', customer=customer)
 
-        update_customer(customer_id, name=name, email=email, company=company, phone=phone)
+        update_customer(customer_id, name=name, email=email, company=company, phone=phone, sms_opted_in=sms_opted_in)
         flash(f'Customer "{name}" updated successfully!', 'success')
         return redirect(url_for('admin.customer_detail', customer_id=customer_id))
 
@@ -462,6 +466,46 @@ def delete_project_route(project_id):
     delete_project(project_id)
     flash(f'Project "{project["project_name"]}" deleted.', 'success')
     return redirect(url_for('admin.projects'))
+
+
+def send_payment_link_notification(customer, amount, description, link_url):
+    """Email and SMS the customer that a payment link has been generated for them"""
+    if not customer:
+        return
+
+    dashboard_url = "https://shaunasaunders.com/customers/dashboard"
+
+    body = f"""Hi {customer['name']},
+
+A payment of ${amount:.2f} is ready for you{f' — {description}' if description else ''}.
+
+You can view and complete your payment in your dashboard:
+{dashboard_url}
+
+If you have any questions, feel free to reply to this email.
+
+— Shauna
+"""
+    try:
+        ses_send_email(
+            to_email=customer['email'],
+            subject='Payment Ready',
+            body=body,
+            reply_to='shauna.saunders@alumni.unc.edu'
+        )
+    except Exception as e:
+        print(f"Error sending payment link email: {str(e)}")
+
+    if customer.get('phone') and customer.get('sms_opted_in'):
+        sms_body = (
+            f"Hi {customer['name']}, you have a payment of ${amount:.2f} due"
+            f"{f' ({description})' if description else ''}."
+            f" Log in to your dashboard to complete your payment: {dashboard_url}"
+        )
+        try:
+            twilio_helper.send_sms(to_phone=customer['phone'], body=sms_body)
+        except Exception as e:
+            print(f"Error sending payment link SMS: {str(e)}")
 
 
 def send_payment_waived_notification(project, amount, next_payment_date,
@@ -945,6 +989,9 @@ def create_payment_link():
                 description=description,
                 created_by_admin_id=session.get('user_id')
             )
+
+            # Notify customer via email and SMS
+            send_payment_link_notification(customer, amount, description, payment_link.url)
 
             flash(f'Payment link created! URL: {payment_link.url}', 'success')
             return redirect(url_for('admin.customer_detail', customer_id=customer_id))

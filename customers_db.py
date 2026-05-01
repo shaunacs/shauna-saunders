@@ -27,6 +27,7 @@ def init_db():
             name TEXT NOT NULL,
             company TEXT,
             phone TEXT,
+            sms_opted_in BOOLEAN DEFAULT 0,
             password_hash TEXT NOT NULL,
             is_active BOOLEAN DEFAULT 1,
             created_by_admin_id INTEGER,
@@ -261,12 +262,19 @@ def migrate_db():
     ''')
     conn.commit()
 
+    # Migrations for existing databases
+    try:
+        cursor.execute('ALTER TABLE customers ADD COLUMN sms_opted_in BOOLEAN DEFAULT 0')
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
     conn.close()
 
 
 # Customer Management Functions
 
-def create_customer(email, name, password, company=None, phone=None, created_by_admin_id=None):
+def create_customer(email, name, password, company=None, phone=None, sms_opted_in=False, created_by_admin_id=None):
     """Create a new customer account"""
     conn = get_db()
     cursor = conn.cursor()
@@ -276,9 +284,9 @@ def create_customer(email, name, password, company=None, phone=None, created_by_
 
     try:
         cursor.execute('''
-            INSERT INTO customers (email, name, company, phone, password_hash, created_by_admin_id)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (email, name, company, phone, password_hash, created_by_admin_id))
+            INSERT INTO customers (email, name, company, phone, sms_opted_in, password_hash, created_by_admin_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (email, name, company, phone, sms_opted_in, password_hash, created_by_admin_id))
         conn.commit()
         customer_id = cursor.lastrowid
         conn.close()
@@ -394,7 +402,7 @@ def update_customer(customer_id, **kwargs):
     conn = get_db()
     cursor = conn.cursor()
 
-    allowed_fields = ['name', 'email', 'company', 'phone', 'is_active']
+    allowed_fields = ['name', 'email', 'company', 'phone', 'sms_opted_in', 'is_active']
     updates = []
     values = []
 

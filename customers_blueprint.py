@@ -21,7 +21,7 @@ from customers_db import (
     get_agreement_signature, replace_agreement_placeholders,
     get_payment_link_by_id, mark_payment_link_manual_pending,
     get_customer_by_email, create_password_reset_token, get_valid_reset_token,
-    consume_reset_token, update_customer_password
+    consume_reset_token, update_customer_password, update_customer
 )
 
 customers_bp = Blueprint('customers', __name__, url_prefix='/customers')
@@ -69,7 +69,6 @@ def customer_login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'customer_id' not in session:
-            flash('Please log in to access this page.', 'error')
             return redirect(url_for('customers.login'))
 
         # Check idle timeout (30 minutes) — skip when admin is impersonating
@@ -299,6 +298,33 @@ def dashboard():
                          payment_links=payment_links,
                          unsigned_agreements=unsigned_agreements,
                          recent_payments=recent_payments)
+
+
+@customers_bp.route('/update-phone', methods=['POST'])
+@customer_login_required
+def update_phone():
+    """Allow customer to update their phone number"""
+    customer_id = session['customer_id']
+    phone = request.form.get('phone', '').strip() or None
+    update_customer(customer_id, phone=phone)
+    if not phone:
+        update_customer(customer_id, sms_opted_in=False)
+    flash('Phone number updated.', 'success')
+    return redirect(url_for('customers.dashboard'))
+
+
+@customers_bp.route('/sms-preferences', methods=['POST'])
+@customer_login_required
+def update_sms_preference():
+    """Allow customer to opt in or out of SMS payment notifications"""
+    customer_id = session['customer_id']
+    sms_opted_in = request.form.get('sms_opted_in') == '1'
+    update_customer(customer_id, sms_opted_in=sms_opted_in)
+    if sms_opted_in:
+        flash('SMS payment notifications enabled.', 'success')
+    else:
+        flash('SMS payment notifications disabled.', 'success')
+    return redirect(url_for('customers.dashboard'))
 
 
 @customers_bp.route('/projects/<int:project_id>')

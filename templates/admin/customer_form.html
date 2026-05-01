@@ -39,6 +39,14 @@
         <input type="tel" id="phone" name="phone" value="{{ customer.phone if customer else '' }}">
     </div>
 
+    <div class="form-group" id="sms-consent-group" style="{{ 'display:none' if not (customer and customer.phone) else '' }}">
+        <label style="display:flex; align-items:flex-start; gap:0.6rem; cursor:pointer; font-weight:normal;">
+            <input type="checkbox" name="sms_opted_in" id="sms_opted_in" value="1" style="width:auto; margin-top:3px; flex-shrink:0;"
+                   {{ 'checked' if customer and customer.sms_opted_in else '' }}>
+            <span>Customer has provided consent to receive SMS payment notifications to the phone number above. They can opt out at any time from their dashboard.</span>
+        </label>
+    </div>
+
     <div class="form-actions">
         <button type="submit" class="btn btn-primary">
             {% if customer %}Update Customer{% else %}Create Customer{% endif %}
@@ -46,4 +54,19 @@
         <a href="{% if customer %}{{ url_for('admin.customer_detail', customer_id=customer.id) }}{% else %}{{ url_for('admin.customers') }}{% endif %}" class="btn btn-secondary">Cancel</a>
     </div>
 </form>
+
+<script>
+const phoneInput = document.getElementById('phone');
+const consentGroup = document.getElementById('sms-consent-group');
+const consentCheckbox = document.getElementById('sms_opted_in');
+
+phoneInput.addEventListener('input', function() {
+    if (this.value.trim()) {
+        consentGroup.style.display = '';
+    } else {
+        consentGroup.style.display = 'none';
+        consentCheckbox.checked = false;
+    }
+});
+</script>
 {% endblock %}
