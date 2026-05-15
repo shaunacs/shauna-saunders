@@ -692,7 +692,7 @@ body::before {
     border: 2px solid var(--border-color);
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .portfolio-item::before {
@@ -702,9 +702,11 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
+    border-radius: 16px;
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(110, 231, 183, 0.1));
     opacity: 0;
     transition: opacity 0.3s ease;
+    pointer-events: none;
 }
 
 .portfolio-item:hover {
@@ -1052,6 +1054,122 @@ body::before {
     font-size: 0.78rem;
     color: #A0AEC0;
     line-height: 1.4;
+}
+
+/* Service Accordion */
+.service-group {
+    margin-bottom: 2.5rem;
+}
+
+.service-group-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--primary-color);
+    margin-bottom: 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.service-accordion-item {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.service-accordion-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 0;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    transition: color 0.2s ease;
+}
+
+.service-accordion-summary::-webkit-details-marker {
+    display: none;
+}
+
+.service-accordion-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.service-accordion-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-light);
+    transition: color 0.2s ease;
+}
+
+.service-accordion-summary:hover .service-accordion-name {
+    color: var(--primary-color);
+}
+
+.service-accordion-tagline {
+    font-size: 0.875rem;
+    color: #A0AEC0;
+    font-style: italic;
+}
+
+.service-accordion-indicator {
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    font-size: 1.4rem;
+    font-weight: 300;
+    line-height: 1;
+    transition: transform 0.2s ease;
+}
+
+.service-accordion-indicator::before {
+    content: '+';
+}
+
+.service-accordion-item[open] .service-accordion-indicator::before {
+    content: '−';
+}
+
+.service-accordion-body {
+    padding: 0.5rem 0 1.75rem 0;
+    color: #CBD5E0;
+}
+
+/* Not Sure callout */
+.unsure-callout {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin-top: 2.5rem;
+}
+
+.unsure-callout-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.unsure-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+.unsure-subtitle {
+    font-size: 0.9rem;
+    color: #A0AEC0;
 }
 
 .service-card {

@@ -28,20 +28,17 @@
 
             <div class="portfolio-grid">
                 <div class="portfolio-item">
-                    <h2 class="portfolio-title">Three of Cups LLC</h2>
-                    <div class="portfolio-preview video-recording-preview" data-href="https://threeofcupsllc.com">
-                        <video autoplay loop muted playsinline>
-                            <source src="{{ url_for('static', filename='video/three-of-cups-preview.mp4') }}" type="video/mp4">
-                            <img src="{{ url_for('static', filename='img/three-of-cups-preview.png') }}" alt="Three of Cups LLC website preview">
-                        </video>
+                    <h2 class="portfolio-title">Jellies</h2>
+                    <div class="portfolio-preview" data-href="https://www.getjellies.app">
+                        <iframe src="https://www.getjellies.app" title="Jellies website preview" loading="lazy"></iframe>
                         <div class="preview-overlay">
                             <span class="preview-link-text">Visit Site</span>
                         </div>
                     </div>
                     <p class="portfolio-description">
-                        A friendship matchmaking platform that helps people form meaningful connections and build community. Features include personality assessments, compatibility matching, and community events to bring people together based on shared interests and values.
+                        A company I founded and built from the ground up. Jellies is an iOS app that helps people stay genuinely connected with the people who matter most through daily check-ins, without the noise of social media.
                     </p>
-                    <a href="https://threeofcupsllc.com" target="_blank" class="portfolio-link">
+                    <a href="https://www.getjellies.app" target="_blank" class="portfolio-link">
                         Visit Site
                         <svg class="external-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
@@ -49,6 +46,34 @@
                             <line x1="10" y1="14" x2="21" y2="3"></line>
                         </svg>
                     </a>
+                </div>
+
+                <div class="portfolio-item">
+                    <h2 class="portfolio-title">Friendship Matchmaking Platform</h2>
+                    <div class="portfolio-preview video-recording-preview">
+                        <video autoplay loop muted playsinline>
+                            <source src="{{ url_for('static', filename='video/three-of-cups-preview.mp4') }}" type="video/mp4">
+                            <img src="{{ url_for('static', filename='img/three-of-cups-preview.png') }}" alt="Friendship matchmaking platform preview">
+                        </video>
+                    </div>
+                    <p class="portfolio-description">
+                        A full-stack web application built for a real friendship matchmaking business, actively used in production.
+                    </p>
+                    <details class="portfolio-features">
+                        <summary class="portfolio-features-toggle">Key Features</summary>
+                        <ul class="portfolio-features-list">
+                            <li>Member registration with email verification and account management</li>
+                            <li>Multi-section compatibility assessment covering personality, communication style, values, and social preferences — with personalized insights generated from responses</li>
+                            <li>Admin-curated matching workflow with individualized introduction emails written for each person in a match</li>
+                            <li>Member dashboard showing current matches, assessment results, and upcoming events</li>
+                            <li>Full event management system with RSVP tracking, capacity limits, and flexible pricing</li>
+                            <li>Tablet-friendly event day check-in kiosk for use by volunteers without requiring an admin login</li>
+                            <li>Interactive in-event speed-friending facilitation tool for admins to coordinate live pairings</li>
+                            <li>Community partner portal for submitting assessments on behalf of prospective members</li>
+                            <li>Admin content management for the public-facing services page</li>
+                            <li>Automated emails at every key member touchpoint</li>
+                        </ul>
+                    </details>
                 </div>
 
                 <div class="portfolio-item">
@@ -92,6 +117,49 @@
     </main>
 </div>
 
+<style>
+.portfolio-features {
+    margin-top: 0.75rem;
+}
+.portfolio-features-toggle {
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    user-select: none;
+    transition: color 0.3s ease;
+    position: relative;
+    z-index: 2;
+}
+.portfolio-features-toggle::-webkit-details-marker { display: none; }
+.portfolio-features-toggle::after {
+    content: '›';
+    font-size: 1.2rem;
+    line-height: 1;
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+details[open] .portfolio-features-toggle::after {
+    transform: rotate(90deg);
+}
+.portfolio-features-toggle:hover {
+    color: var(--accent-color);
+}
+.portfolio-features-list {
+    margin: 0.75rem 0 0 0;
+    padding-left: 1.25rem;
+    font-size: 0.9rem;
+    color: #A0AEC0;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+</style>
 <script>
 // Video preview handling
 const portfolioVideos = document.querySelectorAll('.video-recording-preview video');
@@ -145,6 +213,25 @@ document.querySelectorAll('.video-recording-preview').forEach(preview => {
             if (video.paused) {
                 video.play();
             }
+        });
+    }
+});
+
+// Handle iframe-based preview clicks — iframes absorb pointer events so we
+// disable them on the iframe and wire the overlay click to open the link.
+document.querySelectorAll('.portfolio-preview[data-href]').forEach(preview => {
+    const href = preview.dataset.href;
+    const iframe = preview.querySelector('iframe');
+    const overlay = preview.querySelector('.preview-overlay');
+
+    if (iframe) {
+        iframe.style.pointerEvents = 'none';
+    }
+
+    if (overlay && href) {
+        overlay.style.cursor = 'pointer';
+        overlay.addEventListener('click', () => {
+            window.open(href, '_blank');
         });
     }
 });
