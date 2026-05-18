@@ -15,7 +15,7 @@
             <h1>{{ feature_request.title }}</h1>
             <div class="request-meta">
                 <span class="request-id">#{{ feature_request.id }}</span>
-                <span class="project-name">{{ feature_request.project_name }}</span>
+                <span class="project-name">{{ feature_request.project_name or 'General Request' }}</span>
                 <span class="priority-badge priority-{{ feature_request.priority }}">{{ feature_request.priority|title }} Priority</span>
             </div>
         </div>

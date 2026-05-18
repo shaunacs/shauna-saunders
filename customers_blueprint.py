@@ -17,6 +17,7 @@ from customers_db import (
     get_active_subscription_projects, update_project, create_feature_request,
     get_feature_requests_by_customer, get_feature_request_by_id, get_feature_request_history,
     get_unsigned_agreements_for_customer, get_signed_agreements_for_customer,
+    get_cancelled_agreements_for_customer,
     get_agreement_by_id, get_active_agreement_for_project, sign_agreement,
     get_agreement_signature, replace_agreement_placeholders,
     get_payment_link_by_id, mark_payment_link_manual_pending,
@@ -996,6 +997,56 @@ def backfill_subscription_payment_dates():
 
 # Feature Request Routes
 
+@customers_bp.route('/request-feature', methods=['GET', 'POST'])
+@customer_login_required
+def request_feature_standalone():
+    """Submit a general feature request not tied to a specific project"""
+    customer_id = session['customer_id']
+    projects = get_projects_by_customer(customer_id)
+
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        priority = request.form.get('priority', 'medium')
+        requested_completion = request.form.get('requested_completion', '').strip()
+        additional_info = request.form.get('additional_info', '').strip()
+        project_id_raw = request.form.get('project_id', '').strip()
+        project_id = int(project_id_raw) if project_id_raw else None
+
+        if not title or not description:
+            flash('Title and description are required.', 'error')
+            return render_template('customers/request_feature_standalone.html', projects=projects)
+
+        # Verify the project belongs to this customer if one was selected
+        if project_id:
+            project = get_project_by_id(project_id)
+            if not project or project['customer_id'] != customer_id:
+                flash('Invalid project selected.', 'error')
+                return render_template('customers/request_feature_standalone.html', projects=projects)
+
+        try:
+            feature_request_id = create_feature_request(
+                customer_id=customer_id,
+                project_id=project_id,
+                title=title,
+                description=description,
+                priority=priority,
+                requested_completion=requested_completion if requested_completion else None,
+                additional_info=additional_info if additional_info else None
+            )
+
+            send_feature_request_notification(feature_request_id)
+
+            flash('Your feature request has been submitted successfully!', 'success')
+            return redirect(url_for('customers.all_feature_requests'))
+
+        except Exception as e:
+            print(f"Error creating feature request: {str(e)}")
+            flash('An error occurred while submitting your request. Please try again.', 'error')
+
+    return render_template('customers/request_feature_standalone.html', projects=projects)
+
+
 @customers_bp.route('/project/<int:project_id>/request-feature', methods=['GET', 'POST'])
 @customer_login_required
 def request_feature(project_id):
@@ -1117,12 +1168,13 @@ def send_feature_request_notification(feature_request_id):
             print("Feature request not found for notification")
             return
 
+        project_line = f"Project: {feature_request['project_name']}" if feature_request.get('project_name') else "Project: General Request (no specific project)"
         email_body = f"""
 New Feature Request Submitted
 
 Request ID: #{feature_request['id']}
 Customer: {feature_request['customer_name']} ({feature_request['customer_email']})
-Project: {feature_request['project_name']}
+{project_line}
 
 Title: {feature_request['title']}
 Priority: {feature_request['priority'].title()}
@@ -1186,6 +1238,7 @@ def send_status_update_notification(feature_request_id, old_status, new_status, 
         # Build the link to the feature request detail page
         feature_request_url = f"{BASE_URL}/customers/feature-request/{feature_request_id}"
 
+        project_label = feature_request['project_name'] if feature_request.get('project_name') else "General Request"
         email_body = f"""
 Feature Request Status Update
 
@@ -1194,7 +1247,7 @@ Hi {feature_request['customer_name']},
 Your feature request has been updated:
 
 Request: {feature_request['title']}
-Project: {feature_request['project_name']}
+Project: {project_label}
 
 Status changed from "{old_status_name}" to "{new_status_name}"
 
@@ -1229,15 +1282,17 @@ Shauna Saunders
 @customers_bp.route('/agreements')
 @customer_login_required
 def agreements():
-    """View all agreements (signed and unsigned)"""
+    """View all agreements (signed, unsigned, and cancelled)"""
     customer_id = session['customer_id']
 
     unsigned_agreements = get_unsigned_agreements_for_customer(customer_id)
     signed_agreements = get_signed_agreements_for_customer(customer_id)
+    cancelled_agreements = get_cancelled_agreements_for_customer(customer_id)
 
     return render_template('customers/agreements.html',
                          unsigned_agreements=unsigned_agreements,
-                         signed_agreements=signed_agreements)
+                         signed_agreements=signed_agreements,
+                         cancelled_agreements=cancelled_agreements)
 
 
 @customers_bp.route('/agreement/<int:agreement_id>')

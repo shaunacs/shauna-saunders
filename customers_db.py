@@ -269,6 +269,44 @@ def migrate_db():
     except sqlite3.OperationalError:
         pass  # Column already exists
 
+    # Add is_cancelled column to project_agreements
+    try:
+        cursor.execute('ALTER TABLE project_agreements ADD COLUMN is_cancelled BOOLEAN DEFAULT 0')
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
+    # Make project_id nullable in feature_requests (recreate table if needed)
+    cursor.execute("PRAGMA table_info(feature_requests)")
+    fr_cols = {col[1]: col for col in cursor.fetchall()}
+    if fr_cols and fr_cols.get('project_id') and fr_cols['project_id'][3] == 1:
+        # notnull flag is 1 — recreate with nullable project_id
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS feature_requests_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_id INTEGER NOT NULL,
+                project_id INTEGER,
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                priority TEXT DEFAULT 'medium',
+                requested_completion TEXT,
+                additional_info TEXT,
+                status TEXT DEFAULT 'request_received',
+                admin_notes TEXT,
+                estimated_hours REAL,
+                actual_hours REAL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                completed_at TIMESTAMP,
+                FOREIGN KEY (customer_id) REFERENCES customers(id),
+                FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+            )
+        ''')
+        cursor.execute('INSERT INTO feature_requests_new SELECT * FROM feature_requests')
+        cursor.execute('DROP TABLE feature_requests')
+        cursor.execute('ALTER TABLE feature_requests_new RENAME TO feature_requests')
+        conn.commit()
+
     conn.close()
 
 
@@ -1023,11 +1061,7 @@ def get_active_subscription_projects():
 
 def create_feature_request(customer_id, project_id, title, description, priority='medium',
                           requested_completion=None, additional_info=None, created_by_admin=False):
-    """Create a new feature request
-
-    Args:
-        created_by_admin: If True, sets a different initial status message
-    """
+    """Create a new feature request. project_id may be None for general requests."""
     conn = get_db()
     cursor = conn.cursor()
 
@@ -1061,7 +1095,7 @@ def get_feature_request_by_id(request_id):
                p.project_name, p.email as project_email
         FROM feature_requests fr
         JOIN customers c ON fr.customer_id = c.id
-        JOIN projects p ON fr.project_id = p.id
+        LEFT JOIN projects p ON fr.project_id = p.id
         WHERE fr.id = ?
     ''', (request_id,))
     request = cursor.fetchone()
@@ -1073,12 +1107,12 @@ def get_feature_requests_by_customer(customer_id, project_id=None):
     """Get feature requests for a customer, optionally filtered by project"""
     conn = get_db()
     cursor = conn.cursor()
-    
+
     if project_id:
         cursor.execute('''
             SELECT fr.*, p.project_name
             FROM feature_requests fr
-            JOIN projects p ON fr.project_id = p.id
+            LEFT JOIN projects p ON fr.project_id = p.id
             WHERE fr.customer_id = ? AND fr.project_id = ?
             ORDER BY fr.created_at DESC
         ''', (customer_id, project_id))
@@ -1086,11 +1120,11 @@ def get_feature_requests_by_customer(customer_id, project_id=None):
         cursor.execute('''
             SELECT fr.*, p.project_name
             FROM feature_requests fr
-            JOIN projects p ON fr.project_id = p.id
+            LEFT JOIN projects p ON fr.project_id = p.id
             WHERE fr.customer_id = ?
             ORDER BY fr.created_at DESC
         ''', (customer_id,))
-    
+
     requests = cursor.fetchall()
     conn.close()
     return [dict(request) for request in requests]
@@ -1100,24 +1134,24 @@ def get_all_feature_requests(status=None):
     """Get all feature requests, optionally filtered by status"""
     conn = get_db()
     cursor = conn.cursor()
-    
+
     if status:
         cursor.execute('''
-            SELECT fr.*, c.name as customer_name, c.email as customer_email, 
+            SELECT fr.*, c.name as customer_name, c.email as customer_email,
                    p.project_name
             FROM feature_requests fr
             JOIN customers c ON fr.customer_id = c.id
-            JOIN projects p ON fr.project_id = p.id
+            LEFT JOIN projects p ON fr.project_id = p.id
             WHERE fr.status = ?
             ORDER BY fr.created_at DESC
         ''', (status,))
     else:
         cursor.execute('''
-            SELECT fr.*, c.name as customer_name, c.email as customer_email, 
+            SELECT fr.*, c.name as customer_name, c.email as customer_email,
                    p.project_name
             FROM feature_requests fr
             JOIN customers c ON fr.customer_id = c.id
-            JOIN projects p ON fr.project_id = p.id
+            LEFT JOIN projects p ON fr.project_id = p.id
             ORDER BY fr.created_at DESC
         ''')
     
@@ -1325,8 +1359,56 @@ def get_all_agreements(include_inactive=False):
     return [dict(a) for a in agreements]
 
 
+def cancel_agreement(agreement_id):
+    """Cancel an unsigned agreement. Sets is_active=0 and is_cancelled=1."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        UPDATE project_agreements
+        SET is_active = 0, is_cancelled = 1, superseded_at = ?
+        WHERE id = ?
+    ''', (datetime.now(), agreement_id))
+    conn.commit()
+    conn.close()
+
+
+def get_cancelled_agreements_for_customer(customer_id):
+    """Get all cancelled agreements for a customer"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT a.*, p.project_name
+        FROM project_agreements a
+        JOIN projects p ON a.project_id = p.id
+        WHERE p.customer_id = ?
+        AND a.is_cancelled = 1
+        ORDER BY a.superseded_at DESC
+    ''', (customer_id,))
+    agreements = cursor.fetchall()
+    conn.close()
+    return [dict(a) for a in agreements]
+
+
+def get_cancelled_agreement_for_project(project_id):
+    """Get the most recent cancelled agreement for a project (when no active one exists)"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT a.*, p.project_name, c.name as customer_name, c.id as customer_id
+        FROM project_agreements a
+        JOIN projects p ON a.project_id = p.id
+        JOIN customers c ON p.customer_id = c.id
+        WHERE a.project_id = ? AND a.is_cancelled = 1
+        ORDER BY a.superseded_at DESC
+        LIMIT 1
+    ''', (project_id,))
+    agreement = cursor.fetchone()
+    conn.close()
+    return dict(agreement) if agreement else None
+
+
 def get_unsigned_agreements_for_customer(customer_id):
-    """Get all active agreements that the customer has not signed"""
+    """Get all active, non-cancelled agreements that the customer has not signed"""
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('''
@@ -1335,6 +1417,7 @@ def get_unsigned_agreements_for_customer(customer_id):
         JOIN projects p ON a.project_id = p.id
         WHERE p.customer_id = ?
         AND a.is_active = 1
+        AND COALESCE(a.is_cancelled, 0) = 0
         AND a.id NOT IN (
             SELECT agreement_id FROM agreement_signatures WHERE customer_id = ?
         )

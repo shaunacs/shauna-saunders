@@ -93,6 +93,11 @@
         color: #9ca3af;
         border: 1px solid #6b7280;
     }
+    .badge-danger {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid #ef4444;
+    }
     .empty-state {
         color: var(--text-muted, #9ca3af);
         padding: 1rem;
@@ -117,7 +122,9 @@
         <p class="text-muted">
             Version {{ agreement.version }} |
             {{ agreement.agreement_type|replace('_', ' ')|title }} |
-            {% if agreement.is_active %}
+            {% if agreement.is_cancelled %}
+                <span class="badge badge-danger">Cancelled</span>
+            {% elif agreement.is_active %}
                 <span class="badge badge-success">Active</span>
             {% else %}
                 <span class="badge badge-secondary">Superseded</span>
@@ -125,8 +132,15 @@
         </p>
     </div>
     <div class="header-actions">
-        {% if agreement.is_active %}
-        <a href="{{ url_for('admin.edit_agreement', agreement_id=agreement.id) }}" class="btn btn-secondary">Create New Version</a>
+        {% if agreement.is_active and not agreement.is_cancelled %}
+            <a href="{{ url_for('admin.edit_agreement', agreement_id=agreement.id) }}" class="btn btn-secondary">Create New Version</a>
+            {% if signatures|length == 0 %}
+            <form method="POST" action="{{ url_for('admin.cancel_agreement_route', agreement_id=agreement.id) }}" style="display:inline"
+                  onsubmit="return confirm('Cancel this agreement? The customer will no longer be able to sign it, but it will remain visible on their dashboard.')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-secondary" style="background:#E74C3C; color:#fff;">Cancel Agreement</button>
+            </form>
+            {% endif %}
         {% endif %}
     </div>
 </div>

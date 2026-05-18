@@ -7,6 +7,7 @@
     <div class="page-header">
         <h1>Your Feature Requests</h1>
         <p class="page-subtitle">Track the status of all your feature requests and updates</p>
+        <a href="{{ url_for('customers.request_feature_standalone') }}" class="btn btn-primary" style="margin-top:1rem;">+ Submit New Request</a>
     </div>
 
     {% if feature_requests %}
@@ -17,7 +18,7 @@
                 <div class="request-title-section">
                     <h3><a href="{{ url_for('customers.view_feature_request', request_id=request.id) }}" class="request-title-link">{{ request.title }}</a></h3>
                     <div class="request-meta">
-                        <span class="request-project">{{ request.project_name }}</span>
+                        <span class="request-project">{{ request.project_name or 'General Request' }}</span>
                         <span class="request-date">{{ request.created_at[:10] if request.created_at else 'N/A' }}</span>
                     </div>
                 </div>
@@ -81,8 +82,8 @@
     <div class="empty-state">
         <div class="empty-icon">📝</div>
         <h2>No Feature Requests Yet</h2>
-        <p>You haven't submitted any feature requests. When you have ongoing maintenance projects, you can request new features and updates from your dashboard.</p>
-        <a href="{{ url_for('customers.dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+        <p>You haven't submitted any feature requests. You can submit a request below — it doesn't need to be tied to a specific project.</p>
+        <a href="{{ url_for('customers.request_feature_standalone') }}" class="btn btn-primary">Submit Your First Request</a>
     </div>
     {% endif %}
 </div>

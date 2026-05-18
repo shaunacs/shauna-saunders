@@ -49,7 +49,7 @@
                     </a>
                 </td>
                 <td>{{ request.customer_name }}</td>
-                <td>{{ request.project_name }}</td>
+                <td>{{ request.project_name or 'General Request' }}</td>
                 <td>
                     <span class="priority-badge priority-{{ request.priority }}">
                         {{ request.priority|title }}

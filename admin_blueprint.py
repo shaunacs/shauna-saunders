@@ -21,7 +21,8 @@ from customers_db import (
     get_feature_request_history, create_feature_request, get_all_agreements, get_agreement_by_id,
     create_agreement, get_agreements_by_project, get_all_signatures_for_agreement,
     get_agreement_template, replace_agreement_placeholders, get_active_agreement_for_project,
-    get_agreement_signature, create_payment, update_project_paid_amount,
+    get_agreement_signature, cancel_agreement, get_cancelled_agreement_for_project,
+    create_payment, update_project_paid_amount,
     get_payment_link_by_id, confirm_payment_link_manual
 )
 from customers_blueprint import send_status_update_notification
@@ -380,8 +381,11 @@ def project_detail(project_id):
     # Get agreement info
     agreement = get_active_agreement_for_project(project_id)
     agreement_signature = None
+    cancelled_agreement = None
     if agreement:
         agreement_signature = get_agreement_signature(agreement['id'], customer['id'])
+    else:
+        cancelled_agreement = get_cancelled_agreement_for_project(project_id)
 
     return render_template('admin/project_detail.html',
                          project=project,
@@ -390,7 +394,8 @@ def project_detail(project_id):
                          payments=payments,
                          completion_percentage=completion_percentage,
                          agreement=agreement,
-                         agreement_signature=agreement_signature)
+                         agreement_signature=agreement_signature,
+                         cancelled_agreement=cancelled_agreement)
 
 
 @admin_bp.route('/projects/<int:project_id>/edit', methods=['GET', 'POST'])
@@ -1452,6 +1457,29 @@ def edit_agreement(agreement_id):
                          projects=projects,
                          agreement=agreement,
                          has_signatures=len(signatures) > 0)
+
+
+@admin_bp.route('/agreements/<int:agreement_id>/cancel', methods=['POST'])
+@admin_required
+def cancel_agreement_route(agreement_id):
+    """Cancel an unsigned agreement"""
+    agreement = get_agreement_by_id(agreement_id)
+    if not agreement:
+        flash('Agreement not found.', 'error')
+        return redirect(url_for('admin.agreements'))
+
+    signatures = get_all_signatures_for_agreement(agreement_id)
+    if signatures:
+        flash('Cannot cancel an agreement that has already been signed.', 'error')
+        return redirect(url_for('admin.agreement_detail', agreement_id=agreement_id))
+
+    if not agreement['is_active']:
+        flash('This agreement is already inactive.', 'error')
+        return redirect(url_for('admin.agreement_detail', agreement_id=agreement_id))
+
+    cancel_agreement(agreement_id)
+    flash(f'Agreement "{agreement["title"]}" has been cancelled.', 'success')
+    return redirect(url_for('admin.agreement_detail', agreement_id=agreement_id))
 
 
 @admin_bp.route('/agreements/templates')

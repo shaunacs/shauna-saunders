@@ -152,7 +152,31 @@
 </section>
 {% endif %}
 
-{% if not unsigned_agreements and not signed_agreements %}
+{% if cancelled_agreements %}
+<section class="agreements-section">
+    <h2>Cancelled Agreements</h2>
+    {% for agreement in cancelled_agreements %}
+    <div class="agreement-card" style="border-color:#ef4444; opacity:0.8;">
+        <div class="agreement-info">
+            <h3>{{ agreement.title }}</h3>
+            <p class="agreement-meta">
+                {{ agreement.project_name }} |
+                {{ agreement.agreement_type|replace('_', ' ')|title }} |
+                Cancelled {% if agreement.superseded_at %}{{ agreement.superseded_at[:10] }}{% endif %}
+            </p>
+        </div>
+        <div class="agreement-actions">
+            <span style="background:rgba(239,68,68,0.2);color:#ef4444;border:1px solid #ef4444;padding:0.25rem 0.75rem;border-radius:9999px;font-size:0.75rem;font-weight:600;">Cancelled</span>
+            <a href="{{ url_for('customers.view_agreement', agreement_id=agreement.id) }}" class="btn btn-secondary">
+                View Agreement
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</section>
+{% endif %}
+
+{% if not unsigned_agreements and not signed_agreements and not cancelled_agreements %}
 <div class="empty-state">
     <p>No agreements found. Agreements will appear here when your projects are set up.</p>
     <a href="{{ url_for('customers.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
